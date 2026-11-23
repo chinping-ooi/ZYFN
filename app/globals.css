@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-zyfn-navy: #263d5b;
+  --color-zyfn-sidebar: #1e2c40;
+  --color-zyfn-sidebar-active: #33465f;
+  --color-zyfn-sidebar-hover: #2b3c53;
+  --color-zyfn-slate: #a4b1c0;
+  --color-zyfn-ink: #233044;
+  --color-zyfn-muted: #657185;
+  --color-zyfn-line: #cbd2dc;
+  --color-zyfn-bg: #f1f3f5;
+  --color-zyfn-green: #276b54;
+  --color-zyfn-red: #a52d2d;
+  --color-zyfn-focus: #526f93;
+}
+
+@layer base {
+  body {
+    @apply bg-zyfn-bg text-zyfn-ink antialiased;
+    font-family: Arial, "Helvetica Neue", sans-serif;
+  }
+}
+
+@layer components {
+  .page-btn {
+    @apply inline-flex h-9 shrink-0 items-center justify-center rounded-[3px] border border-[#b8c2cf] bg-white px-3 text-sm text-zyfn-ink whitespace-nowrap;
+  }
+  .page-btn:disabled {
+    @apply cursor-default border-[#dce1e7] bg-[#f5f6f8] text-[#929baa];
+  }
+  .sort-btn {
+    @apply flex w-full items-center justify-between gap-3 border-0 bg-transparent px-[13px] py-[11px] text-left font-semibold whitespace-nowrap text-inherit;
+  }
+  .sort-btn:hover {
+    @apply bg-[#e2e7ef];
+  }
+  .sort-indicator {
+    @apply h-[7px] w-[7px] shrink-0 rotate-45 border-r border-b border-current opacity-30;
+  }
+  .sort-indicator[data-direction="ascending"] {
+    @apply rotate-[225deg] opacity-100;
+  }
+  .sort-indicator[data-direction="descending"] {
+    @apply opacity-100;
+  }
+}
