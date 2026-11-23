@@ -38,13 +38,19 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
   const net_sen =
     (snapshot?.income_sen ?? 0) - (snapshot?.spending_sen ?? 0);
 
+  const account_type = (id: string) => {
+    if (id === "tng") return "Wallet balance";
+    if (id === "go_plus") return "Investment balance";
+    return "Savings account";
+  };
+
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>
           <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">
-            Derived from Transaction.xlsx · HLB + PBE · {snapshot?.label ?? month}
+            Transaction.xlsx (HLB + PBE) and data.txt (TNG) · {snapshot?.label ?? month}
           </p>
         </div>
         {metrics.months.length > 0 ? (
@@ -81,12 +87,12 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
         <KpiCard
           label="Available balance"
           amount_sen={available_sen}
-          meta="Hong Leong Bank + Public Bank · latest workbook balances"
+          meta="Hong Leong, Public Bank, TNG wallet, and GO+ · latest parsed balances"
         />
         <KpiCard
           label="Net cash flow"
           amount_sen={net_sen}
-          meta="Credits − debits for selected month (HLB + PBE)"
+          meta="Credits − debits for selected month (banks + TNG; transfers excluded)"
         />
       </section>
 
@@ -115,7 +121,9 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold">{account.name}</div>
-                    <div className="text-xs text-zyfn-muted">Savings account</div>
+                    <div className="text-xs text-zyfn-muted">
+                      {account_type(account.id)}
+                    </div>
                   </div>
                   <div className="text-right text-sm font-semibold tabular-nums">
                     {format_rm(account.balance_sen)}

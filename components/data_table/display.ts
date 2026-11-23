@@ -29,6 +29,10 @@ export function display_cell<T extends Record<string, unknown>>(
     case "status":
       return String(value);
     default:
+      if (column.key === "account") {
+        if (value === "go_plus") return "GO+";
+        if (value === "wallet") return "Wallet";
+      }
       return String(value);
   }
 }

@@ -1,4 +1,5 @@
 import type { ParsedSheet } from "@/lib/workbook/types";
+import type { ParsedTngDump } from "@/lib/tng/types";
 import type { MinorAmount } from "@/lib/money";
 
 export type MonthKey = string;
@@ -33,7 +34,7 @@ function month_label(key: MonthKey): string {
   }).format(new Date(`${key}-01T00:00:00Z`));
 }
 
-function build_monthly(sheets: ParsedSheet[]): MonthlyAggregate[] {
+function build_monthly_from_sheets(sheets: ParsedSheet[]): MonthlyAggregate[] {
   const totals = new Map<MonthKey, { income_sen: number; spending_sen: number }>();
 
   for (const sheet of sheets) {
@@ -56,27 +57,101 @@ function build_monthly(sheets: ParsedSheet[]): MonthlyAggregate[] {
     }));
 }
 
+function merge_tng_monthly(
+  bank_monthly: MonthlyAggregate[],
+  tng: ParsedTngDump,
+): MonthlyAggregate[] {
+  const totals = new Map<
+    MonthKey,
+    { income_sen: number; spending_sen: number; label: string }
+  >();
+
+  for (const row of bank_monthly) {
+    totals.set(row.month, {
+      income_sen: row.income_sen,
+      spending_sen: row.spending_sen,
+      label: row.label,
+    });
+  }
+
+  for (const row of tng.rows) {
+    if (row.direction === "transfer") continue;
+    const key = month_key(row.date);
+    const bucket = totals.get(key) ?? {
+      income_sen: 0,
+      spending_sen: 0,
+      label: month_label(key),
+    };
+    if (row.direction === "in") {
+      bucket.income_sen += row.credit_sen;
+    } else if (row.direction === "out") {
+      bucket.spending_sen += row.debit_sen;
+    }
+    totals.set(key, bucket);
+  }
+
+  return [...totals.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, values]) => ({
+      month,
+      label: values.label,
+      income_sen: values.income_sen,
+      spending_sen: values.spending_sen,
+    }));
+}
+
 export function build_dashboard_metrics(
   hlb: ParsedSheet,
   pbe: ParsedSheet,
+  tng: ParsedTngDump | null = null,
 ): DashboardMetrics {
-  const monthly = build_monthly([hlb, pbe]);
+  const bank_monthly = build_monthly_from_sheets([hlb, pbe]);
+  const monthly = tng ? merge_tng_monthly(bank_monthly, tng) : bank_monthly;
   const months = monthly.map((m) => ({ value: m.month, label: m.label }));
   const default_month = months.at(-1)?.value ?? new Date().toISOString().slice(0, 7);
+
+  const accounts: DashboardMetrics["accounts"] = [
+    {
+      id: "hong_leong",
+      name: hlb.account_label,
+      balance_sen: hlb.closing_balance_sen,
+    },
+    {
+      id: "public_bank",
+      name: pbe.account_label,
+      balance_sen: pbe.closing_balance_sen,
+    },
+  ];
+
+  if (tng) {
+    accounts.push(
+      {
+        id: "tng",
+        name: "TNG eWallet",
+        balance_sen: tng.wallet_closing_sen,
+      },
+      {
+        id: "go_plus",
+        name: "GO+",
+        balance_sen: tng.go_plus_closing_sen,
+      },
+    );
+  }
 
   return {
     months,
     default_month,
-    accounts: [
-      { id: "hong_leong", name: hlb.account_label, balance_sen: hlb.closing_balance_sen },
-      { id: "public_bank", name: pbe.account_label, balance_sen: pbe.closing_balance_sen },
-    ],
+    accounts,
     monthly,
     data_notes: {
       skipped_total:
-        hlb.skipped_rows.length + pbe.skipped_rows.length,
+        hlb.skipped_rows.length +
+        pbe.skipped_rows.length +
+        (tng?.skipped_records.length ?? 0),
       reconcile_warnings_total:
-        hlb.reconcile_warning_count + pbe.reconcile_warning_count,
+        hlb.reconcile_warning_count +
+        pbe.reconcile_warning_count +
+        (tng?.reconcile_warning_count ?? 0),
     },
   };
 }
