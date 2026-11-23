@@ -111,7 +111,7 @@ export function TngStatementView({
             income and spending
           </p>
         </div>
-        <div className="px-5 pt-4 pb-4">
+        <div className="border-t border-zyfn-line px-5 py-4">
           <TngLedgerDataTable
             label="TNG and GO+ activity"
             scope={`tng-${month}-${type_filter}`}

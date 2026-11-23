@@ -13,7 +13,6 @@ export const TNG_LEDGER_COLUMNS: DataTableColumn<TngTableRow>[] = [
   {
     key: "description",
     label: "Description",
-    className: "min-w-[230px] !whitespace-normal",
   },
   {
     key: "debit_micro",

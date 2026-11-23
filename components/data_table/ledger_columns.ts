@@ -17,7 +17,6 @@ export const LEDGER_COLUMNS: DataTableColumn<LedgerRow>[] = [
   {
     key: "description",
     label: "Description",
-    className: "min-w-[230px] !whitespace-normal",
   },
   { key: "debit_sen", label: "Debit (RM)", type: "money", zero_as_blank: true },
   { key: "credit_sen", label: "Credit (RM)", type: "money", zero_as_blank: true },

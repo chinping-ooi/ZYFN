@@ -30,7 +30,7 @@
     @apply cursor-default border-[#dce1e7] bg-[#f5f6f8] text-[#929baa];
   }
   .sort-btn {
-    @apply flex w-full items-center justify-between gap-3 border-0 bg-transparent px-[13px] py-[11px] text-left font-semibold whitespace-nowrap text-inherit;
+    @apply flex w-full min-h-[42px] items-center justify-between gap-2 border-0 bg-transparent px-[13px] py-2 text-left text-[13px] font-semibold whitespace-nowrap text-inherit;
   }
   .sort-btn:hover {
     @apply bg-[#e2e7ef];

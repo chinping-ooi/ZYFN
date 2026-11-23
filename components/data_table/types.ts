@@ -13,6 +13,7 @@ export type DataTableColumn<T> = {
   type?: ColumnType;
   zero_as_blank?: boolean;
   className?: string;
+  headerClassName?: string;
   sortable?: boolean;
   /** For money_micro: row key holding wallet | go_plus */
   account_key?: keyof T & string;

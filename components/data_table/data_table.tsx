@@ -2,6 +2,10 @@
 
 import { useMemo, useState } from "react";
 import type { DataTableColumn, SortDirection } from "@/components/data_table/types";
+import {
+  column_cell_class,
+  column_header_class,
+} from "@/components/data_table/column_layout";
 import { compare_rows, display_cell } from "@/components/data_table/display";
 import { ExportDialog } from "@/components/data_table/export_dialog";
 import { StatusBadge } from "@/components/status_badge";
@@ -18,6 +22,8 @@ type Props<T extends Record<string, unknown>> = {
   date_key?: keyof T & string;
   toolbar_in_header?: boolean;
   empty_period_message?: string;
+  /** When true (default), table sits inside an outer card without a second bordered panel. */
+  inset?: boolean;
 };
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -28,9 +34,13 @@ export function DataTable<T extends Record<string, unknown>>({
   date_key,
   toolbar_in_header = false,
   empty_period_message = "No records in this period.",
+  inset = true,
 }: Props<T>) {
   const safe_columns = columns ?? EMPTY_COLUMNS;
-  const safe_rows = Array.isArray(rows) ? rows : [];
+  const safe_rows = useMemo(
+    () => (Array.isArray(rows) ? rows : []),
+    [rows],
+  );
   const resolved_date_key = date_key ?? ("date" as keyof T & string);
 
   const [search, set_search] = useState("");
@@ -82,12 +92,12 @@ export function DataTable<T extends Record<string, unknown>>({
   }
 
   const toolbar = (
-    <div className="flex items-center justify-end gap-2.5">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <input
         type="search"
         aria-label={`Search ${label}`}
         placeholder="Search all columns"
-        className="h-9 w-[270px] max-w-full rounded-[3px] border border-[#b8c2cf] px-3 text-sm text-zyfn-ink"
+        className="h-9 w-full rounded-[3px] border border-[#b8c2cf] px-3 text-sm text-zyfn-ink sm:max-w-[min(100%,320px)] sm:flex-1"
         value={search}
         onChange={(e) => {
           set_search(e.target.value);
@@ -96,7 +106,7 @@ export function DataTable<T extends Record<string, unknown>>({
       />
       <button
         type="button"
-        className="page-btn"
+        className="page-btn w-full sm:w-auto sm:shrink-0"
         onClick={() => set_export_open(true)}
       >
         Export
@@ -113,14 +123,20 @@ export function DataTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <>
+    <div className="flex min-h-0 w-full flex-col gap-3">
       {!toolbar_in_header ? toolbar : null}
-      <div className="overflow-x-auto">
+      <div
+        className={`max-h-[min(70vh,560px)] min-h-0 overflow-auto overscroll-contain ${
+          inset
+            ? "-mx-5 border-y border-zyfn-line"
+            : "rounded-[3px] border border-zyfn-line"
+        }`}
+      >
         <table
-          className="w-full border-collapse border border-zyfn-line"
+          className="w-full min-w-[520px] table-fixed border-collapse sm:min-w-[640px]"
           aria-label={label}
         >
-          <thead>
+          <thead className="sticky top-0 z-[1] bg-[#edf0f4] shadow-[inset_0_-1px_0_#cbd2dc]">
             <tr>
               {safe_columns.map((column) => {
                 const numeric = ["money", "money_micro", "rate", "months"].includes(
@@ -135,13 +151,13 @@ export function DataTable<T extends Record<string, unknown>>({
                     key={column.key}
                     scope="col"
                     aria-sort={sort === "none" ? undefined : sort}
-                    className={`border border-zyfn-line bg-[#edf0f4] p-0 text-[13px] font-semibold text-[#435168] ${
+                    className={`border border-zyfn-line bg-[#edf0f4] p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${
                       numeric ? "text-right" : "text-left"
                     }`}
                   >
                     <button
                       type="button"
-                      className="sort-btn"
+                      className={`sort-btn ${numeric ? "flex-row-reverse text-right" : ""}`}
                       aria-label={`Sort ${column.label} ${next}`}
                       onClick={() => toggle_sort(column.key)}
                     >
@@ -168,17 +184,21 @@ export function DataTable<T extends Record<string, unknown>>({
                     column.type ?? "",
                   );
                   const raw = row[column.key];
+                  const text = display_cell(row, column);
                   return (
                     <td
                       key={column.key}
-                      className={`border border-zyfn-line px-[13px] py-[11px] text-sm whitespace-nowrap ${
-                        numeric ? "text-right tabular-nums" : "text-left"
-                      } ${column.className ?? ""}`}
+                      title={
+                        column.key === "description" ? String(text) : undefined
+                      }
+                      className={`border border-zyfn-line px-[13px] py-[11px] text-sm ${
+                        numeric ? "text-right" : "text-left"
+                      } ${column_cell_class(column)}`}
                     >
                       {column.type === "status" ? (
                         <StatusBadge status={String(raw)} />
                       ) : (
-                        display_cell(row, column)
+                        text
                       )}
                     </td>
                   );
@@ -200,7 +220,7 @@ export function DataTable<T extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      <div className="mt-3.5 flex flex-wrap items-center justify-between gap-4 text-[13px] text-zyfn-muted">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-zyfn-muted">
         <span role="status">
           {filtered.length
             ? `${start + 1}–${start + visible.length} of ${filtered.length} records`
@@ -261,7 +281,7 @@ export function DataTable<T extends Record<string, unknown>>({
         rows={filtered}
         date_key={resolved_date_key}
       />
-    </>
+    </div>
   );
 }
 

@@ -33,7 +33,7 @@ export function CardWithTable({
           {header_extra}
         </div>
       </div>
-      <div className="px-5 pt-4 pb-4">
+      <div className="border-t border-zyfn-line px-5 py-4">
         <LedgerDataTable label={table_label} scope={scope} rows={rows} />
       </div>
     </section>
