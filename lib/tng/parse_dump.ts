@@ -7,9 +7,10 @@ import {
 } from "@/lib/tng/money_micro";
 import { classify_tng_direction } from "@/lib/tng/direction";
 import { normalize_tng_type } from "@/lib/tng/normalize_type";
+import { finalize_tng_rows } from "@/lib/tng/reconcile";
+import { detect_dump_chronology } from "@/lib/tng/sort_rows";
 import type {
   ParsedTngDump,
-  ReconcileWarning,
   SkippedTngRecord,
   TngAccount,
   TngLedgerRow,
@@ -158,6 +159,16 @@ function is_success_status(status: string): boolean {
   return /^success$/i.test(status.trim());
 }
 
+function row_affects_totals(
+  success: boolean,
+  raw_type: string,
+): boolean {
+  if (!success) return false;
+  const t = raw_type.toLowerCase();
+  if (t.includes("ewallet cash out")) return false;
+  return true;
+}
+
 function assign_movement(
   normalized_type: string,
   raw_type: string,
@@ -216,10 +227,7 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
   const groups = split_records(raw);
   const rows: TngLedgerRow[] = [];
   const skipped_records: SkippedTngRecord[] = [];
-  const reconcile_warnings: ReconcileWarning[] = [];
-
-  let wallet_running: MicroAmount | null = null;
-  let go_running: MicroAmount | null = null;
+  const dump_dates_in_order: string[] = [];
 
   groups.forEach((chunk, record_index) => {
     try {
@@ -231,8 +239,11 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
 
       if (chunk.length === 1 && !success) {
         const description = normalize_tng_type(header.raw_type, "");
+        const date = parse_dmy_to_iso(header.date_dmy);
+        dump_dates_in_order.push(date);
         rows.push({
-          date: parse_dmy_to_iso(header.date_dmy),
+          date,
+          dump_order: record_index,
           status: header.status,
           type: normalize_tng_type(header.raw_type, description),
           reference: header.reference,
@@ -268,8 +279,11 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
             header.raw_type,
             description,
           );
+          const date = parse_dmy_to_iso(header.date_dmy);
+          dump_dates_in_order.push(date);
           rows.push({
-            date: parse_dmy_to_iso(header.date_dmy),
+            date,
+            dump_order: record_index,
             status: header.status,
             type: normalized_type,
             reference: header.reference,
@@ -302,6 +316,7 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
         account,
       );
       const date = parse_dmy_to_iso(header.date_dmy);
+      dump_dates_in_order.push(date);
       const direction = classify_tng_direction(header.raw_type, description);
       const movement = assign_movement(
         normalized_type,
@@ -312,44 +327,11 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
         direction,
       );
 
-      let reconcile_ok = true;
-      const affects_totals = success;
-
-      if (success) {
-        if (account === "wallet") {
-          if (wallet_running !== null) {
-            const expected =
-              wallet_running -
-              movement.debit_micro +
-              movement.credit_micro;
-            if (expected !== balance_micro) {
-              reconcile_ok = false;
-              reconcile_warnings.push({
-                record_index: record_index + 1,
-                account: "wallet",
-                reason: `Wallet balance ${balance_micro} ≠ expected ${expected}`,
-              });
-            }
-          }
-          wallet_running = balance_micro;
-        } else {
-          if (go_running !== null) {
-            const expected = go_running + movement.credit_micro - movement.debit_micro;
-            if (expected !== balance_micro) {
-              reconcile_ok = false;
-              reconcile_warnings.push({
-                record_index: record_index + 1,
-                account: "go_plus",
-                reason: `GO+ balance ${balance_micro} ≠ expected ${expected}`,
-              });
-            }
-          }
-          go_running = balance_micro;
-        }
-      }
+      const affects_totals = row_affects_totals(success, header.raw_type);
 
       rows.push({
         date,
+        dump_order: record_index,
         status: header.status,
         type: normalized_type,
         reference: header.reference,
@@ -357,7 +339,7 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
         account,
         balance_micro,
         affects_totals,
-        reconcile_ok,
+        reconcile_ok: true,
         ...movement,
         ...row_sen_fields({
           ...movement,
@@ -372,7 +354,17 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
     }
   });
 
-  rows.sort((a, b) => a.date.localeCompare(b.date));
+  const rows_with_order = rows.map((r, i) => ({
+    ...r,
+    dump_order: r.dump_order ?? i,
+  }));
+  const dump_chronology = detect_dump_chronology(dump_dates_in_order);
+  const { rows: sorted_rows, reconcile_warnings } = finalize_tng_rows(
+    rows_with_order,
+    dump_dates_in_order,
+  );
+  rows.length = 0;
+  rows.push(...sorted_rows);
 
   const wallet_rows = rows.filter(
     (r) => r.account === "wallet" && r.affects_totals,
@@ -393,6 +385,7 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
   return {
     source: "data.txt",
     loaded_at: new Date().toISOString(),
+    dump_chronology,
     wallet_closing_micro,
     go_plus_closing_micro,
     wallet_closing_sen: micro_to_sen_display(wallet_closing_micro),

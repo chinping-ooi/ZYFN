@@ -15,6 +15,8 @@ export type TngLedgerRow = {
   description: string;
   direction: TngDirection;
   account: TngAccount;
+  /** Row index in source dump (stable sort tie-breaker; not shown in UI). */
+  dump_order?: number;
   debit_micro: MicroAmount;
   credit_micro: MicroAmount;
   balance_micro: MicroAmount;
@@ -33,14 +35,22 @@ export type SkippedTngRecord = {
 };
 
 export type ReconcileWarning = {
-  record_index: number;
+  dump_order: number;
   account: TngAccount;
-  reason: string;
+  type: string;
+  status: string;
+  first_of_day_in_ledger: boolean;
+  mismatch_sign: "positive" | "negative";
+  matches_amount: boolean;
+  matches_2x_amount: boolean;
+  matches_prev_row_amount: boolean;
 };
 
 export type ParsedTngDump = {
   source: "data.txt";
   loaded_at: string;
+  /** Whether the source file lists transactions newest-first or oldest-first. */
+  dump_chronology: "asc" | "desc";
   wallet_closing_micro: MicroAmount;
   go_plus_closing_micro: MicroAmount;
   wallet_closing_sen: MinorAmount;

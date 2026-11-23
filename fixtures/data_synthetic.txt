@@ -8,16 +8,20 @@ RM 12.50 RM 137.50
 17/01/2026 Success GO+ Daily Earnings MMFSYN
 Synthetic GO+ interest line
 RM 0.0011 RM 12.3400
-18/01/2026 Success GO+ Cash In SYN003
+23/01/2026 Success Reload SYNGOIN
+Quick reload payment pattern on wallet ledger
+Quick Reload Payment
+RM 10.00 RM 142.50
+24/01/2026 Success GO+ Cash In SYN003
 Synthetic transfer to GO+
-RM 25.00 RM 112.50
+RM 25.00 RM 117.50
 19/01/2026 Failed Payment SYNFAIL
 Failed without posted amounts
 20/01/2026 Pending DuitNow QR SYNPEND
 Awaiting confirmation
 21/01/2026 Success Payment SYNMID
 Amount not on last line in dump
-RM 5.00 RM 107.50
+RM 5.00 RM 132.50
 post-amount metadata should not break parser
 22/01/2026 Success GO+ Daily Earnings MMFSYN2
 Four decimal amount and balance
