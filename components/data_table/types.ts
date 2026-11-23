@@ -1,6 +1,7 @@
 export type ColumnType =
   | "text"
   | "money"
+  | "money_micro"
   | "date"
   | "rate"
   | "months"
@@ -13,6 +14,8 @@ export type DataTableColumn<T> = {
   zero_as_blank?: boolean;
   className?: string;
   sortable?: boolean;
+  /** For money_micro: row key holding wallet | go_plus */
+  account_key?: keyof T & string;
 };
 
 export type SortDirection = "ascending" | "descending";

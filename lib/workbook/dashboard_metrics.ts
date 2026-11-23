@@ -1,5 +1,6 @@
 import type { ParsedSheet } from "@/lib/workbook/types";
 import type { ParsedTngDump } from "@/lib/tng/types";
+import { micro_to_sen_display } from "@/lib/tng/money_micro";
 import type { MinorAmount } from "@/lib/money";
 
 export type MonthKey = string;
@@ -63,29 +64,29 @@ function merge_tng_monthly(
 ): MonthlyAggregate[] {
   const totals = new Map<
     MonthKey,
-    { income_sen: number; spending_sen: number; label: string }
+    { income_micro: number; spending_micro: number; label: string }
   >();
 
   for (const row of bank_monthly) {
     totals.set(row.month, {
-      income_sen: row.income_sen,
-      spending_sen: row.spending_sen,
+      income_micro: row.income_sen * 100,
+      spending_micro: row.spending_sen * 100,
       label: row.label,
     });
   }
 
   for (const row of tng.rows) {
-    if (row.direction === "transfer") continue;
+    if (!row.affects_totals || row.direction === "transfer") continue;
     const key = month_key(row.date);
     const bucket = totals.get(key) ?? {
-      income_sen: 0,
-      spending_sen: 0,
+      income_micro: 0,
+      spending_micro: 0,
       label: month_label(key),
     };
     if (row.direction === "in") {
-      bucket.income_sen += row.credit_sen;
+      bucket.income_micro += row.credit_micro;
     } else if (row.direction === "out") {
-      bucket.spending_sen += row.debit_sen;
+      bucket.spending_micro += row.debit_micro;
     }
     totals.set(key, bucket);
   }
@@ -95,8 +96,8 @@ function merge_tng_monthly(
     .map(([month, values]) => ({
       month,
       label: values.label,
-      income_sen: values.income_sen,
-      spending_sen: values.spending_sen,
+      income_sen: micro_to_sen_display(values.income_micro),
+      spending_sen: micro_to_sen_display(values.spending_micro),
     }));
 }
 
@@ -128,12 +129,12 @@ export function build_dashboard_metrics(
       {
         id: "tng",
         name: "TNG eWallet",
-        balance_sen: tng.wallet_closing_sen,
+        balance_sen: micro_to_sen_display(tng.wallet_closing_micro),
       },
       {
         id: "go_plus",
         name: "GO+",
-        balance_sen: tng.go_plus_closing_sen,
+        balance_sen: micro_to_sen_display(tng.go_plus_closing_micro),
       },
     );
   }

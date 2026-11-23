@@ -1,4 +1,5 @@
 import type { ParsedTngDump, TngLedgerRow } from "@/lib/tng/types";
+import { micro_to_sen_display } from "@/lib/tng/money_micro";
 import type { MinorAmount } from "@/lib/money";
 
 export type TngStatementSlice = {
@@ -50,17 +51,23 @@ export function build_tng_statement(
     rows = rows.filter((row) => row.type === type_filter);
   }
 
-  const wallet_rows = rows.filter((r) => r.account === "wallet");
-  const debit_sen = rows.reduce((t, row) => t + row.debit_sen, 0);
-  const credit_sen = rows.reduce((t, row) => t + row.credit_sen, 0);
+  const wallet_rows = rows.filter(
+    (r) => r.account === "wallet" && r.affects_totals,
+  );
+  const posting = rows.filter((r) => r.affects_totals);
+
+  const debit_micro = posting.reduce((t, row) => t + row.debit_micro, 0);
+  const credit_micro = posting.reduce((t, row) => t + row.credit_micro, 0);
 
   let opening_sen: MinorAmount | null = null;
   let closing_sen: MinorAmount | null = dump.wallet_closing_sen;
 
   if (wallet_rows.length > 0) {
     const first = wallet_rows[0];
-    opening_sen = first.balance_sen + first.debit_sen - first.credit_sen;
-    closing_sen = wallet_rows.at(-1)!.balance_sen;
+    opening_sen = micro_to_sen_display(
+      first.balance_micro + first.debit_micro - first.credit_micro,
+    );
+    closing_sen = micro_to_sen_display(wallet_rows.at(-1)!.balance_micro);
   }
 
   const period_label =
@@ -73,8 +80,8 @@ export function build_tng_statement(
     type_filter,
     period_label,
     opening_sen,
-    debit_sen,
-    credit_sen,
+    debit_sen: micro_to_sen_display(debit_micro),
+    credit_sen: micro_to_sen_display(credit_micro),
     closing_sen,
     rows,
   };

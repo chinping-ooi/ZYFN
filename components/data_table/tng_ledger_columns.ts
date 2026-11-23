@@ -15,8 +15,25 @@ export const TNG_LEDGER_COLUMNS: DataTableColumn<TngTableRow>[] = [
     label: "Description",
     className: "min-w-[230px] !whitespace-normal",
   },
-  { key: "debit_sen", label: "Debit (RM)", type: "money", zero_as_blank: true },
-  { key: "credit_sen", label: "Credit (RM)", type: "money", zero_as_blank: true },
-  { key: "balance_sen", label: "Balance (RM)", type: "money" },
+  {
+    key: "debit_micro",
+    label: "Debit (RM)",
+    type: "money_micro",
+    account_key: "account",
+    zero_as_blank: true,
+  },
+  {
+    key: "credit_micro",
+    label: "Credit (RM)",
+    type: "money_micro",
+    account_key: "account",
+    zero_as_blank: true,
+  },
+  {
+    key: "balance_micro",
+    label: "Balance (RM)",
+    type: "money_micro",
+    account_key: "account",
+  },
   { key: "account", label: "Account", type: "text" },
 ];

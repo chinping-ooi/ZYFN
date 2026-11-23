@@ -7,7 +7,7 @@ import {
   tng_month_options,
   tng_type_options,
 } from "@/lib/tng/statement";
-import { format_rm } from "@/lib/money";
+import { format_micro_rm } from "@/lib/tng/money_micro";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { TngLedgerDataTable } from "@/components/data_table/tng_ledger_data_table";
@@ -70,7 +70,7 @@ export function TngStatementView({ dump }: { dump: ParsedTngDump }) {
         <article className="rounded-[3px] border border-zyfn-line bg-white px-5 py-4">
           <div className="text-sm font-semibold text-[#526075]">GO+ balance</div>
           <div className="mt-2 text-2xl font-medium tabular-nums">
-            {format_rm(dump.go_plus_closing_sen)}
+            {format_micro_rm(dump.go_plus_closing_micro, 4)}
           </div>
           <p className="mt-2 text-xs text-zyfn-muted">
             Latest GO+ balance from parsed daily earnings / cash movements

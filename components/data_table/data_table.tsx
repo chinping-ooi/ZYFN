@@ -123,7 +123,7 @@ export function DataTable<T extends Record<string, unknown>>({
           <thead>
             <tr>
               {safe_columns.map((column) => {
-                const numeric = ["money", "rate", "months"].includes(
+                const numeric = ["money", "money_micro", "rate", "months"].includes(
                   column.type ?? "",
                 );
                 const sort =
@@ -164,7 +164,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 className="even:bg-[#fafbfc] hover:bg-[#f0f3f7]"
               >
                 {safe_columns.map((column) => {
-                  const numeric = ["money", "rate", "months"].includes(
+                  const numeric = ["money", "money_micro", "rate", "months"].includes(
                     column.type ?? "",
                   );
                   const raw = row[column.key];

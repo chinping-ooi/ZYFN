@@ -1,5 +1,10 @@
 import type { DataTableColumn } from "@/components/data_table/types";
 import { format_money, type MinorAmount } from "@/lib/money";
+import {
+  display_dp_for_account,
+  format_micro_money,
+  type MicroAmount,
+} from "@/lib/tng/money_micro";
 
 export function display_cell<T extends Record<string, unknown>>(
   row: T,
@@ -14,6 +19,17 @@ export function display_cell<T extends Record<string, unknown>>(
       const minor = value as MinorAmount;
       if (column.zero_as_blank && minor === 0) return "";
       return format_money(minor);
+    }
+    case "money_micro": {
+      if (value === null) return "";
+      const micro = value as MicroAmount;
+      if (column.zero_as_blank && micro === 0) return "";
+      const account_key = column.account_key ?? "account";
+      const account = String(row[account_key] ?? "wallet");
+      const dp = display_dp_for_account(
+        account === "go_plus" ? "go_plus" : "wallet",
+      );
+      return format_micro_money(micro, dp);
     }
     case "date":
       return new Intl.DateTimeFormat("en-GB", {
