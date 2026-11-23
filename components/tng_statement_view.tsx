@@ -13,7 +13,13 @@ import { MonthSelect } from "@/components/month_select";
 import { TngLedgerDataTable } from "@/components/data_table/tng_ledger_data_table";
 import type { TngTableRow } from "@/components/data_table/tng_ledger_columns";
 
-export function TngStatementView({ dump }: { dump: ParsedTngDump }) {
+export function TngStatementView({
+  dump,
+  reconcile_enabled = false,
+}: {
+  dump: ParsedTngDump;
+  reconcile_enabled?: boolean;
+}) {
   const month_options = useMemo(() => tng_month_options(dump), [dump]);
   const type_options = useMemo(() => tng_type_options(dump.rows), [dump.rows]);
 
@@ -29,7 +35,7 @@ export function TngStatementView({ dump }: { dump: ParsedTngDump }) {
 
   const table_rows = statement.rows as TngTableRow[];
   const skipped = dump.skipped_records.length;
-  const warnings = dump.reconcile_warning_count;
+  const warnings = reconcile_enabled ? dump.reconcile_warning_count : 0;
 
   return (
     <>
@@ -76,17 +82,25 @@ export function TngStatementView({ dump }: { dump: ParsedTngDump }) {
             Latest GO+ balance from parsed daily earnings / cash movements
           </p>
         </article>
-        <article className="rounded-[3px] border border-zyfn-line bg-white px-5 py-4">
-          <div className="text-sm font-semibold text-[#526075]">Parse quality</div>
-          <p className="mt-2 text-sm text-zyfn-muted">
-            {skipped > 0
-              ? `${skipped} record${skipped === 1 ? "" : "s"} skipped. `
-              : "No skipped records. "}
-            {warnings > 0
-              ? `${warnings} balance warning${warnings === 1 ? "" : "s"}.`
-              : "Balances reconcile."}
-          </p>
-        </article>
+        {(skipped > 0 || reconcile_enabled) && (
+          <article className="rounded-[3px] border border-zyfn-line bg-white px-5 py-4">
+            <div className="text-sm font-semibold text-[#526075]">Parse quality</div>
+            <p className="mt-2 text-sm text-zyfn-muted">
+              {skipped > 0
+                ? `${skipped} record${skipped === 1 ? "" : "s"} skipped. `
+                : "No skipped records. "}
+              {reconcile_enabled ? (
+                warnings > 0 ? (
+                  <>
+                    {warnings} balance warning{warnings === 1 ? "" : "s"}.
+                  </>
+                ) : (
+                  "Balances reconcile."
+                )
+              ) : null}
+            </p>
+          </article>
+        )}
       </section>
 
       <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">

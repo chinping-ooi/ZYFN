@@ -75,14 +75,12 @@ These proposals are planning inputs and require refinement before implementation
 - Use sample data for the layout preview. Authentication work is deferred based on the current interpretation of the user's scope.
 - The sidebar has a Dashboard, a Transactions group with Maybank and Public Bank transactions, a separate TNG transaction page, and a Fixed deposits group with bank-specific FD pages.
 - Each FD page shows that bank's deposit register and FD activity, including placements, redemptions, and interest. The user has accepted the formal UI style.
-- The standalone `index.html` prototype does not select the production frontend framework.
-
 - Sidebar groups use collapsible menus with borderless active tabs. Keep the header compact and the sidebar footer anchored at the viewport bottom. Use one shared content footer across pages.
 
-- All tables use the reusable `components/data-table.js` component, with sortable headers, global column search, and pagination sizes 25, 50, 100, 200, and All.
+- All tables use the reusable `components/data_table` React component, with sortable headers, global column search, and pagination sizes 25, 50, 100, 200, and All.
 - Sidebar groups animate open and closed, including interrupted transitions, and respect reduced-motion preferences.
 
-- The reusable table owns an Export action with weekly (Monday–Sunday), monthly, yearly, and inclusive custom date ranges. The prototype exports CSV from all matching loaded rows across pages, retaining current search and sort.
+- The reusable table owns an Export action with weekly (Monday–Sunday), monthly, yearly, and inclusive custom date ranges. CSV export uses all matching loaded rows across pages, retaining current search and sort.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

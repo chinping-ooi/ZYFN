@@ -1,4 +1,5 @@
 import type { ParsedSheet } from "@/lib/workbook/types";
+import { tng_reconcile_enabled } from "@/lib/tng/config";
 import type { ParsedTngDump } from "@/lib/tng/types";
 import { micro_to_sen_display } from "@/lib/tng/money_micro";
 import type { MinorAmount } from "@/lib/money";
@@ -152,7 +153,7 @@ export function build_dashboard_metrics(
       reconcile_warnings_total:
         hlb.reconcile_warning_count +
         pbe.reconcile_warning_count +
-        (tng?.reconcile_warning_count ?? 0),
+        (tng && tng_reconcile_enabled() ? tng.reconcile_warning_count : 0),
     },
   };
 }

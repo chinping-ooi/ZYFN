@@ -1,3 +1,7 @@
+/**
+ * TNG wallet GO+ reconcile — ON HOLD: logic kept for `report_tng_parse.mjs` and
+ * optional UI via `TNG_RECONCILE_ENABLED`; semantics still being validated on real exports.
+ */
 import type { MicroAmount } from "@/lib/tng/money_micro";
 import type { ReconcileWarning, TngAccount, TngLedgerRow } from "@/lib/tng/types";
 import {
@@ -71,7 +75,6 @@ export function reconcile_tng_rows(
     go_plus: null,
   };
   let prev_wallet_amount: MicroAmount | null = null;
-  let prev_go_amount: MicroAmount | null = null;
 
   for (const row of sorted) {
     row.reconcile_ok = true;
@@ -117,7 +120,6 @@ export function reconcile_tng_rows(
       // GO+ earnings rows report authoritative statement balance (coinflow anchors).
       go_running = row.balance_micro;
       last_date.go_plus = row.date;
-      prev_go_amount = amount;
     }
   }
 

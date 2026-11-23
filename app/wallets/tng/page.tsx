@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app_shell";
 import { TngStatementView } from "@/components/tng_statement_view";
+import { tng_reconcile_enabled } from "@/lib/tng/config";
 import { load_tng_data } from "@/lib/tng/load";
 import { is_tng_data, type TngError, type TngMissing } from "@/lib/tng/types";
 
@@ -28,7 +29,10 @@ export default function TngPage() {
       {!is_tng_data(tng) ? (
         <TngStatusPanel result={tng} />
       ) : (
-        <TngStatementView dump={tng} />
+        <TngStatementView
+          dump={tng}
+          reconcile_enabled={tng_reconcile_enabled()}
+        />
       )}
     </AppShell>
   );

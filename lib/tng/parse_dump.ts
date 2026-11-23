@@ -359,6 +359,7 @@ export function parse_tng_dump(raw: string): ParsedTngDump {
     dump_order: r.dump_order ?? i,
   }));
   const dump_chronology = detect_dump_chronology(dump_dates_in_order);
+  // Reconcile is on hold for product UI (TNG_RECONCILE_ENABLED); still runs for diagnostics.
   const { rows: sorted_rows, reconcile_warnings } = finalize_tng_rows(
     rows_with_order,
     dump_dates_in_order,
