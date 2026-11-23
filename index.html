@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZYFN — Dashboard preview</title>
+<style>
+:root {
+  --navy: #263d5b;
+  --slate: #a4b1c0;
+  --ink: #233044;
+  --muted: #657185;
+  --line: #cbd2dc;
+  --bg: #f1f3f5;
+  --green: #276b54;
+  --control-height: 36px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 Arial, "Helvetica Neue", sans-serif;
+}
+button, select { font: inherit; cursor: pointer; }
+button:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid #526f93;
+  outline-offset: 3px;
+}
+.shell { display: flex; min-width: 1100px; min-height: 100vh; }
+.sidebar {
+  width: 224px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #1e2c40;
+  color: #fff;
+  border-right: 1px solid #152235;
+}
+.brand {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid #38465a;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+.nav { flex: 1; overflow-y: auto; padding: 16px 12px; }
+.nav-item, .nav-group {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  margin: 0 0 3px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 3px;
+  color: #c1cad7;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 400;
+}
+.nav-item.active { background: #33465f; color: #fff; font-weight: 600; }
+.nav-item:focus-visible, .nav-group:focus-visible {
+  outline: 2px solid #b4c8e1;
+  outline-offset: -2px;
+}
+.nav-section { margin-top: 8px; }
+.nav-group { justify-content: space-between; cursor: pointer; list-style: none; }
+.nav-group::-webkit-details-marker { display: none; }
+.nav-group::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  margin-right: 3px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+}
+.nav-section[data-expanded="true"] > .nav-group::after { transform: rotate(45deg); }
+.nav-group:hover { background: #2b3c53; color: #fff; }
+.nav-children { overflow: hidden; }
+.nav-children .nav-item { padding-left: 28px; }
+.side-foot {
+  flex-shrink: 0;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-top: 1px solid #38465a;
+  font-size: 12px;
+  line-height: 20px;
+  color: #aeb8c6;
+}
+.workspace { flex: 1; min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }
+.topbar {
+  min-height: 64px;
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar h1 { font-size: 20px; font-weight: 600; margin: 0; }
+.topbar p { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+.profile { font-size: 13px; color: var(--muted); }
+.content { flex: 1; width: 100%; max-width: 1560px; margin: 0 auto; padding: 24px 32px; }
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.toolbar h2 { font-size: 17px; font-weight: 600; margin: 0; }
+.toolbar p { font-size: 13px; color: var(--muted); margin: 3px 0 0; }
+.select-wrap { position: relative; }
+.select-wrap:after {
+  content: '⌄';
+  position: absolute;
+  right: 12px;
+  top: 7px;
+  pointer-events: none;
+  color: var(--muted);
+}
+select {
+  height: var(--control-height);
+  line-height: 20px;
+  appearance: none;
+  background: #fff;
+  border: 1px solid #b8c2cf;
+  border-radius: 3px;
+  padding: 0 35px 0 12px;
+  color: var(--ink);
+  font-size: 14px;
+  min-width: 160px;
+}
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.kpi { padding: 19px 21px; border-top: 3px solid var(--navy); }
+.kpi-label { color: #526075; font-size: 14px; font-weight: 600; }
+.kpi-amount {
+  font-size: 30px;
+  line-height: 1.3;
+  font-weight: 500;
+  margin: 10px 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.currency { font-size: 16px; color: var(--muted); margin-right: 7px; }
+.kpi-meta { font-size: 13px; color: var(--muted); }
+.change { color: var(--green); font-weight: 600; margin-right: 4px; }
+.middle {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(330px, 1fr);
+  gap: 18px;
+  margin-top: 20px;
+}
+.card-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fafbfc;
+}
+.card-head h3 { font-size: 15px; margin: 0; font-weight: 600; }
+.sub { font-size: 12px; color: var(--muted); margin: 3px 0 0; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); padding-top: 3px; }
+.legend i { width: 9px; height: 9px; display: inline-block; margin-right: 6px; }
+.chart { padding: 22px 20px 16px; }
+.plot { height: 190px; display: flex; gap: 12px; }
+.axis {
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  padding-bottom: 22px;
+}
+.bars {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  position: relative;
+  background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), #e5e8ed calc(25% - 1px), #e5e8ed 25%);
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.bar-col { flex: 1; display: flex; align-items: flex-end; gap: 5px; justify-content: center; position: relative; }
+.bar { width: 26%; max-width: 24px; background: var(--slate); }
+.bar.expense { background: var(--navy); }
+.bar-label { position: absolute; bottom: -23px; font-size: 12px; color: var(--muted); }
+.chart-foot {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  margin-top: 13px;
+  padding-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.chart-foot strong { color: var(--ink); font-size: 14px; font-weight: 600; margin-left: 8px; }
+.accounts { padding: 0 20px; }
+.account { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #dce1e7; }
+.account:last-child { border-bottom: 0; }
+.bank-name { font-size: 14px; font-weight: 600; }
+.account-type { font-size: 12px; color: var(--muted); }
+.account-value { margin-left: auto; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.account-note { padding: 9px 20px 15px; font-size: 12px; color: var(--muted); }
+.fd { margin-top: 20px; }
+.fd .card-head { align-items: center; }
+.segmented { display: flex; }
+.segmented button {
+  border: 1px solid #b9c3d0;
+  background: #fff;
+  padding: 6px 13px;
+  color: #526075;
+  font-size: 13px;
+}
+.segmented button:first-child { border-radius: 3px 0 0 3px; }
+.segmented button:last-child { border-radius: 0 3px 3px 0; margin-left: -1px; }
+.segmented button[aria-pressed=true] { background: var(--navy); border-color: var(--navy); color: #fff; }
+.table-wrap { padding: 18px 20px 16px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); }
+th, td { border: 1px solid var(--line); padding: 11px 13px; text-align: left; white-space: nowrap; }
+th { background: #edf0f4; font-size: 13px; color: #435168; font-weight: 600; }
+td { font-size: 14px; }
+td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:nth-child(even) { background: #fafbfc; }
+tbody tr:hover { background: #f0f3f7; }
+.status { font-size: 12px; font-weight: 500; border: 1px solid; border-radius: 2px; padding: 3px 7px; display: inline-block; }
+.active-status { background: #f1f7f4; color: #35634f; border-color: #bfd2c7; }
+.due-status { background: #faf6ec; color: #805e23; border-color: #decea9; }
+.matured-status { background: #f2f3f5; color: #626c7a; border-color: #cbd0d8; }
+.table-bank { font-weight: 500; }
+.ref { font-size: 12px; color: var(--muted); }
+.table-footer { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); padding-top: 12px; }
+.footer {
+  flex-shrink: 0;
+  min-height: 46px;
+  padding: 12px 32px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+@media (max-width: 1200px) {
+  .sidebar { width: 210px; }
+  .content { padding: 24px; }
+  .topbar { padding-inline: 24px; }
+  .kpi-amount { font-size: 27px; }
+  .kpi { padding: 18px; }
+  .legend { gap: 8px; }
+}
+
+[hidden] { display: none !important; }
+a.nav-item { text-decoration: none; }
+a.nav-item:hover { background: #2b3c53; color: #fff; }
+a.nav-item.active:hover { background: #33465f; }
+.statement-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 20px; }
+.statement-summary .kpi-amount { font-size: 24px; }
+.statement-table { margin-top: 20px; }
+.statement-description { min-width: 230px; white-space: normal; }
+.empty-row { text-align: center; padding: 30px; color: var(--muted); }
+
+.data-table-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-bottom: 12px; }
+.data-table-card-head { align-items: center; flex-wrap: wrap; }
+.data-table-card-head .data-table-toolbar { margin: 0 0 0 auto; }
+.data-table-card-head .table-search { max-width: 100%; }
+.table-search {
+  width: 270px;
+  height: var(--control-height);
+  padding: 0 12px;
+  line-height: 20px;
+  appearance: none;
+  border: 1px solid #b8c2cf;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+}
+.table-search:focus-visible { outline: 2px solid #526f93; outline-offset: 2px; }
+.data-table-scroll { overflow-x: auto; }
+.data-table-scroll th { padding: 0; }
+.sort-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 13px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+}
+.sort-button:hover { background: #e2e7ef; }
+.sort-button:focus-visible { outline-offset: -3px; }
+.sort-indicator { width: 7px; height: 7px; border-right: 1px solid; border-bottom: 1px solid; transform: rotate(45deg); opacity: .3; flex-shrink: 0; }
+.sort-indicator[data-direction="ascending"] { transform: rotate(225deg); opacity: 1; }
+.sort-indicator[data-direction="descending"] { opacity: 1; }
+.data-table-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+.pagination-controls { display: flex; align-items: center; gap: 10px; }
+.pagination-controls label { display: flex; align-items: center; gap: 8px; }
+.pagination-controls select { min-width: 80px; font-size: 14px; }
+.pagination-controls .select-wrap:after { top: 7px; }
+.page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: var(--control-height);
+  padding: 0 12px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid #b8c2cf;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.page-button:disabled { color: #929baa; background: #f5f6f8; cursor: default; border-color: #dce1e7; }
+.page-label { min-width: 75px; text-align: center; }
+.nav-group::after { transition: transform 200ms ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .nav-group::after { transition: none; } }
+
+.export-dialog { width: 440px; max-width: calc(100vw - 32px); padding: 24px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); }
+.export-dialog::backdrop { background: #13223870; }
+.export-form { display: flex; flex-direction: column; gap: 16px; }
+.export-form h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.export-note { margin: 0; font-size: 13px; color: var(--muted); }
+.export-form label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.export-form input { min-width: 0; width: 100%; height: var(--control-height); padding: 0 12px; line-height: 20px; border: 1px solid #b8c2cf; border-radius: 3px; font: inherit; color: var(--ink); }
+.export-custom-dates { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.export-error { margin: 0; font-size: 13px; color: #a52d2d; }
+.export-error:empty { display: none; }
+.export-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.export-primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar" aria-label="Main navigation">
+<div class="brand">ZYFN</div>
+<nav class="nav" aria-label="Workspace pages">
+  <a class="nav-item" href="#dashboard" data-page="dashboard">Dashboard</a>
+  <details class="nav-section" open>
+    <summary class="nav-group">Transactions</summary>
+    <div class="nav-children">
+      <a class="nav-item" href="#maybank" data-page="maybank">Maybank</a>
+      <a class="nav-item" href="#public-bank" data-page="public-bank">Public Bank</a>
+      <a class="nav-item" href="#hlb" data-page="hlb">Hong Leong Bank</a>
+    </div>
+  </details>
+  <details class="nav-section">
+    <summary class="nav-group">Wallets</summary>
+    <div class="nav-children">
+      <a class="nav-item" href="#tng" data-page="tng">TNG</a>
+    </div>
+  </details>
+  <details class="nav-section">
+    <summary class="nav-group">Fixed deposits</summary>
+    <div class="nav-children">
+      <a class="nav-item" href="#fd-maybank" data-page="fd-maybank">Maybank</a>
+      <a class="nav-item" href="#fd-public-bank" data-page="fd-public-bank">Public Bank</a>
+    </div>
+  </details>
+</nav>
+<div class="side-foot">Sample financial data</div>
+</aside>
+<div class="workspace">
+<header class="topbar">
+<div>
+<h1 id="page-title">Dashboard</h1>
+<p id="page-description">Personal financial overview</p>
+</div>
+<div class="profile">
+<span>Personal workspace</span>
+</div>
+</header>
+<main class="content" id="dashboard-page">
+<div class="toolbar">
+<div>
+<h2>Monthly summary</h2>
+<p id="period-note">
+</p>
+</div>
+<div class="select-wrap">
+<select id="month" aria-label="Dashboard month">
+<option value="nov">November 2026</option>
+<option value="oct">October 2026</option>
+</select>
+</div>
+</div>
+<section class="kpis" aria-label="Monthly financial summary">
+<article class="card kpi">
+<div class="kpi-label">Monthly spending</div>
+<div class="kpi-amount">
+<span class="currency">RM</span>
+<span id="spending">
+</span>
+</div>
+<div class="kpi-meta">
+<span class="change" id="spend-change">
+</span>vs. previous month</div>
+</article>
+<article class="card kpi">
+<div class="kpi-label">Available balance</div>
+<div class="kpi-amount">
+<span class="currency">RM</span>
+<span id="balance">
+</span>
+</div>
+<div class="kpi-meta">Across 4 accounts · excludes fixed deposits</div>
+</article>
+<article class="card kpi">
+<div class="kpi-label">Fixed deposits</div>
+<div class="kpi-amount">
+<span class="currency">RM</span>
+<span id="fd-total">
+</span>
+</div>
+<div class="kpi-meta" id="fd-note">
+</div>
+</article>
+</section>
+<div class="middle">
+<section class="card">
+<div class="card-head">
+<div>
+<h3>Monthly cash flow</h3>
+<p class="sub" id="chart-period">
+</p>
+</div>
+<div class="legend">
+<span>
+<i style="background:var(--slate)">
+</i>Income</span>
+<span>
+<i style="background:var(--navy)">
+</i>Spending</span>
+</div>
+</div>
+<div class="chart">
+<div class="plot" role="img" id="plot">
+<div class="axis" aria-hidden="true">
+<span>RM 8k</span>
+<span>6k</span>
+<span>4k</span>
+<span>2k</span>
+<span>0</span>
+</div>
+<div class="bars" id="bars" aria-hidden="true">
+</div>
+</div>
+<div class="chart-foot">
+<span>Monthly income<strong id="income">
+</strong>
+</span>
+<span>Net cash flow<strong id="net">
+</strong>
+</span>
+</div>
+</div>
+</section>
+<section class="card">
+<div class="card-head">
+<div>
+<h3>Account balances</h3>
+<p class="sub">Latest recorded balance in selected period</p>
+</div>
+</div>
+<div class="accounts" id="accounts">
+</div>
+<div class="account-note">GO+ is shown separately from the TNG wallet.</div>
+</section>
+</div>
+<section class="card fd">
+<div class="card-head">
+<div>
+<h3>Fixed deposits</h3>
+<p class="sub">Track placements and upcoming maturities</p>
+</div>
+<div class="segmented" role="group" aria-label="Fixed deposit filter">
+<button type="button" data-filter="active" aria-pressed="true">Active</button>
+<button type="button" data-filter="all" aria-pressed="false">All deposits</button>
+</div>
+</div>
+<div class="table-wrap" id="dashboard-deposits-table"></div>
+</section>
+
+</main>
+<main class="content" id="statement-page" hidden>
+  <div class="toolbar">
+    <div>
+      <h2 id="statement-heading">Transactions</h2>
+      <p id="statement-period"></p>
+    </div>
+    <div class="select-wrap">
+      <select id="statement-month" aria-label="Statement month">
+        <option value="nov">November 2026</option>
+        <option value="oct">October 2026</option>
+      </select>
+    </div>
+  </div>
+  <section class="kpis statement-summary" aria-label="Statement summary" id="statement-summary"></section>
+  <section class="card" id="placements-card" hidden>
+    <div class="card-head"><div><h3>Deposit register</h3><p class="sub">Placements recorded through the selected period</p></div></div>
+    <div class="table-wrap" id="placements-table"></div>
+  </section>
+  <section class="card statement-table">
+    <div class="card-head"><div><h3 id="activity-title">Transaction activity</h3><p class="sub" id="activity-note"></p></div></div>
+    <div class="table-wrap" id="activity-table"></div>
+  </section>
+  
+</main>
+<footer class="footer">
+  <span>ZYFN · Personal finance</span>
+  <span>Illustrative figures · MYR</span>
+</footer>
+
+</div>
+</div>
+<script src="components/data-table.js"></script>
+<script>
+const dashboardDepositTable = new ZyfnDataTable(document.querySelector('#dashboard-deposits-table'), 'Dashboard fixed deposits');
+const placementTable = new ZyfnDataTable(document.querySelector('#placements-table'), 'Deposit register');
+const activityTable = new ZyfnDataTable(document.querySelector('#activity-table'), 'Transaction activity');
+const depositColumns = [
+  { key: 'bank', label: 'Bank' },
+  { key: 'ref', label: 'Placement' },
+  { key: 'principal', label: 'Principal (RM)', type: 'money' },
+  { key: 'rate', label: 'Rate p.a.', type: 'rate' },
+  { key: 'tenure', label: 'Tenure', type: 'months' },
+  { key: 'placed', label: 'Placement date', type: 'date' },
+  { key: 'maturity', label: 'Maturity date', type: 'date' },
+  { key: 'status', label: 'Status' }
+];
+const transactionColumns = [
+  { key: 'date', label: 'Date', type: 'date' },
+  { key: 'reference', label: 'Reference' },
+  { key: 'description', label: 'Description' },
+  { key: 'debit', label: 'Debit (RM)', type: 'money', zeroAsBlank: true },
+  { key: 'credit', label: 'Credit (RM)', type: 'money', zeroAsBlank: true },
+  { key: 'balance', label: 'Balance (RM)', type: 'money' }
+];
+const fdActivityColumns = [
+  { key: 'date', label: 'Date', type: 'date' },
+  { key: 'reference', label: 'Placement reference' },
+  { key: 'event', label: 'Activity' },
+  { key: 'principalIn', label: 'Principal placed (RM)', type: 'money', zeroAsBlank: true },
+  { key: 'principalOut', label: 'Principal redeemed (RM)', type: 'money', zeroAsBlank: true },
+  { key: 'interest', label: 'Interest received (RM)', type: 'money', zeroAsBlank: true }
+];
+
+function depositTableRows(records, month) {
+  return records.map(deposit => ({
+    ...deposit,
+    rate: parseFloat(deposit.rate),
+    tenure: parseInt(deposit.tenure, 10),
+    placed: new Date(deposit.placed + ' UTC').toISOString().slice(0, 10),
+    maturity: new Date(deposit.maturity + ' UTC').toISOString().slice(0, 10),
+    status: month === 'nov' && deposit.matured ? 'Matured' : 'Active'
+  }));
+}
+
+const formatMoney = value => new Intl.NumberFormat('en-MY', {minimumFractionDigits:2,maximumFractionDigits:2}).format(value);
+const deposits = [
+ {bank:'Maybank',ref:'MBB-001',principal:20000,rate:'3.65%',tenure:'6 months',placed:'28 May 2026',maturity:'28 Nov 2026',due:true},
+ {bank:'Public Bank',ref:'PBB-001',principal:15000,rate:'3.80%',tenure:'12 months',placed:'15 Jan 2026',maturity:'15 Jan 2027'},
+ {bank:'Maybank',ref:'MBB-002',principal:10000,rate:'3.50%',tenure:'3 months',placed:'10 Oct 2026',maturity:'10 Jan 2027'},
+ {bank:'Public Bank',ref:'PBB-002',principal:5000,rate:'3.40%',tenure:'6 months',placed:'5 May 2026',maturity:'5 Nov 2026',matured:true}
+];
+const snapshots = {
+ nov:{date:'20 November 2026',spend:2140,previous:2380,income:5800,balances:[6450,12000,850,3500],labels:['Jun','Jul','Aug','Sep','Oct','Nov'],incomes:[5200,5500,5800,5600,5800,5800],spends:[2680,3100,2450,2590,2380,2140]},
+ oct:{date:'31 October 2026',spend:2380,previous:2590,income:5800,balances:[6990,17000,920,3310],labels:['May','Jun','Jul','Aug','Sep','Oct'],incomes:[5100,5200,5500,5800,5600,5800],spends:[2800,2680,3100,2450,2590,2380]}
+};
+const accountMeta=[['MB','Maybank','Savings account','#fff2c7','#87630e'],['PB','Public Bank','Savings account','#ffe7e9','#ba4b59'],['TnG','TNG eWallet','Wallet balance','#e5f3ff','#2587c6'],['GO+','GO+','Investment balance','#eae6ff','#6951cb']];
+let selectedFilter='active';
+function render(){
+ const month=document.querySelector('#month').value;
+ const s=snapshots[month];
+ document.querySelector('#period-note').textContent='Balances and activity as of '+s.date;
+ document.querySelector('#spending').textContent=formatMoney(s.spend);
+ document.querySelector('#spend-change').textContent=((s.previous-s.spend)/s.previous*100).toFixed(1)+'% lower ';
+ document.querySelector('#balance').textContent=formatMoney(s.balances.reduce((total,amount)=>total+amount,0));
+ const fdTotal=deposits.filter(d=>month==='oct'||!d.matured).reduce((total,d)=>total+d.principal,0);
+ document.querySelector('#fd-total').textContent=formatMoney(fdTotal);
+ document.querySelector('#fd-note').textContent=month==='nov'?'3 active placements · 1 maturing within 30 days':'4 active placements · 2 maturing within 30 days';
+ document.querySelector('#chart-period').textContent=s.labels[0]+' – '+s.labels[5]+' 2026'+(month==='nov'?' · November to date':'');
+ document.querySelector('#bars').innerHTML=s.labels.map((label,i)=>`<div class="bar-col ${i===5?'current':''}"><div class="bar" style="height:${s.incomes[i]/8000*100}%"></div><div class="bar expense" style="height:${s.spends[i]/8000*100}%"></div><span class="bar-label">${label}</span></div>`).join('');
+ document.querySelector('#plot').setAttribute('aria-label',s.labels.map((label,i)=>`${label}: income RM ${s.incomes[i]}, spending RM ${s.spends[i]}`).join('. '));
+ document.querySelector('#income').textContent='RM '+formatMoney(s.income);
+ document.querySelector('#net').textContent='+RM '+formatMoney(s.income-s.spend);
+ document.querySelector('#accounts').innerHTML=accountMeta.map((a,i)=>`<div class="account"><div><div class="bank-name">${a[1]}</div><div class="account-type">${a[2]}</div></div><div class="account-value">RM ${formatMoney(s.balances[i])}</div></div>`).join('');
+ const records=deposits.filter(d=>selectedFilter==='all'||month==='oct'||!d.matured);
+ dashboardDepositTable.setData(depositColumns, depositTableRows(records, month), 'dashboard-' + month);
+}
+document.querySelector('#month').addEventListener('change',render);
+document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{selectedFilter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));render()}));
+render();
+
+const pageDefinitions = {
+  dashboard: { title: 'Dashboard', description: 'Personal financial overview' },
+  maybank: { title: 'Maybank', description: 'Bank account transactions', accountIndex: 0 },
+  'public-bank': { title: 'Public Bank', description: 'Bank account transactions', accountIndex: 1 },
+  hlb: { title: 'Hong Leong Bank', description: 'Transactions from Transaction.xlsx · HLB' },
+  tng: { title: 'TNG', description: 'Touch ’n Go eWallet transactions', accountIndex: 2 },
+  'fd-maybank': { title: 'Maybank · Fixed deposits', description: 'Deposit register and fixed deposit activity', bank: 'Maybank' },
+  'fd-public-bank': { title: 'Public Bank · Fixed deposits', description: 'Deposit register and fixed deposit activity', bank: 'Public Bank' }
+};
+
+// Statement examples are separate from the dashboard's illustrative totals.
+const transactionExamples = {
+  maybank: [
+    { day: '02', reference: 'MBB-SAL', description: 'Salary credit', debit: 0, credit: 5800 },
+    { day: '05', reference: 'MBB-TRF', description: 'Transfer to Public Bank', debit: 1000, credit: 0 },
+    { day: '12', reference: 'MBB-BILL', description: 'Utility payment', debit: 180, credit: 0 }
+  ],
+  'public-bank': [
+    { day: '05', reference: 'PBB-TRF', description: 'Transfer from Maybank', debit: 0, credit: 1000 },
+    { day: '08', reference: 'PBB-RENT', description: 'Rental payment', debit: 1200, credit: 0 },
+    { day: '15', reference: 'PBB-PAY', description: 'Online payment', debit: 125, credit: 0 }
+  ],
+  tng: [
+    { day: '03', reference: 'TNG-RLD', description: 'Wallet reload', debit: 0, credit: 300 },
+    { day: '09', reference: 'TNG-QR', description: 'DuitNow QR payment', debit: 45, credit: 0 },
+    { day: '18', reference: 'TNG-RFID', description: 'RFID toll payment', debit: 12.5, credit: 0 }
+  ]
+};
+
+const fixedDepositActivity = [
+  { bank: 'Maybank', month: 'oct', date: '2026-10-10', reference: 'MBB-002', event: 'Placement', principalIn: 10000, principalOut: 0, interest: 0 },
+  { bank: 'Public Bank', month: 'nov', date: '2026-11-05', reference: 'PBB-002', event: 'Redemption', principalIn: 0, principalOut: 5000, interest: 0 },
+  { bank: 'Public Bank', month: 'nov', date: '2026-11-05', reference: 'PBB-002', event: 'Interest received', principalIn: 0, principalOut: 0, interest: 85 }
+];
+
+function summaryCard(label, amount) {
+  return `<article class="card kpi">
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-amount"><span class="currency">RM</span>${amount === null ? '' : formatMoney(amount)}</div>
+  </article>`;
+}
+
+function renderBankStatement(pageKey, month) {
+  const page = pageDefinitions[pageKey];
+  const snapshot = snapshots[month];
+  const rows = transactionExamples[pageKey];
+  const totalDebit = rows.reduce((total, row) => total + row.debit, 0);
+  const totalCredit = rows.reduce((total, row) => total + row.credit, 0);
+  const closing = snapshot.balances[page.accountIndex];
+  const opening = closing - totalCredit + totalDebit;
+  let runningBalance = opening;
+
+  document.querySelector('#placements-card').hidden = true;
+  document.querySelector('#statement-summary').innerHTML =
+    summaryCard('Opening balance', opening) +
+    summaryCard('Debits', totalDebit) +
+    summaryCard('Credits', totalCredit) +
+    summaryCard('Closing balance', closing);
+  const statementRows = rows.map(row => {
+    runningBalance += row.credit - row.debit;
+    return {
+      ...row,
+      date: `2026-${month === 'nov' ? '11' : '10'}-${row.day}`,
+      balance: runningBalance
+    };
+  });
+  activityTable.setData(transactionColumns, statementRows, pageKey + '-' + month);
+  document.querySelector('#activity-title').textContent = 'Transaction activity';
+  document.querySelector('#activity-note').textContent = 'Illustrative statement records for this account';
+}
+
+function renderFixedDepositStatement(bank, month) {
+  const placements = deposits.filter(deposit => deposit.bank === bank);
+  const activity = fixedDepositActivity.filter(row => row.bank === bank && row.month === month);
+  const activePrincipal = placements
+    .filter(deposit => month === 'oct' || !deposit.matured)
+    .reduce((total, deposit) => total + deposit.principal, 0);
+  const principalPlaced = activity.reduce((total, row) => total + row.principalIn, 0);
+  const principalRedeemed = activity.reduce((total, row) => total + row.principalOut, 0);
+  const interestReceived = activity.reduce((total, row) => total + row.interest, 0);
+
+  document.querySelector('#placements-card').hidden = false;
+  document.querySelector('#statement-summary').innerHTML =
+    summaryCard('Active principal', activePrincipal) +
+    summaryCard('Placed this month', principalPlaced) +
+    summaryCard('Redeemed this month', principalRedeemed) +
+    summaryCard('Interest received', interestReceived);
+  placementTable.setData(depositColumns, depositTableRows(placements, month), bank + '-' + month);
+  activityTable.setData(fdActivityColumns, activity, 'fd-' + bank + '-' + month);
+  document.querySelector('#activity-title').textContent = 'Fixed deposit activity';
+  document.querySelector('#activity-note').textContent = 'Principal movements and interest received during the selected month';
+}
+
+
+let hlbData = null;
+let hlbLoading = false;
+let hlbError = '';
+let hlbMonth = 'all';
+const hlbColumns = [
+  { key: 'date', label: 'Date', type: 'date' },
+  { key: 'description', label: 'Description' },
+  { key: 'debit', label: 'Debit (RM)', type: 'money', zeroAsBlank: true },
+  { key: 'credit', label: 'Credit (RM)', type: 'money', zeroAsBlank: true },
+  { key: 'balance', label: 'Balance (RM)', type: 'money' }
+];
+
+async function loadHlb() {
+  hlbLoading = true;
+  try {
+    const response = await fetch('/api/hlb', { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Could not read HLB transactions.');
+    hlbData = result;
+  } catch (error) {
+    hlbError = 'Unable to load HLB. Open the local ZYFN preview server. ' + error.message;
+  } finally {
+    hlbLoading = false;
+    if (window.location.hash === '#hlb') renderPage();
+  }
+}
+
+function configureStatementMonths(isHlb) {
+  const select = document.querySelector('#statement-month');
+  if (isHlb) {
+    const months = [...new Set((hlbData?.rows || []).map(row => row.date.slice(0, 7)))].sort().reverse();
+    select.replaceChildren();
+    const all = document.createElement('option');
+    all.value = 'all';
+    all.textContent = 'All months';
+    select.append(all);
+    for (const month of months) {
+      const option = document.createElement('option');
+      option.value = month;
+      option.textContent = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(month + '-01T00:00:00Z'));
+      select.append(option);
+    }
+    select.value = hlbMonth;
+  } else if (select.dataset.context === 'hlb') {
+    select.innerHTML = '<option value="nov">November 2026</option><option value="oct">October 2026</option>';
+    select.value = 'nov';
+  }
+  select.dataset.context = isHlb ? 'hlb' : 'sample';
+}
+
+function renderHlbStatement() {
+  document.querySelector('#placements-card').hidden = true;
+  document.querySelector('#statement-heading').textContent = 'Account statement';
+  document.querySelector('#activity-title').textContent = 'Transaction activity';
+  document.querySelector('.side-foot').textContent = 'Source · Transaction.xlsx';
+  document.querySelector('.footer').lastElementChild.textContent = 'HLB workbook data · MYR';
+  const note = document.querySelector('#activity-note');
+  note.setAttribute('role', hlbError ? 'alert' : 'status');
+  if (!hlbData) {
+    document.querySelector('#statement-period').textContent = 'Transaction.xlsx · HLB';
+    note.textContent = hlbError || 'Reading HLB transactions…';
+    document.querySelector('#statement-summary').innerHTML = '';
+    activityTable.setData(hlbColumns, [], 'hlb-loading');
+    if (!hlbLoading && !hlbError) loadHlb();
+    return;
+  }
+  const rows = hlbData.rows.filter(row => hlbMonth === 'all' || row.date.startsWith(hlbMonth));
+  const debitMinor = rows.reduce((total, row) => total + Math.round((row.debit || 0) * 100), 0);
+  const creditMinor = rows.reduce((total, row) => total + Math.round((row.credit || 0) * 100), 0);
+  const first = rows[0];
+  const last = rows.at(-1);
+  const opening = first?.balance == null ? null : (Math.round(first.balance * 100) + Math.round((first.debit || 0) * 100) - Math.round((first.credit || 0) * 100)) / 100;
+  document.querySelector('#statement-summary').innerHTML =
+    summaryCard('Opening balance', opening) + summaryCard('Debits', debitMinor / 100) +
+    summaryCard('Credits', creditMinor / 100) + summaryCard('Closing balance', last?.balance ?? null);
+  document.querySelector('#statement-period').textContent = rows.length ? first.date + ' – ' + last.date : 'No transactions in this period';
+  note.textContent = rows.length + ' transactions · Transaction.xlsx / HLB · Opening balance derived from the first transaction; row balances are from the workbook.';
+  activityTable.setData(hlbColumns, rows, 'hlb-' + hlbMonth);
+}
+
+function renderPage() {
+  const requestedPage = window.location.hash.slice(1);
+  const pageKey = Object.hasOwn(pageDefinitions, requestedPage) ? requestedPage : 'dashboard';
+  const page = pageDefinitions[pageKey];
+  const isDashboard = pageKey === 'dashboard';
+  document.querySelector('#dashboard-page').hidden = !isDashboard;
+  document.querySelector('#statement-page').hidden = isDashboard;
+  document.querySelector('#page-title').textContent = page.title;
+  document.querySelector('#page-description').textContent = page.description;
+  document.title = 'ZYFN — ' + page.title;
+
+  document.querySelectorAll('[data-page]').forEach(link => {
+    const current = link.dataset.page === pageKey;
+    link.classList.toggle('active', current);
+    if (current) {
+      link.setAttribute('aria-current', 'page');
+      const group = link.closest('details');
+      if (group) group.setExpanded(true);
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+
+  if (isDashboard) {
+    document.querySelector('.side-foot').textContent = 'Sample financial data';
+    document.querySelector('.footer').lastElementChild.textContent = 'Illustrative figures · MYR';
+    return;
+  }
+
+  configureStatementMonths(pageKey === 'hlb');
+  if (pageKey === 'hlb') {
+    renderHlbStatement();
+    return;
+  }
+  document.querySelector('.side-foot').textContent = 'Sample financial data';
+  document.querySelector('.footer').lastElementChild.textContent = 'Illustrative figures · MYR';
+  const month = document.querySelector('#statement-month').value;
+  document.querySelector('#statement-heading').textContent = page.bank ? 'Fixed deposit statement' : 'Account statement';
+  document.querySelector('#statement-period').textContent = 'Sample records through ' + snapshots[month].date;
+  if (page.bank) renderFixedDepositStatement(page.bank, month);
+  else renderBankStatement(pageKey, month);
+}
+
+
+// Animate the content while preserving native details/summary semantics.
+document.querySelectorAll('.nav-section').forEach(group => {
+  const summary = group.querySelector('summary');
+  const content = group.querySelector('.nav-children');
+  let animation = null;
+  let expanded = group.open;
+  group.dataset.expanded = String(expanded);
+  summary.setAttribute('aria-expanded', String(expanded));
+
+  group.setExpanded = nextExpanded => {
+    if (nextExpanded === expanded) return;
+    expanded = nextExpanded;
+    const startHeight = group.open ? content.getBoundingClientRect().height : 0;
+    if (animation) animation.cancel();
+    group.open = true;
+    group.dataset.expanded = String(expanded);
+    summary.setAttribute('aria-expanded', String(expanded));
+    const endHeight = expanded ? content.scrollHeight : 0;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      group.open = expanded;
+      return;
+    }
+    animation = content.animate(
+      [{ height: startHeight + 'px' }, { height: endHeight + 'px' }],
+      { duration: 200, easing: 'ease-in-out' }
+    );
+    animation.onfinish = () => {
+      group.open = expanded;
+      animation = null;
+    };
+  };
+  summary.addEventListener('click', event => {
+    event.preventDefault();
+    group.setExpanded(!expanded);
+  });
+});
+
+window.addEventListener('hashchange', renderPage);
+document.querySelector('#statement-month').addEventListener('change', event => {
+  if (window.location.hash === '#hlb') hlbMonth = event.target.value;
+  renderPage();
+});
+renderPage();
+
+</script>
+</body></html>
