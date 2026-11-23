@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app_shell";
-import { FdStatementView } from "@/components/fd_statement_view";
+import { NoDataSourcePanel } from "@/components/no_data_source";
 
 export default function FdMaybankPage() {
   return (
@@ -7,7 +7,7 @@ export default function FdMaybankPage() {
       title="Maybank · Fixed deposits"
       description="Deposit register and fixed deposit activity"
     >
-      <FdStatementView bank="Maybank" />
+      <NoDataSourcePanel area="Maybank fixed deposits" />
     </AppShell>
   );
 }

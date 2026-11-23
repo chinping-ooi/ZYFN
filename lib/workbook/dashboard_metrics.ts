@@ -1,0 +1,100 @@
+import type { ParsedSheet } from "@/lib/workbook/types";
+import type { MinorAmount } from "@/lib/money";
+
+export type MonthKey = string;
+
+export type MonthlyAggregate = {
+  month: MonthKey;
+  label: string;
+  income_sen: MinorAmount;
+  spending_sen: MinorAmount;
+};
+
+export type DashboardMetrics = {
+  months: { value: MonthKey; label: string }[];
+  default_month: MonthKey;
+  accounts: { id: string; name: string; balance_sen: MinorAmount }[];
+  monthly: MonthlyAggregate[];
+  data_notes: {
+    skipped_total: number;
+    reconcile_warnings_total: number;
+  };
+};
+
+function month_key(iso_date: string): MonthKey {
+  return iso_date.slice(0, 7);
+}
+
+function month_label(key: MonthKey): string {
+  return new Intl.DateTimeFormat("en", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${key}-01T00:00:00Z`));
+}
+
+function build_monthly(sheets: ParsedSheet[]): MonthlyAggregate[] {
+  const totals = new Map<MonthKey, { income_sen: number; spending_sen: number }>();
+
+  for (const sheet of sheets) {
+    for (const tx of sheet.transactions) {
+      const key = month_key(tx.date);
+      const bucket = totals.get(key) ?? { income_sen: 0, spending_sen: 0 };
+      bucket.spending_sen += tx.debit_sen;
+      bucket.income_sen += tx.credit_sen;
+      totals.set(key, bucket);
+    }
+  }
+
+  return [...totals.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, values]) => ({
+      month,
+      label: month_label(month),
+      income_sen: values.income_sen,
+      spending_sen: values.spending_sen,
+    }));
+}
+
+export function build_dashboard_metrics(
+  hlb: ParsedSheet,
+  pbe: ParsedSheet,
+): DashboardMetrics {
+  const monthly = build_monthly([hlb, pbe]);
+  const months = monthly.map((m) => ({ value: m.month, label: m.label }));
+  const default_month = months.at(-1)?.value ?? new Date().toISOString().slice(0, 7);
+
+  return {
+    months,
+    default_month,
+    accounts: [
+      { id: "hong_leong", name: hlb.account_label, balance_sen: hlb.closing_balance_sen },
+      { id: "public_bank", name: pbe.account_label, balance_sen: pbe.closing_balance_sen },
+    ],
+    monthly,
+    data_notes: {
+      skipped_total:
+        hlb.skipped_rows.length + pbe.skipped_rows.length,
+      reconcile_warnings_total:
+        hlb.reconcile_warning_count + pbe.reconcile_warning_count,
+    },
+  };
+}
+
+export function snapshot_for_month(
+  metrics: DashboardMetrics,
+  month: MonthKey,
+): MonthlyAggregate | undefined {
+  return metrics.monthly.find((m) => m.month === month);
+}
+
+export function chart_window(
+  metrics: DashboardMetrics,
+  month: MonthKey,
+  window = 6,
+): MonthlyAggregate[] {
+  const index = metrics.monthly.findIndex((m) => m.month === month);
+  if (index < 0) return metrics.monthly.slice(-window);
+  const start = Math.max(0, index - window + 1);
+  return metrics.monthly.slice(start, index + 1);
+}

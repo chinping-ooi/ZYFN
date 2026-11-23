@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app_shell";
-import { FdStatementView } from "@/components/fd_statement_view";
+import { NoDataSourcePanel } from "@/components/no_data_source";
 
 export default function FdPublicBankPage() {
   return (
@@ -7,7 +7,7 @@ export default function FdPublicBankPage() {
       title="Public Bank · Fixed deposits"
       description="Deposit register and fixed deposit activity"
     >
-      <FdStatementView bank="Public Bank" />
+      <NoDataSourcePanel area="Public Bank fixed deposits" />
     </AppShell>
   );
 }

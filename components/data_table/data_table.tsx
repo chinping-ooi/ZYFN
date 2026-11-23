@@ -5,7 +5,6 @@ import type { DataTableColumn, SortDirection } from "@/components/data_table/typ
 import { compare_rows, display_cell } from "@/components/data_table/display";
 import { ExportDialog } from "@/components/data_table/export_dialog";
 import { StatusBadge } from "@/components/status_badge";
-import type { FdStatus } from "@/lib/fd_status";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
 
@@ -165,7 +164,7 @@ export function DataTable<T extends Record<string, unknown>>({
                       } ${column.className ?? ""}`}
                     >
                       {column.type === "status" ? (
-                        <StatusBadge status={raw as FdStatus} />
+                        <StatusBadge status={String(raw)} />
                       ) : (
                         display_cell(row, column)
                       )}

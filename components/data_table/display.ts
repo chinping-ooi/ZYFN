@@ -1,6 +1,5 @@
 import type { DataTableColumn } from "@/components/data_table/types";
 import { format_money, type MinorAmount } from "@/lib/money";
-import { status_label, type FdStatus } from "@/lib/fd_status";
 
 export function display_cell<T extends Record<string, unknown>>(
   row: T,
@@ -28,7 +27,7 @@ export function display_cell<T extends Record<string, unknown>>(
     case "months":
       return `${value} months`;
     case "status":
-      return status_label(value as FdStatus);
+      return String(value);
     default:
       return String(value);
   }
