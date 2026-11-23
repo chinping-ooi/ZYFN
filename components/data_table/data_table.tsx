@@ -8,6 +8,8 @@ import { StatusBadge } from "@/components/status_badge";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
 
+const EMPTY_COLUMNS: DataTableColumn<Record<string, unknown>>[] = [];
+
 type Props<T extends Record<string, unknown>> = {
   label: string;
   scope: string;
@@ -27,6 +29,8 @@ export function DataTable<T extends Record<string, unknown>>({
   toolbar_in_header = false,
   empty_period_message = "No records in this period.",
 }: Props<T>) {
+  const safe_columns = columns ?? EMPTY_COLUMNS;
+  const safe_rows = Array.isArray(rows) ? rows : [];
   const resolved_date_key = date_key ?? ("date" as keyof T & string);
 
   const [search, set_search] = useState("");
@@ -39,20 +43,20 @@ export function DataTable<T extends Record<string, unknown>>({
 
   const filtered = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
-    let result = rows.filter((row) =>
-      columns.some((column) => {
+    let result = safe_rows.filter((row) =>
+      safe_columns.some((column) => {
         const raw = row[column.key];
         const display = display_cell(row, column);
         return `${raw ?? ""} ${display}`.toLocaleLowerCase().includes(query);
       }),
     );
-    const column = columns.find((c) => c.key === sort_key);
+    const column = safe_columns.find((c) => c.key === sort_key);
     if (column) {
       const dir = sort_direction === "ascending" ? 1 : -1;
       result = [...result].sort((a, b) => compare_rows(a, b, column, dir));
     }
     return result;
-  }, [rows, columns, search, sort_key, sort_direction]);
+  }, [safe_rows, safe_columns, search, sort_key, sort_direction]);
 
   const page_count =
     page_size === "all"
@@ -100,6 +104,14 @@ export function DataTable<T extends Record<string, unknown>>({
     </div>
   );
 
+  if (safe_columns.length === 0) {
+    return (
+      <p className="text-sm text-zyfn-muted" role="alert">
+        Table columns are not configured.
+      </p>
+    );
+  }
+
   return (
     <>
       {!toolbar_in_header ? toolbar : null}
@@ -110,7 +122,7 @@ export function DataTable<T extends Record<string, unknown>>({
         >
           <thead>
             <tr>
-              {columns.map((column) => {
+              {safe_columns.map((column) => {
                 const numeric = ["money", "rate", "months"].includes(
                   column.type ?? "",
                 );
@@ -151,7 +163,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 key={index}
                 className="even:bg-[#fafbfc] hover:bg-[#f0f3f7]"
               >
-                {columns.map((column) => {
+                {safe_columns.map((column) => {
                   const numeric = ["money", "rate", "months"].includes(
                     column.type ?? "",
                   );
@@ -176,10 +188,10 @@ export function DataTable<T extends Record<string, unknown>>({
             {visible.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length}
+                  colSpan={Math.max(safe_columns.length, 1)}
                   className="border border-zyfn-line px-[13px] py-[30px] text-center text-zyfn-muted"
                 >
-                  {rows.length
+                  {safe_rows.length
                     ? "No matching records."
                     : empty_period_message}
                 </td>
@@ -245,7 +257,7 @@ export function DataTable<T extends Record<string, unknown>>({
         onClose={() => set_export_open(false)}
         label={label}
         scope={scope}
-        columns={columns}
+        columns={safe_columns}
         rows={filtered}
         date_key={resolved_date_key}
       />

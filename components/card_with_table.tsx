@@ -1,30 +1,25 @@
 "use client";
 
-import type { DataTableColumn } from "@/components/data_table/types";
-import { DataTable } from "@/components/data_table/data_table";
+import { LedgerDataTable } from "@/components/data_table/ledger_data_table";
+import type { LedgerRow } from "@/components/data_table/ledger_columns";
 
-type Props<T extends Record<string, unknown>> = {
+type Props = {
   title: string;
   subtitle?: string;
   table_label: string;
   scope: string;
-  columns: DataTableColumn<T>[];
-  rows: T[];
-  date_key?: keyof T & string;
+  rows: LedgerRow[];
   header_extra?: React.ReactNode;
-  toolbar?: React.ReactNode;
 };
 
-export function CardWithTable<T extends Record<string, unknown>>({
+export function CardWithTable({
   title,
   subtitle,
   table_label,
   scope,
-  columns,
   rows,
-  date_key,
   header_extra,
-}: Props<T>) {
+}: Props) {
   return (
     <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
@@ -39,13 +34,7 @@ export function CardWithTable<T extends Record<string, unknown>>({
         </div>
       </div>
       <div className="px-5 pt-4 pb-4">
-        <DataTable
-          label={table_label}
-          scope={scope}
-          columns={columns}
-          rows={rows}
-          date_key={date_key}
-        />
+        <LedgerDataTable label={table_label} scope={scope} rows={rows} />
       </div>
     </section>
   );

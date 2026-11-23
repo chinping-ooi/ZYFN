@@ -6,7 +6,6 @@ import { build_statement, statement_month_options } from "@/lib/workbook/stateme
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { CardWithTable } from "@/components/card_with_table";
-import { LEDGER_COLUMNS } from "@/components/column_defs";
 import { DataQualityNotice } from "@/components/data_quality_notice";
 
 export function StatementFromWorkbook({ sheet }: { sheet: ParsedSheet }) {
@@ -67,9 +66,7 @@ export function StatementFromWorkbook({ sheet }: { sheet: ParsedSheet }) {
         subtitle={`${statement.rows.length} transaction${statement.rows.length === 1 ? "" : "s"} in view · source sheet ${sheet.sheet_name}`}
         table_label={`${sheet.account_label} activity`}
         scope={`${sheet.sheet_name}-${month}`}
-        columns={LEDGER_COLUMNS}
         rows={statement.rows}
-        date_key="date"
       />
     </>
   );

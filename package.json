@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "generate:synthetic-workbook": "node scripts/generate_synthetic_workbook.mjs",
+    "smoke:routes": "node scripts/smoke_dev_routes.mjs"
   },
   "dependencies": {
     "next": "^16.0.3",

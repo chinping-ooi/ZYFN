@@ -8,6 +8,8 @@ import type { WorkbookResult } from "@/lib/workbook/types";
 export const TRANSACTION_WORKBOOK_FILE = "Transaction.xlsx";
 
 function workbook_path(): string {
+  const override = process.env.TRANSACTION_XLSX_PATH?.trim();
+  if (override) return override;
   return join(process.cwd(), TRANSACTION_WORKBOOK_FILE);
 }
 

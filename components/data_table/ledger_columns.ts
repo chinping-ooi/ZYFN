@@ -1,7 +1,18 @@
-import type { DataTableColumn } from "@/components/data_table/types";
-import type { LedgerTransaction } from "@/lib/workbook/types";
+"use client";
 
-export const LEDGER_COLUMNS: DataTableColumn<LedgerTransaction>[] = [
+import type { DataTableColumn } from "@/components/data_table/types";
+
+/** Ledger row shape for HLB/PBE tables — keys must match workbook parser output. */
+export type LedgerRow = {
+  date: string;
+  description: string;
+  debit_sen: number;
+  credit_sen: number;
+  balance_sen: number;
+  reconcile_ok: boolean;
+};
+
+export const LEDGER_COLUMNS: DataTableColumn<LedgerRow>[] = [
   { key: "date", label: "Date", type: "date" },
   {
     key: "description",
