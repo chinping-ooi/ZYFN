@@ -1,3 +1,6 @@
+/** Sidebar default when Supabase is unavailable; extended from DB in layout. */
+export const DEFAULT_FD_BANK_CODES = ["MBB", "PBE", "HLB"];
+
 const CODE_TO_SLUG: Record<string, string> = {
   MBB: "maybank",
   PBE: "public-bank",

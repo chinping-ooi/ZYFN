@@ -27,6 +27,7 @@ export function FixedDepositDataTable({
       rows={rows}
       date_key="maturity_date"
       empty_period_message="No fixed deposits in this view."
+      table_layout="auto"
     />
   );
 }

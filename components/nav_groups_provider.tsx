@@ -12,9 +12,11 @@ export function NavGroupsProvider({
   bank_codes: string[];
   children: React.ReactNode;
 }) {
+  const bank_key = bank_codes.join("\0");
   const groups = useMemo(
     () => merge_nav_groups(NAV_GROUPS, bank_codes),
-    [bank_codes],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable via join
+    [bank_key],
   );
   return (
     <NavGroupsContext.Provider value={groups}>

@@ -4,6 +4,12 @@ import type {
   FixedDepositTableRow,
 } from "@/lib/fixed_deposits/types";
 
+function format_days_left(days: number): number | string {
+  if (days < 0) return "Overdue";
+  if (days === 0) return "Due today";
+  return days;
+}
+
 function days_until_maturity(maturity_date: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -21,7 +27,9 @@ export function to_table_row(row: FixedDepositRecord): FixedDepositTableRow {
         ? null
         : major_to_minor(row.interest_earned_major),
     status_label: active ? "Active" : "Matured",
-    days_left: active ? Math.max(0, days_until_maturity(row.maturity_date)) : "—",
+    days_left: active
+      ? format_days_left(days_until_maturity(row.maturity_date))
+      : "—",
   };
 }
 

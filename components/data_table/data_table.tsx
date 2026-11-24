@@ -24,6 +24,7 @@ type Props<T extends Record<string, unknown>> = {
   empty_period_message?: string;
   /** When true (default), table sits inside an outer card without a second bordered panel. */
   inset?: boolean;
+  table_layout?: "fixed" | "auto";
 };
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -35,6 +36,7 @@ export function DataTable<T extends Record<string, unknown>>({
   toolbar_in_header = false,
   empty_period_message = "No records in this period.",
   inset = true,
+  table_layout = "fixed",
 }: Props<T>) {
   const safe_columns = columns ?? EMPTY_COLUMNS;
   const safe_rows = useMemo(
@@ -133,7 +135,9 @@ export function DataTable<T extends Record<string, unknown>>({
         }`}
       >
         <table
-          className="w-full min-w-[520px] table-fixed border-collapse sm:min-w-[640px]"
+          className={`w-full min-w-[520px] border-collapse sm:min-w-[720px] ${
+            table_layout === "fixed" ? "table-fixed" : "table-auto"
+          }`}
           aria-label={label}
         >
           <thead className="sticky top-0 z-[1] bg-[#edf0f4] shadow-[inset_0_-1px_0_#cbd2dc]">

@@ -8,7 +8,8 @@ import type {
   FixedDepositLoadResult,
   FixedDepositRecord,
 } from "@/lib/fixed_deposits/types";
-import { create_supabase_server_client } from "@/lib/supabase/server";
+import { create_supabase_data_client } from "@/lib/supabase/data_client";
+import { cache } from "react";
 import { supabase_configured } from "@/lib/supabase/env";
 
 type SupabaseFdRow = {
@@ -69,7 +70,7 @@ function mock_result(filter_code?: string): FixedDepositLoadResult {
   };
 }
 
-export async function load_fixed_deposits(
+async function load_fixed_deposits_impl(
   filter_code?: string,
 ): Promise<FixedDepositLoadResult> {
   noStore();
@@ -79,7 +80,7 @@ export async function load_fixed_deposits(
   }
 
   try {
-    const supabase = await create_supabase_server_client();
+    const supabase = create_supabase_data_client();
     const { data, error } = await supabase
       .from("zyfn_fixed_deposits")
       .select(
@@ -150,7 +151,13 @@ export async function load_fixed_deposits(
   }
 }
 
-export async function list_fd_bank_codes(): Promise<string[]> {
+/** Deduped per request (layout + page share one Supabase round-trip). */
+export const load_fixed_deposits = cache(load_fixed_deposits_impl);
+
+async function list_fd_bank_codes_impl(): Promise<string[]> {
   const loaded = await load_fixed_deposits();
   return loaded.bank_codes;
 }
+
+/** Cached per request — shared by layout and FD pages. */
+export const list_fd_bank_codes = cache(list_fd_bank_codes_impl);

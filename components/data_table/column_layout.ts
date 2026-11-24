@@ -8,6 +8,8 @@ export function column_header_class<T>(
 
   if (column.type === "date" || column.key === "date") {
     parts.push("w-[6.75rem] max-w-[6.75rem]");
+  } else if (column.type === "percent") {
+    parts.push("w-[4.25rem] min-w-[4.25rem]");
   } else if (column.type === "money" || column.type === "money_micro") {
     parts.push("w-[6.25rem] max-w-[6.25rem]");
   } else if (column.key === "description") {
