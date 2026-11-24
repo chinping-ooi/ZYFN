@@ -139,7 +139,7 @@ export function DataTable<T extends Record<string, unknown>>({
           <thead className="sticky top-0 z-[1] bg-[#edf0f4] shadow-[inset_0_-1px_0_#cbd2dc]">
             <tr>
               {safe_columns.map((column) => {
-                const numeric = ["money", "money_micro", "rate", "months"].includes(
+                const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
                   column.type ?? "",
                 );
                 const sort =
@@ -180,7 +180,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 className="even:bg-[#fafbfc] hover:bg-[#f0f3f7]"
               >
                 {safe_columns.map((column) => {
-                  const numeric = ["money", "money_micro", "rate", "months"].includes(
+                  const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
                     column.type ?? "",
                   );
                   const raw = row[column.key];

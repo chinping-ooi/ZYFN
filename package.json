@@ -13,6 +13,8 @@
     "smoke:tng-client-parse": "npx tsx scripts/smoke_tng_client_parse.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.2",
     "next": "^16.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

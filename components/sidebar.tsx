@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DASHBOARD_HREF, NAV_GROUPS } from "@/lib/navigation";
+import { useNavGroups } from "@/components/nav_groups_provider";
+import { DASHBOARD_HREF } from "@/lib/navigation";
 
 type SidebarProps = {
   mobile_open: boolean;
@@ -61,9 +62,11 @@ function NavGroupSection({
 function SidebarPanel({
   pathname,
   on_navigate,
+  nav_groups,
 }: {
   pathname: string;
   on_navigate: () => void;
+  nav_groups: ReturnType<typeof useNavGroups>;
 }) {
   return (
     <>
@@ -83,7 +86,7 @@ function SidebarPanel({
         >
           Dashboard
         </Link>
-        {NAV_GROUPS.map((group) => (
+        {nav_groups.map((group) => (
           <NavGroupSection
             key={group.title}
             title={group.title}
@@ -103,6 +106,7 @@ function SidebarPanel({
 
 export function Sidebar({ mobile_open, on_close }: SidebarProps) {
   const pathname = usePathname();
+  const nav_groups = useNavGroups();
 
   return (
     <>
@@ -110,7 +114,11 @@ export function Sidebar({ mobile_open, on_close }: SidebarProps) {
         className="sticky top-0 hidden h-screen w-56 shrink-0 flex flex-col border-r border-[#152235] bg-zyfn-sidebar text-white lg:flex"
         aria-label="Main navigation"
       >
-        <SidebarPanel pathname={pathname} on_navigate={on_close} />
+        <SidebarPanel
+          pathname={pathname}
+          on_navigate={on_close}
+          nav_groups={nav_groups}
+        />
       </aside>
       {mobile_open ? (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -121,7 +129,11 @@ export function Sidebar({ mobile_open, on_close }: SidebarProps) {
             onClick={on_close}
           />
           <aside className="relative flex h-full w-[min(280px,85vw)] flex-col bg-zyfn-sidebar text-white shadow-xl">
-            <SidebarPanel pathname={pathname} on_navigate={on_close} />
+            <SidebarPanel
+              pathname={pathname}
+              on_navigate={on_close}
+              nav_groups={nav_groups}
+            />
           </aside>
         </div>
       ) : null}

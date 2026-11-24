@@ -4,6 +4,7 @@ export type ColumnType =
   | "money_micro"
   | "date"
   | "rate"
+  | "percent"
   | "months"
   | "status";
 

@@ -5,9 +5,12 @@ const styles: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
+  const key = status.toLowerCase();
+  const style =
+    styles[key] ?? "bg-[#f2f3f5] text-[#626c7a] border-[#cbd0d8]";
   return (
     <span
-      className={`inline-block rounded-[2px] border px-[7px] py-[3px] text-xs font-medium ${styles[status]}`}
+      className={`inline-block rounded-[2px] border px-[7px] py-[3px] text-xs font-medium ${style}`}
     >
       {status}
     </span>

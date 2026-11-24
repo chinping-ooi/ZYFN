@@ -40,6 +40,8 @@ export function display_cell<T extends Record<string, unknown>>(
       }).format(new Date(String(value) + (String(value).includes("T") ? "" : "T00:00:00Z")));
     case "rate":
       return `${(Number(value) / 100).toFixed(2)}%`;
+    case "percent":
+      return `${Number(value).toFixed(2)}%`;
     case "months":
       return `${value} months`;
     case "status":

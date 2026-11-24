@@ -19,8 +19,10 @@ const routes = [
   "/transactions/public-bank",
   "/transactions/maybank",
   "/wallets/tng",
+  "/fixed-deposits",
   "/fixed-deposits/maybank",
   "/fixed-deposits/public-bank",
+  "/fixed-deposits/hong-leong-bank",
   "/nope-404",
 ];
 
@@ -28,6 +30,8 @@ const must_include = {
   "/transactions/hong-leong-bank": "Search all columns",
   "/transactions/public-bank": "Search all columns",
   "/wallets/tng": "Read from this device",
+  "/fixed-deposits": "Deposit register",
+  "/fixed-deposits/maybank": "Deposit register",
 };
 
 let dev = null;

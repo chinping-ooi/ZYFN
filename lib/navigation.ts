@@ -1,3 +1,9 @@
+import {
+  bank_code_to_label,
+  bank_code_to_slug,
+  ordered_bank_codes,
+} from "@/lib/fixed_deposits/banks";
+
 export type NavItem = {
   href: string;
   label: string;
@@ -9,7 +15,29 @@ export type NavGroup = {
   defaultOpen?: boolean;
 };
 
-export const NAV_GROUPS: NavGroup[] = [
+export function build_fixed_deposit_nav(bank_codes: string[]): NavItem[] {
+  const items: NavItem[] = [{ href: "/fixed-deposits", label: "All" }];
+  for (const code of ordered_bank_codes(bank_codes)) {
+    items.push({
+      href: `/fixed-deposits/${bank_code_to_slug(code)}`,
+      label: bank_code_to_label(code),
+    });
+  }
+  return items;
+}
+
+export function merge_nav_groups(
+  base: NavGroup[],
+  bank_codes: string[],
+): NavGroup[] {
+  return base.map((group) =>
+    group.title === "Fixed deposits"
+      ? { ...group, items: build_fixed_deposit_nav(bank_codes) }
+      : group,
+  );
+}
+
+const BASE_NAV_GROUPS: NavGroup[] = [
   {
     title: "Transactions",
     defaultOpen: true,
@@ -25,11 +53,11 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "Fixed deposits",
-    items: [
-      { href: "/fixed-deposits/maybank", label: "Maybank" },
-      { href: "/fixed-deposits/public-bank", label: "Public Bank" },
-    ],
+    items: build_fixed_deposit_nav(["MBB", "PBE", "HLB"]),
   },
 ];
+
+/** Default sidebar groups (fixed-deposit banks filled at runtime when possible). */
+export const NAV_GROUPS: NavGroup[] = BASE_NAV_GROUPS;
 
 export const DASHBOARD_HREF = "/";
