@@ -27,7 +27,7 @@ const routes = [
 const must_include = {
   "/transactions/hong-leong-bank": "Search all columns",
   "/transactions/public-bank": "Search all columns",
-  "/wallets/tng": "Search all columns",
+  "/wallets/tng": "Read from this device",
 };
 
 let dev = null;
@@ -102,6 +102,16 @@ async function run() {
   }
 
   if (dev) dev.kill("SIGTERM");
+
+  try {
+    execSync("npm run smoke:tng-client-parse", {
+      cwd: root,
+      stdio: "inherit",
+    });
+  } catch {
+    failed = true;
+  }
+
   if (failed) process.exit(1);
 }
 

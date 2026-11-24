@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "generate:synthetic-workbook": "node scripts/generate_synthetic_workbook.mjs",
     "smoke:routes": "node scripts/smoke_dev_routes.mjs",
-    "report:tng-parse": "npx tsx scripts/report_tng_parse.mjs"
+    "report:tng-parse": "npx tsx scripts/report_tng_parse.mjs",
+    "smoke:tng-client-parse": "npx tsx scripts/smoke_tng_client_parse.mjs"
   },
   "dependencies": {
     "next": "^16.0.3",

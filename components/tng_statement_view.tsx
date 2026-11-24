@@ -43,7 +43,7 @@ export function TngStatementView({
         <div>
           <h2 className="m-0 text-[17px] font-semibold">TNG wallet statement</h2>
           <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">
-            data.txt · {statement.period_label}
+            {statement.period_label}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
