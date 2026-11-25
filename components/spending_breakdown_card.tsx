@@ -45,22 +45,15 @@ export function SpendingBreakdownCard({
                 className="account border-b border-[#dce1e7] py-2 last:border-0"
               >
                 <div className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="bank-name text-sm font-semibold">{row.label}</div>
-                    <div className="account-type text-xs text-zyfn-muted">
-                      {row.account_type}
-                      {" · "}
-                      {row.count} transaction{row.count === 1 ? "" : "s"}
-                      {" · "}
-                      {row.pct.toFixed(1)}%
-                    </div>
+                  <div className="bank-name min-w-0 flex-1 text-sm font-semibold">
+                    {row.label}
                   </div>
-                  <div className="account-value ml-auto shrink-0 text-right text-sm font-semibold tabular-nums">
+                  <div className="account-value shrink-0 text-right text-sm font-semibold tabular-nums">
                     {format_rm(row.amount_sen)}
                   </div>
                 </div>
                 <div
-                  className="mt-1.5 h-[3px] w-full overflow-hidden rounded-[2px] bg-[#e8ecf0]"
+                  className="mt-2 h-[3px] w-full overflow-hidden rounded-[2px] bg-[#e8ecf0]"
                   role="presentation"
                   aria-hidden
                 >

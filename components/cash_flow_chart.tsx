@@ -75,7 +75,7 @@ export function CashFlowChart({
   const plot_body = (
     <div className={plot_class} role="img" aria-label={aria_label}>
       <div
-        className="flex w-[3.5rem] shrink-0 flex-col justify-between pb-[22px] text-[10px] leading-none text-zyfn-muted md:w-[4.25rem] md:text-[11px]"
+        className="flex w-[3.25rem] shrink-0 flex-col justify-between pb-[22px] text-[10px] leading-none text-zyfn-muted md:w-[3.75rem] md:text-[11px]"
         aria-hidden
       >
         {y_labels.map((label) => (
@@ -84,7 +84,7 @@ export function CashFlowChart({
           </span>
         ))}
       </div>
-      <div className="relative flex h-full min-h-0 min-w-0 flex-1 gap-2 border-b border-zyfn-line bg-[repeating-linear-gradient(to_top,transparent_0,transparent_calc(25%-1px),#e5e8ed_calc(25%-1px),#e5e8ed_25%)] md:gap-3">
+      <div className="relative flex h-full min-h-0 min-w-0 flex-1 gap-1.5 border-b border-zyfn-line bg-[repeating-linear-gradient(to_top,transparent_0,transparent_calc(25%-1px),#e5e8ed_calc(25%-1px),#e5e8ed_25%)] md:gap-2 lg:gap-3">
         {labels.map((label, i) => {
           const income_pct = (income_sen[i] / max_sen) * 100;
           const spend_pct = (spending_sen[i] / max_sen) * 100;

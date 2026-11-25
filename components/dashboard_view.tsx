@@ -135,6 +135,9 @@ export function DashboardView({
     income_sen,
   });
 
+  const chart_period = `${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`;
+  const month_label = snapshot?.label ?? month;
+
   return (
     <div className="flex shrink-0 flex-col">
       <PageToolbar
@@ -142,7 +145,7 @@ export function DashboardView({
         subtitle={
           <>
             Cash in/out only · excludes FD and internal transfers ·{" "}
-            {snapshot?.label ?? month}
+            {month_label}
           </>
         }
         controls={
@@ -158,28 +161,28 @@ export function DashboardView({
       />
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-5 flex max-h-[760px] flex-col gap-5 md:flex-row md:items-start">
-          <div className="flex min-w-0 flex-1 flex-col gap-5">
-            <div className="shrink-0">{kpi_pair}</div>
-            <CashFlowChart
-              className="w-full shrink-0"
-              fill_height
-              labels={chart_labels}
-              income_sen={chart.map((m) => m.income_sen)}
-              spending_sen={chart.map((m) => m.spending_sen)}
-              period_note={`${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`}
-              monthly_income_sen={income_sen}
-              monthly_spending_sen={spending_sen}
-            />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-5">
-            <DashboardAccountBalancesCard className="shrink-0" rows={balance_rows} />
-            <SpendingBreakdownCard
-              content_sized
-              rows={spending_rows}
-              month_label={snapshot?.label ?? month}
-            />
-          </div>
+        <div className="dashboard-layout mt-5 grid max-h-[760px] grid-cols-1 gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:items-start">
+          <div className="min-w-0 md:col-start-1 md:row-start-1">{kpi_pair}</div>
+          <SpendingBreakdownCard
+            content_sized
+            className="min-w-0 md:col-start-1 md:row-start-2"
+            rows={spending_rows}
+            month_label={month_label}
+          />
+          <CashFlowChart
+            className="min-w-0 shrink-0 md:col-start-2 md:row-start-1"
+            fill_height
+            labels={chart_labels}
+            income_sen={chart.map((m) => m.income_sen)}
+            spending_sen={chart.map((m) => m.spending_sen)}
+            period_note={chart_period}
+            monthly_income_sen={income_sen}
+            monthly_spending_sen={spending_sen}
+          />
+          <DashboardAccountBalancesCard
+            className="min-w-0 md:col-start-2 md:row-start-2"
+            rows={balance_rows}
+          />
         </div>
       ) : (
         <div className="mt-5 shrink-0">{kpi_pair}</div>
