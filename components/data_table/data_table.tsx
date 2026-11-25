@@ -268,20 +268,40 @@ export function DataTable<T extends Record<string, unknown>>({
             type="button"
             className="page-btn"
             disabled={safe_page <= 1}
+            aria-label="First page"
+            onClick={() => set_page(1)}
+          >
+            First
+          </button>
+          <button
+            type="button"
+            className="page-btn"
+            disabled={safe_page <= 1}
+            aria-label="Previous page"
             onClick={() => set_page((p) => Math.max(1, p - 1))}
           >
             Previous
           </button>
-          <span className="min-w-[75px] text-center">
+          <span className="min-w-[75px] text-center" aria-live="polite">
             Page {safe_page} of {page_count}
           </span>
           <button
             type="button"
             className="page-btn"
             disabled={safe_page >= page_count}
-            onClick={() => set_page((p) => p + 1)}
+            aria-label="Next page"
+            onClick={() => set_page((p) => Math.min(page_count, p + 1))}
           >
             Next
+          </button>
+          <button
+            type="button"
+            className="page-btn"
+            disabled={safe_page >= page_count}
+            aria-label="Last page"
+            onClick={() => set_page(page_count)}
+          >
+            Last
           </button>
         </div>
       </div>
