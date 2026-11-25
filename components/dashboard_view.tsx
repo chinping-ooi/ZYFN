@@ -59,7 +59,7 @@ function dashboard_kpi_pair({
 }) {
   return (
     <div
-      className="grid shrink-0 grid-cols-1 items-start gap-5 md:grid-cols-2"
+      className="grid shrink-0 grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-5"
       aria-label="Monthly financial summary"
     >
       <KpiCard
@@ -161,8 +161,8 @@ export function DashboardView({
       />
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-3 flex flex-col gap-4 md:flex-row md:items-start lg:mt-4 lg:gap-5">
-          <div className="flex min-w-0 flex-col gap-4 md:flex-[3] lg:gap-5">
+        <div className="dashboard-layout mt-3 flex flex-col gap-4 lg:mt-4 lg:flex-row lg:items-start lg:gap-5">
+          <div className="flex min-w-0 flex-col gap-4 lg:flex-[3] lg:gap-5">
             {kpi_pair}
             <SpendingBreakdownCard
               content_sized
@@ -170,8 +170,24 @@ export function DashboardView({
               rows={spending_rows.length > 0 ? spending_rows : []}
               month_label={month_label}
             />
+            <div className="flex flex-col gap-4 lg:hidden">
+              <CashFlowChart
+                className="w-full shrink-0"
+                fill_height
+                labels={chart_labels}
+                income_sen={chart.map((m) => m.income_sen)}
+                spending_sen={chart.map((m) => m.spending_sen)}
+                period_note={chart_period}
+                monthly_income_sen={income_sen}
+                monthly_spending_sen={spending_sen}
+              />
+              <DashboardAccountBalancesCard
+                className="shrink-0"
+                rows={balance_rows}
+              />
+            </div>
           </div>
-          <div className="flex min-w-0 flex-col gap-4 md:flex-[2] lg:gap-5">
+          <div className="hidden min-w-0 flex-col gap-4 lg:flex lg:flex-[2] lg:gap-5">
             <CashFlowChart
               className="w-full shrink-0"
               fill_height
