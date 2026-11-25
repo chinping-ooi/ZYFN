@@ -28,7 +28,7 @@ const pagination_icon_btn =
 const LEDGER_CELL_DIVIDER =
   "border-0 border-r border-b border-slate-200 last:border-r-0";
 
-const LEDGER_HEAD_CELL = `${LEDGER_CELL_DIVIDER} sticky top-0 z-10 bg-[#edf0f4] shadow-[inset_0_-1px_0_0_#e2e8f0]`;
+const LEDGER_HEAD_CELL = `${LEDGER_CELL_DIVIDER} sticky top-0 z-10 bg-[#edf0f4] shadow-[inset_0_1px_0_0_#e2e8f0,inset_0_-1px_0_0_#e2e8f0]`;
 
 type Props<T extends Record<string, unknown>> = {
   label: string;
@@ -157,19 +157,18 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
       ) : null}
       <div
-        className={`min-h-0 overflow-auto overscroll-contain ${body_pad} ${
+        className={`min-h-0 overflow-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
           fill_height
             ? "flex-1"
             : "max-h-[min(70vh,560px)]"
         }`}
       >
-        <div className="rounded-[3px] border border-zyfn-line">
-          <table
-            className={`ledger-grid-table w-full min-w-[520px] border-collapse sm:min-w-[720px] ${
-              table_layout === "fixed" ? "table-fixed" : "table-auto"
-            }`}
-            aria-label={label}
-          >
+        <table
+          className={`ledger-grid-table w-full min-w-[520px] border-collapse sm:min-w-[720px] ${
+            table_layout === "fixed" ? "table-fixed" : "table-auto"
+          }`}
+          aria-label={label}
+        >
           <thead>
             <tr>
               {safe_columns.map((column) => {
@@ -252,8 +251,7 @@ export function DataTable<T extends Record<string, unknown>>({
               </tr>
             ) : null}
           </tbody>
-          </table>
-        </div>
+        </table>
       </div>
       <div
         className={`data-table-footer flex shrink-0 flex-wrap items-center justify-between gap-2 pt-3 pb-1 text-[13px] text-zyfn-muted ${body_pad}`}
