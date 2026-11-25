@@ -10,6 +10,7 @@ export function KpiCard({
   meta,
   hide_amount,
   compact_amount,
+  snug = false,
 }: {
   label: string;
   amount_sen?: MinorAmount | null;
@@ -19,13 +20,18 @@ export function KpiCard({
   hide_amount?: boolean;
   /** Statement summary uses 24px amounts per UI reference. */
   compact_amount?: boolean;
+  /** Dashboard KPIs: natural height, tight meta under amount. */
+  snug?: boolean;
 }) {
+  const height_class = snug ? "" : "flex h-full flex-col";
   return (
-    <article className="card kpi flex h-full flex-col overflow-hidden rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white">
+    <article
+      className={`card kpi overflow-hidden rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white ${height_class}`}
+    >
       <div
-        className={`flex flex-1 flex-col py-[19px] ${
+        className={`py-[19px] ${
           compact_amount ? "px-4 md:px-[18px]" : "px-[21px]"
-        }`}
+        } ${snug ? "" : "flex flex-1 flex-col"}`}
       >
         <div className="text-sm font-semibold text-[#526075]">{label}</div>
         <div
@@ -52,10 +58,16 @@ export function KpiCard({
           ) : null}
         </div>
         {meta ? (
-          <div className="mt-auto min-h-[2.5rem] text-[13px] text-zyfn-muted">
+          <div
+            className={
+              snug
+                ? "mt-1.5 text-[12px] leading-snug text-zyfn-muted md:text-[13px]"
+                : "mt-auto min-h-[2.5rem] text-[13px] text-zyfn-muted"
+            }
+          >
             {meta}
           </div>
-        ) : (
+        ) : snug ? null : (
           <div className="mt-auto min-h-[2.5rem]" aria-hidden />
         )}
       </div>
