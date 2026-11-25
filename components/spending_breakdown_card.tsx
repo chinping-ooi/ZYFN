@@ -1,31 +1,149 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  type ChartOptions,
+} from "chart.js";
+import { Doughnut } from "react-chartjs-2";
 import { format_rm } from "@/lib/money";
 import type { SpendingAccountRow } from "@/lib/dashboard/spending_breakdown";
 import { spending_total_sen } from "@/lib/dashboard/spending_breakdown";
 import { CardHead } from "@/components/card_head";
 
+ChartJS.register(ArcElement, Tooltip, Legend);
+
 const SEGMENT_COLORS = [
   "#1e3a5f",
+  "#254670",
   "#2c5282",
   "#3d6a9c",
+  "#4a7e9e",
   "#5a7fa8",
+  "#6b8fa8",
   "#7a94b0",
-  "#9aabc4",
 ];
 
-function donut_gradient(rows: SpendingAccountRow[]): string {
-  let cursor = 0;
-  const parts: string[] = [];
-  for (let i = 0; i < rows.length; i++) {
-    const pct = Math.max(0, Math.min(100, rows[i].pct));
-    const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
-    const end = cursor + pct;
-    parts.push(`${color} ${cursor}% ${end}%`);
-    cursor = end;
+function center_amount_class(total_label: string): string {
+  if (total_label.length > 16) {
+    return "text-[9px] font-semibold tabular-nums text-zyfn-ink leading-none";
   }
-  if (cursor < 100) {
-    parts.push(`#e8ecf0 ${cursor}% 100%`);
+  if (total_label.length > 13) {
+    return "text-[10px] font-semibold tabular-nums text-zyfn-ink leading-tight";
   }
-  return `conic-gradient(from -90deg, ${parts.join(", ")})`;
+  return "text-[11px] font-semibold tabular-nums text-zyfn-ink md:text-xs";
+}
+
+function SpendingDonutPanel({
+  rows,
+  total_sen,
+}: {
+  rows: SpendingAccountRow[];
+  total_sen: number;
+}) {
+  const total_label = format_rm(total_sen);
+  const amount_class = center_amount_class(total_label);
+
+  const chart_data = useMemo(
+    () => ({
+      labels: rows.map((r) => r.label),
+      datasets: [
+        {
+          data: rows.map((r) => r.amount_sen / 100),
+          backgroundColor: rows.map(
+            (_, i) => SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+          ),
+          borderColor: "#ffffff",
+          borderWidth: 2,
+          hoverOffset: 4,
+        },
+      ],
+    }),
+    [rows],
+  );
+
+  const options: ChartOptions<"doughnut"> = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: 2 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1e3a5f",
+          titleFont: { size: 11, weight: "bold" },
+          bodyFont: { size: 11 },
+          padding: 8,
+          callbacks: {
+            label(context) {
+              const row = rows[context.dataIndex];
+              if (!row) return "";
+              return `${row.label}: ${format_rm(row.amount_sen)} (${row.pct.toFixed(1)}%)`;
+            },
+          },
+        },
+      },
+      cutout: "65%",
+    }),
+    [rows],
+  );
+
+  return (
+    <div className="spending-donut-layout flex min-h-0 w-full flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4">
+      <div
+        className="spending-donut relative min-h-[168px] w-full min-w-0 flex-1 lg:min-h-0"
+        aria-label={`Spending donut chart, total ${total_label}`}
+      >
+        <div className="absolute inset-0">
+          <Doughnut data={chart_data} options={options} />
+        </div>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div
+            className="flex max-w-[38%] flex-col items-center justify-center px-0.5 text-center"
+            style={{ maxWidth: "min(38%, 6.5rem)" }}
+          >
+            <span className="text-[8px] font-medium uppercase tracking-wide text-zyfn-muted md:text-[9px]">
+              Total
+            </span>
+            <span className={`${amount_class} block max-w-full truncate`}>
+              {total_label}
+            </span>
+          </div>
+        </div>
+      </div>
+      <ul
+        className="legend w-full max-w-full shrink-0 space-y-1.5 self-center sm:max-w-[13.5rem] lg:max-w-[12rem] lg:self-center lg:overflow-y-auto"
+        aria-label="Account spending legend"
+      >
+        {rows.map((row, i) => (
+          <li
+            key={row.id}
+            className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-2 text-[11px] md:text-xs"
+          >
+            <span
+              className="inline-block h-2 w-2 shrink-0 rounded-[1px]"
+              style={{
+                backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+              }}
+              aria-hidden
+            />
+            <span className="truncate font-medium text-zyfn-ink" title={row.label}>
+              {row.label}
+            </span>
+            <span className="shrink-0 font-semibold tabular-nums text-zyfn-ink">
+              {format_rm(row.amount_sen)}
+            </span>
+            <span className="w-9 shrink-0 text-right tabular-nums text-zyfn-muted">
+              {row.pct.toFixed(0)}%
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 export function SpendingBreakdownCard({
@@ -68,14 +186,14 @@ export function SpendingBreakdownCard({
     "flex",
     "min-h-0",
     "flex-col",
-    "gap-3",
     "px-4",
     "pb-3",
+    "pt-1",
     "md:px-5",
     "md:pb-4",
   ];
   if (column_fill && content_sized) {
-    body_parts.push("lg:flex-1", "lg:justify-center", "lg:overflow-y-auto");
+    body_parts.push("lg:flex-1", "lg:min-h-0", "lg:overflow-hidden");
   }
 
   return (
@@ -92,49 +210,8 @@ export function SpendingBreakdownCard({
         </p>
       ) : (
         <>
-          <div className={body_parts.join(" ")}>
-            <div className="spending-donut-layout flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
-              <div
-                className="spending-donut relative h-[112px] w-[112px] shrink-0 rounded-full lg:h-[124px] lg:w-[124px]"
-                style={{ background: donut_gradient(rows) }}
-                role="img"
-                aria-label={`Donut chart of spending by account, total ${format_rm(total_sen)}`}
-              >
-                <div className="absolute inset-[30%] flex flex-col items-center justify-center rounded-full border border-[#e8ecf0] bg-white text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8)]">
-                  <span className="text-[9px] font-medium uppercase tracking-wide text-zyfn-muted lg:text-[10px]">
-                    Total
-                  </span>
-                  <span className="text-[11px] font-semibold tabular-nums text-zyfn-ink lg:text-xs">
-                    {format_rm(total_sen)}
-                  </span>
-                </div>
-              </div>
-              <ul
-                className="legend w-full min-w-0 flex-1 space-y-1.5 sm:max-h-[min(140px,100%)] sm:overflow-y-auto"
-                aria-label="Account spending legend"
-              >
-                {rows.map((row, i) => (
-                  <li
-                    key={row.id}
-                    className="flex items-center gap-2 text-xs md:text-sm"
-                  >
-                    <span
-                      className="inline-block h-2 w-2 shrink-0 rounded-[1px]"
-                      style={{
-                        backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
-                      }}
-                      aria-hidden
-                    />
-                    <span className="min-w-0 flex-1 truncate font-medium text-zyfn-ink">
-                      {row.label}
-                    </span>
-                    <span className="shrink-0 font-semibold tabular-nums text-zyfn-ink">
-                      {format_rm(row.amount_sen)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className={`${body_parts.join(" ")} flex min-h-0 flex-1 flex-col`}>
+            <SpendingDonutPanel rows={rows} total_sen={total_sen} />
           </div>
           <div
             className={`flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 text-sm ${
