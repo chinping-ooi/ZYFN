@@ -28,6 +28,8 @@ const pagination_icon_btn =
 const LEDGER_CELL_DIVIDER =
   "border-0 border-r border-b border-slate-200 last:border-r-0";
 
+const LEDGER_HEAD_CELL = `${LEDGER_CELL_DIVIDER} sticky top-0 z-10 bg-[#edf0f4] shadow-[inset_0_-1px_0_0_#e2e8f0]`;
+
 type Props<T extends Record<string, unknown>> = {
   label: string;
   scope: string;
@@ -161,14 +163,14 @@ export function DataTable<T extends Record<string, unknown>>({
             : "max-h-[min(70vh,560px)]"
         }`}
       >
-        <div className="overflow-hidden rounded-[3px] border border-zyfn-line">
+        <div className="rounded-[3px] border border-zyfn-line">
           <table
             className={`ledger-grid-table w-full min-w-[520px] border-collapse sm:min-w-[720px] ${
               table_layout === "fixed" ? "table-fixed" : "table-auto"
             }`}
             aria-label={label}
           >
-          <thead className="sticky top-0 z-[1] bg-[#edf0f4]">
+          <thead>
             <tr>
               {safe_columns.map((column) => {
                 const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
@@ -183,7 +185,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     key={column.key}
                     scope="col"
                     aria-sort={sort === "none" ? undefined : sort}
-                    className={`${LEDGER_CELL_DIVIDER} bg-[#edf0f4] p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${
+                    className={`${LEDGER_HEAD_CELL} p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${
                       numeric ? "text-right" : "text-left"
                     }`}
                   >
