@@ -3,7 +3,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
 import { chart_window, snapshot_for_month } from "@/lib/dashboard/metrics";
-import { spending_transactions_for_month } from "@/lib/dashboard/spending_breakdown";
+import { spending_breakdown_for_month } from "@/lib/dashboard/spending_breakdown";
 import { dashboard_account_balances } from "@/lib/dashboard/dashboard_balances";
 import { compute_spending_change } from "@/lib/spending_change";
 import { format_rm, major_to_minor } from "@/lib/money";
@@ -75,7 +75,7 @@ export function DashboardView({
   );
 
   const spending_rows = useMemo(
-    () => spending_transactions_for_month(statements, month),
+    () => spending_breakdown_for_month(statements, month),
     [statements, month],
   );
 
