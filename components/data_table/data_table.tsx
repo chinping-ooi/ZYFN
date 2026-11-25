@@ -6,9 +6,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Download,
-  Search,
-  X,
 } from "lucide-react";
 import type { DataTableColumn, SortDirection } from "@/components/data_table/types";
 import {
@@ -116,43 +113,23 @@ export function DataTable<T extends Record<string, unknown>>({
   const body_pad = inset ? "px-4" : "px-0";
 
   const toolbar = (
-    <div className="flex w-full flex-col gap-2 sm:h-9 sm:flex-row sm:items-center sm:justify-between">
-      <div className="relative w-full sm:w-[280px] sm:shrink-0">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-zyfn-muted"
-          aria-hidden
-        />
-        <input
-          type="search"
-          aria-label={`Search ${label}`}
-          placeholder="Search transactions…"
-          className={`h-9 w-full rounded-md border ${TABLE_CONTROL_BORDER} bg-white py-0 pr-9 pl-9 text-sm text-zyfn-ink`}
-          value={search}
-          onChange={(e) => {
-            set_search(e.target.value);
-            set_page(1);
-          }}
-        />
-        {search ? (
-          <button
-            type="button"
-            className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-zyfn-muted hover:text-zyfn-ink"
-            aria-label="Clear search"
-            onClick={() => {
-              set_search("");
-              set_page(1);
-            }}
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-        ) : null}
-      </div>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <input
+        type="search"
+        aria-label={`Search ${label}`}
+        placeholder="Search all columns"
+        className="h-9 w-full rounded-[3px] border border-[#b8c2cf] px-3 text-sm text-zyfn-ink sm:max-w-[min(100%,320px)] sm:flex-1"
+        value={search}
+        onChange={(e) => {
+          set_search(e.target.value);
+          set_page(1);
+        }}
+      />
       <button
         type="button"
-        className={`page-btn h-9 w-full gap-1.5 rounded-md border ${TABLE_CONTROL_BORDER} sm:ml-auto sm:w-auto`}
+        className="page-btn w-full sm:w-auto sm:shrink-0"
         onClick={() => set_export_open(true)}
       >
-        <Download className="size-4 shrink-0" aria-hidden />
         Export
       </button>
     </div>
