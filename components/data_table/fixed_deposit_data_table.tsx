@@ -12,6 +12,7 @@ type Props = {
   rows: FixedDepositDataRow[];
   show_bank?: boolean;
   export_account_label?: string;
+  loading?: boolean;
 };
 
 export function FixedDepositDataTable({
@@ -20,6 +21,7 @@ export function FixedDepositDataTable({
   rows,
   show_bank = false,
   export_account_label,
+  loading,
 }: Props) {
   return (
     <DataTable<FixedDepositDataRow>
@@ -31,6 +33,9 @@ export function FixedDepositDataTable({
       empty_period_message="No fixed deposits in this view."
       inset={false}
       export_account_label={export_account_label}
+      loading={loading}
+      skeleton_variant="fixed_deposit"
+      skeleton_show_bank={show_bank}
     />
   );
 }

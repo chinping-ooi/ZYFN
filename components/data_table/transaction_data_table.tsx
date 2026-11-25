@@ -15,6 +15,7 @@ export type TransactionDataTableProps = {
   empty_period_message?: string;
   fill_height?: boolean;
   export_account_label?: string;
+  loading?: boolean;
 };
 
 /** Single table implementation for all institution transaction pages. */
@@ -26,6 +27,7 @@ export function TransactionDataTable({
   empty_period_message,
   fill_height = false,
   export_account_label,
+  loading,
 }: TransactionDataTableProps) {
   return (
     <DataTable<TransactionTableRow>
@@ -38,6 +40,8 @@ export function TransactionDataTable({
       fill_height={fill_height}
       inset={!fill_height}
       export_account_label={export_account_label}
+      loading={loading}
+      skeleton_variant="transaction"
     />
   );
 }

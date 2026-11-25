@@ -14,6 +14,10 @@ import {
 } from "@/components/data_table/column_layout";
 import { compare_rows, display_cell } from "@/components/data_table/display";
 import { ExportDialog } from "@/components/data_table/export_dialog";
+import {
+  DataTableSkeleton,
+  type DataTableSkeletonVariant,
+} from "@/components/data_table/data_table_skeleton";
 import { TableSelect } from "@/components/data_table/table_select";
 import { StatusBadge } from "@/components/status_badge";
 
@@ -46,6 +50,9 @@ type Props<T extends Record<string, unknown>> = {
   fill_height?: boolean;
   /** Slug source for Excel filename (defaults to `label`). */
   export_account_label?: string;
+  loading?: boolean;
+  skeleton_variant?: DataTableSkeletonVariant;
+  skeleton_show_bank?: boolean;
 };
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -60,6 +67,9 @@ export function DataTable<T extends Record<string, unknown>>({
   table_layout = "fixed",
   fill_height = false,
   export_account_label,
+  loading = false,
+  skeleton_variant = "transaction",
+  skeleton_show_bank = false,
 }: Props<T>) {
   void scope;
   const safe_columns = columns ?? EMPTY_COLUMNS;
@@ -146,6 +156,16 @@ export function DataTable<T extends Record<string, unknown>>({
       </button>
     </div>
   );
+
+  if (loading) {
+    return (
+      <DataTableSkeleton
+        variant={skeleton_variant}
+        fill_height={fill_height}
+        show_bank_column={skeleton_show_bank}
+      />
+    );
+  }
 
   if (labeled_columns.length === 0) {
     return (
