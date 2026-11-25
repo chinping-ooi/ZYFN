@@ -26,7 +26,7 @@ const SEGMENT_COLORS = [
   "#0ea5e9",
 ];
 
-const DONUT_PX = 200;
+const DONUT_PX = 250;
 const MIN_SLICE_PCT = 3;
 
 /** Chart arc weights: each slice at least MIN_SLICE_PCT, renormalised to 100%. */
@@ -39,9 +39,9 @@ function chart_display_majors(rows: SpendingAccountRow[], total_sen: number): nu
 
 function center_amount_class(total_label: string): string {
   if (total_label.length > 15) {
-    return "text-[17px] font-bold tabular-nums leading-tight text-zyfn-ink";
+    return "text-[20px] font-bold tabular-nums leading-tight text-zyfn-ink";
   }
-  return "text-[19px] font-bold tabular-nums leading-tight text-zyfn-ink md:text-xl";
+  return "text-[22px] font-bold tabular-nums leading-tight text-zyfn-ink md:text-2xl";
 }
 
 function SpendingDonutPanel({
