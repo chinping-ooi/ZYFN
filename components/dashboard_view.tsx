@@ -139,7 +139,8 @@ export function DashboardView({
       </section>
 
       {metrics.monthly.length > 0 ? (
-        <div className="middle mb-5 grid grid-cols-1 items-start gap-[18px] xl:grid-cols-[minmax(0,1.5fr)_minmax(330px,1fr)]">
+        <div className="middle mb-5 grid grid-cols-1 items-start gap-[18px] xl:grid-cols-[minmax(0,1.5fr)_minmax(330px,1fr)] xl:items-start">
+          <div className="min-h-0 w-full self-start">
           <CashFlowChart
             labels={chart_labels}
             income_sen={chart.map((m) => m.income_sen)}
@@ -148,7 +149,8 @@ export function DashboardView({
             monthly_income_sen={snapshot?.income_sen ?? 0}
             monthly_spending_sen={snapshot?.spending_sen ?? 0}
           />
-          <div className="flex min-w-0 flex-col gap-[18px]">
+          </div>
+          <div className="flex min-h-0 min-w-0 w-full flex-col gap-[18px] self-start">
             <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
               <CardHead
                 title="Account balances"

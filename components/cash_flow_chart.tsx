@@ -59,7 +59,7 @@ export function CashFlowChart({
       <div className="px-5 pt-5 pb-4">
         <div className="plot flex h-[190px] gap-3" role="img" aria-label={aria_label}>
           <div
-            className="flex min-w-[3.25rem] shrink-0 flex-col justify-between pb-[22px] text-[11px] text-zyfn-muted"
+            className="flex min-w-[4.25rem] shrink-0 flex-col justify-between pb-[22px] text-[11px] leading-none text-zyfn-muted"
             aria-hidden
           >
             {y_labels.map((label) => (

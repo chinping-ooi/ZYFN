@@ -29,10 +29,11 @@ export function axis_labels(max_sen: number): string[] {
 
 function format_axis_tick(sen: number): string {
   const major = sen / 100;
+  const unit = (value: string) => `RM\u00a0${value}`;
   if (major >= 1000) {
     const k = major / 1000;
-    return k % 1 === 0 ? `RM ${k}k` : `RM ${k.toFixed(1)}k`;
+    return k % 1 === 0 ? unit(`${k}k`) : unit(`${k.toFixed(1)}k`);
   }
   if (major === 0) return "0";
-  return `RM ${Math.round(major)}`;
+  return unit(String(Math.round(major)));
 }

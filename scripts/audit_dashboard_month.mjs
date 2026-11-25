@@ -5,7 +5,7 @@
  */
 import { load_dashboard } from "../lib/dashboard/load_dashboard.ts";
 import { audit_month_income } from "../lib/dashboard/month_income_audit.ts";
-import { snapshot_for_month, type MonthKey } from "../lib/dashboard/metrics.ts";
+import { snapshot_for_month } from "../lib/dashboard/metrics.ts";
 
 const month = (process.argv[2] ?? "2026-11").trim();
 
@@ -15,8 +15,8 @@ if (result.kind !== "data") {
   process.exit(1);
 }
 
-const snapshot = snapshot_for_month(result.metrics, month as MonthKey);
-const lines = audit_month_income(result.statements, month as MonthKey);
+const snapshot = snapshot_for_month(result.metrics, month);
+const lines = audit_month_income(result.statements, month);
 
 const included_sen = lines
   .filter((l) => l.included)

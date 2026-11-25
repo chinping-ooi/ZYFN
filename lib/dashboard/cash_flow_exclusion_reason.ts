@@ -23,7 +23,6 @@ export function cash_flow_exclusion_reason(
   if (has_fixed_deposit_link(row.fixed_deposit_id)) return "fixed_deposit_id";
 
   if (has_pair_ref(row.pair_ref)) return "pair_ref";
-  if (type === "transfer") return "transfer";
 
   if (
     type === "card_payment" ||

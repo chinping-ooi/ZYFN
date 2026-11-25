@@ -15,7 +15,8 @@ export type CashFlowExclusionInput = {
  * Rules (any match → excluded):
  * - Fixed deposit: `txn_type` is `fd_placement` or `fd_withdrawal`, starts with `fd_`,
  *   or `fixed_deposit_id` is set.
- * - Own-account movement: `txn_type` is `transfer`, or `pair_ref` is set (paired leg).
+ * - Own-account movement: `pair_ref` is set (paired leg). Unpaired `transfer` rows
+ *   still count (e.g. incoming salary mis-tagged as transfer).
  * - Card funding from savings: `txn_type` is `card_payment`, `cc_payment`, or
  *   `credit_card_payment` (avoids treating bill pay as merchant spending).
  */
