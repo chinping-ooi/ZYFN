@@ -1,0 +1,17 @@
+import { AppShell } from "@/components/app_shell";
+import { SupabaseTransactionPage } from "@/components/supabase_transaction_page";
+import { PBE_SAVINGS_ACCOUNT } from "@/lib/transactions/account_config";
+
+export const dynamic = "force-dynamic";
+
+export default async function PublicBankSavingsPage() {
+  return (
+    <AppShell
+      title="Public Bank Savings"
+      description="Savings account · Supabase"
+      footer_note="public.zyfn_transactions · account_id 1 · MYR"
+    >
+      <SupabaseTransactionPage config={PBE_SAVINGS_ACCOUNT} />
+    </AppShell>
+  );
+}

@@ -19,6 +19,13 @@ export const HLB_ACCOUNT: TransactionAccountConfig = {
   kind: "bank",
 };
 
+export const PBE_SAVINGS_ACCOUNT: TransactionAccountConfig = {
+  account_ref: "PBE_SAVINGS",
+  account_label: "Public Bank Savings",
+  account_id: 1,
+  kind: "bank",
+};
+
 export const MBB_SAVINGS_ACCOUNT: TransactionAccountConfig = {
   account_ref: "MBB_SAVINGS",
   account_label: "Maybank Savings",
@@ -37,6 +44,20 @@ export const MBB_AMEX_ACCOUNT: TransactionAccountConfig = {
   account_ref: "MBB_AMEX_8060",
   account_label: "MBB Amex 8060",
   account_id: 9,
+  kind: "credit_card",
+};
+
+export const PBE_VISA_4104_ACCOUNT: TransactionAccountConfig = {
+  account_ref: "PBE_VISA_4104",
+  account_label: "Public Bank Visa Gold 4104",
+  account_id: 6,
+  kind: "credit_card",
+};
+
+export const PBE_MASTERCARD_6357_ACCOUNT: TransactionAccountConfig = {
+  account_ref: "PBE_MASTERCARD_6357",
+  account_label: "Public Bank Quantum MasterCard 6357",
+  account_id: 7,
   kind: "credit_card",
 };
 

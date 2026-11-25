@@ -98,7 +98,7 @@ function SidebarPanel({
         ))}
       </nav>
       <footer className="shrink-0 border-t border-[#38465a] px-6 py-3 text-xs leading-5 text-[#aeb8c6]">
-        Transaction.xlsx · HLB & PBE
+        Supabase · read-only ledger
       </footer>
     </>
   );

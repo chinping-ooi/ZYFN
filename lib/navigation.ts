@@ -42,8 +42,8 @@ const BASE_NAV_GROUPS: NavGroup[] = [
     title: "Transactions",
     defaultOpen: true,
     items: [
+      { href: "/transactions/pbe", label: "Public Bank Savings" },
       { href: "/transactions/maybank", label: "Maybank Savings" },
-      { href: "/transactions/public-bank", label: "Public Bank" },
       { href: "/transactions/hong-leong-bank", label: "Hong Leong Bank" },
     ],
   },
@@ -53,6 +53,11 @@ const BASE_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/credit-cards/mbb-visa-1697", label: "MBB Visa 1697" },
       { href: "/credit-cards/mbb-amex-8060", label: "MBB Amex 8060" },
+      { href: "/credit-cards/pbe-visa-4104", label: "PBE Visa 4104" },
+      {
+        href: "/credit-cards/pbe-mastercard-6357",
+        label: "PBE Quantum MC 6357",
+      },
     ],
   },
   {
@@ -61,7 +66,6 @@ const BASE_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/transactions/tng-ewallet", label: "TNG eWallet" },
       { href: "/transactions/tng-go-plus", label: "TNG GO+" },
-      { href: "/wallets/tng", label: "TNG (data.txt)" },
     ],
   },
   {
