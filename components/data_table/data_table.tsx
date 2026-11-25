@@ -28,6 +28,9 @@ const TABLE_CONTROL_BORDER = "border-[#b8c2cf]";
 const pagination_icon_btn =
   `inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] border ${TABLE_CONTROL_BORDER} bg-white text-zyfn-ink hover:bg-[#f8f9fb] disabled:cursor-default disabled:border-[#dce1e7] disabled:bg-[#f5f6f8] disabled:text-[#929baa]`;
 
+const LEDGER_CELL_DIVIDER =
+  "border-0 border-r border-b border-slate-200 last:border-r-0";
+
 type Props<T extends Record<string, unknown>> = {
   label: string;
   scope: string;
@@ -110,6 +113,8 @@ export function DataTable<T extends Record<string, unknown>>({
     set_page(1);
   }
 
+  const body_pad = inset ? "px-4" : "px-0";
+
   const toolbar = (
     <div className="flex w-full flex-col gap-2 sm:h-9 sm:flex-row sm:items-center sm:justify-between">
       <div className="relative w-full sm:w-[280px] sm:shrink-0">
@@ -163,26 +168,29 @@ export function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div
-      className={`flex w-full flex-col gap-3 ${
+      className={`flex w-full flex-col ${
         fill_height ? "min-h-0 flex-1" : "min-h-0"
       }`}
     >
       {!toolbar_in_header ? (
-        <div className="shrink-0">{toolbar}</div>
+        <div className={`data-table-toolbar shrink-0 pt-4 pb-3 ${body_pad}`}>
+          {toolbar}
+        </div>
       ) : null}
       <div
-        className={`min-h-0 overflow-auto overscroll-contain ${
+        className={`min-h-0 overflow-auto overscroll-contain ${body_pad} ${
           fill_height
             ? "flex-1"
             : "max-h-[min(70vh,560px)]"
-        } ${inset ? "" : ""}`}
+        }`}
       >
-        <table
-          className={`ledger-grid-table w-full min-w-[520px] border-collapse border border-zyfn-line sm:min-w-[720px] ${
-            table_layout === "fixed" ? "table-fixed" : "table-auto"
-          }`}
-          aria-label={label}
-        >
+        <div className="overflow-hidden rounded-[3px] border border-zyfn-line">
+          <table
+            className={`ledger-grid-table w-full min-w-[520px] border-collapse sm:min-w-[720px] ${
+              table_layout === "fixed" ? "table-fixed" : "table-auto"
+            }`}
+            aria-label={label}
+          >
           <thead className="sticky top-0 z-[1] bg-[#edf0f4]">
             <tr>
               {safe_columns.map((column) => {
@@ -198,7 +206,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     key={column.key}
                     scope="col"
                     aria-sort={sort === "none" ? undefined : sort}
-                    className={`border border-zyfn-line bg-[#edf0f4] p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${
+                    className={`${LEDGER_CELL_DIVIDER} bg-[#edf0f4] p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${
                       numeric ? "text-right" : "text-left"
                     }`}
                   >
@@ -224,7 +232,7 @@ export function DataTable<T extends Record<string, unknown>>({
             {visible.map((row, index) => (
               <tr
                 key={index}
-                className="even:bg-[#fafbfc] hover:bg-[#f0f3f7]"
+                className="even:bg-[#fafbfc] hover:bg-[#f0f3f7] last:[&>td]:border-b-0"
               >
                 {safe_columns.map((column) => {
                   const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
@@ -238,7 +246,7 @@ export function DataTable<T extends Record<string, unknown>>({
                       title={
                         column.key === "description" ? String(text) : undefined
                       }
-                      className={`border border-zyfn-line px-[13px] py-[11px] text-sm ${
+                      className={`${LEDGER_CELL_DIVIDER} px-[13px] py-[11px] text-sm ${
                         numeric ? "text-right" : "text-left"
                       } ${column_cell_class(column)}`}
                     >
@@ -256,7 +264,7 @@ export function DataTable<T extends Record<string, unknown>>({
               <tr>
                 <td
                   colSpan={Math.max(safe_columns.length, 1)}
-                  className="border border-zyfn-line px-[13px] py-[30px] text-center text-zyfn-muted"
+                  className={`${LEDGER_CELL_DIVIDER} px-[13px] py-[30px] text-center text-zyfn-muted`}
                 >
                   {safe_rows.length
                     ? "No matching records."
@@ -265,9 +273,12 @@ export function DataTable<T extends Record<string, unknown>>({
               </tr>
             ) : null}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
-      <div className="data-table-footer flex shrink-0 flex-wrap items-center justify-between gap-2 text-[13px] text-zyfn-muted">
+      <div
+        className={`data-table-footer flex shrink-0 flex-wrap items-center justify-between gap-2 pt-3 pb-1 text-[13px] text-zyfn-muted ${body_pad}`}
+      >
         <span role="status" className="leading-8">
           {filtered.length
             ? `${start + 1}–${start + visible.length} of ${filtered.length} records`

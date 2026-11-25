@@ -61,15 +61,6 @@
     border-collapse: collapse;
   }
 
-  .ledger-grid-table th,
-  .ledger-grid-table td {
-    border: 1px solid var(--line);
-  }
-
-  .ledger-grid-table thead th {
-    border-bottom: 1px solid var(--line);
-  }
-
   .dashboard-main {
     --dash-gap: 16px;
     gap: var(--dash-gap);
