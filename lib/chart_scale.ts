@@ -17,14 +17,18 @@ export function chart_axis_max(values_sen: number[]): number {
   return Math.round(axis_major * 100);
 }
 
-export function axis_labels(max_sen: number): string[] {
-  const steps = 4;
+export function axis_labels(max_sen: number, steps = 4): string[] {
   const labels: string[] = [];
   for (let i = steps; i >= 0; i--) {
     const value = (max_sen / steps) * i;
     labels.push(format_axis_tick(value));
   }
   return labels;
+}
+
+/** Three ticks (max, mid, 0) for compact dashboard plots. */
+export function axis_labels_compact(max_sen: number): string[] {
+  return axis_labels(max_sen, 2);
 }
 
 function format_axis_tick(sen: number): string {

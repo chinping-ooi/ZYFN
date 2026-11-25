@@ -15,7 +15,7 @@ export function PageToolbar({
   return (
     <div
       className={`flex flex-wrap items-center justify-between gap-3 ${
-        dense ? "mb-3 lg:mb-2" : "mb-5"
+        dense ? "mb-2 lg:mb-1.5" : "mb-5"
       }`}
     >
       <div>

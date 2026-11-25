@@ -175,8 +175,8 @@ export function DashboardView({
       </div>
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-2 flex min-h-0 flex-col gap-4 lg:mt-2 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-4">
-          <div className="flex min-h-0 min-w-0 flex-col gap-4 lg:h-full lg:min-h-0 lg:flex-[3] lg:gap-4">
+        <div className="dashboard-layout mt-1 flex min-h-0 flex-col gap-4 pb-0 lg:mt-1 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-2 lg:pb-1">
+          <div className="flex min-h-0 min-w-0 flex-col gap-4 lg:h-full lg:min-h-0 lg:flex-[3] lg:gap-2">
             {kpi_pair}
             <SpendingBreakdownCard
               content_sized
@@ -193,7 +193,7 @@ export function DashboardView({
               />
             </div>
           </div>
-          <div className="hidden min-h-0 min-w-0 flex-col gap-4 lg:flex lg:h-full lg:min-h-0 lg:flex-[2] lg:gap-4">
+          <div className="hidden min-h-0 min-w-0 flex-col gap-2 lg:flex lg:h-full lg:min-h-0 lg:flex-[2]">
             <CashFlowChart {...chart_props} />
             <DashboardAccountBalancesCard
               column_fill

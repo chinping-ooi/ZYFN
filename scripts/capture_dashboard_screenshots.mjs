@@ -80,13 +80,22 @@ async function verifyDashboard(page, vp) {
     const balCardBottom = balSection?.getBoundingClientRect().bottom ?? 0;
     const balList = balSection?.querySelector(".balance-rows");
 
-    const chartFooter = [...document.querySelectorAll("section")].find(
-      (s) =>
-        s.textContent?.includes("Monthly cash flow") &&
-        s.textContent?.includes("Monthly income") &&
-        s.offsetParent !== null,
+    const visiblePlot = [...document.querySelectorAll(".plot")].find(
+      (p) => p.offsetParent !== null,
     );
-    const chartFootEl = chartFooter?.querySelector(".border-t.border-zyfn-line");
+    const chartFootEl = [...document.querySelectorAll(".chart-summary-footer")].find(
+      (el) => el.offsetParent !== null,
+    );
+    const yAxis = visiblePlot?.querySelector(":scope > div:first-child");
+    const yRects = yAxis
+      ? [...yAxis.querySelectorAll("span")].map((s) => s.getBoundingClientRect())
+      : [];
+    let yOverlap = false;
+    for (let i = 1; i < yRects.length; i++) {
+      if (yRects[i - 1].bottom > yRects[i].top + 1) yOverlap = true;
+    }
+    const plotEl = visiblePlot;
+    const plotH = plotEl?.getBoundingClientRect().height ?? 0;
 
     const fdRow = balList
       ? [...balList.children].find((c) => c.textContent?.includes("Fixed deposits"))
@@ -101,6 +110,11 @@ async function verifyDashboard(page, vp) {
       spendTotalBottom: spendTotal?.getBoundingClientRect().bottom ?? 0,
       spendTotalTop: spendTotal?.getBoundingClientRect().top ?? 0,
       chartFootBottom: chartFootEl?.getBoundingClientRect().bottom ?? 0,
+      chartFootHeight: chartFootEl?.getBoundingClientRect().height ?? 0,
+      chartFootVisible: chartFootEl != null && chartFootEl.offsetParent !== null,
+      yOverlap,
+      yTickCount: yRects.length,
+      plotH,
       balCardBottom,
       fdRowBottom: fdRow?.getBoundingClientRect().bottom ?? 0,
       fdInBalList: fdRow != null,
@@ -116,7 +130,7 @@ async function verifyDashboard(page, vp) {
       twoCol:
         layout && window.getComputedStyle(layout).flexDirection === "row",
     };
-  }, vp.lg);
+  });
 
   if (vp.lg) {
     if (m.mainOverflowY !== "hidden") {
@@ -143,8 +157,25 @@ async function verifyDashboard(page, vp) {
     if (m.spendTotalBottom > m.footerTop + 2 || m.spendTotalTop < 80) {
       issues.push(`${vp.name}: spending Total not pinned in viewport`);
     }
-    if (m.chartFootBottom > m.footerTop + 2 && m.chartFootBottom > 0) {
+    if (!m.chartFootVisible || m.chartFootHeight < 8) {
+      issues.push(`${vp.name}: chart footer missing or collapsed`);
+    }
+    if (m.chartFootBottom > m.footerTop + 2) {
       issues.push(`${vp.name}: chart footer below workspace footer`);
+    }
+    if (m.yOverlap) {
+      issues.push(`${vp.name}: y-axis labels overlap`);
+    }
+    if (vp.lg && m.yTickCount > 3) {
+      issues.push(`${vp.name}: expected 3 y-axis ticks on dashboard chart, saw ${m.yTickCount}`);
+    }
+    if (vp.lg && m.plotH > 0 && m.plotH < 115) {
+      issues.push(`${vp.name}: plot too short (${Math.round(m.plotH)}px)`);
+    }
+    if (m.spendTotalBottom > m.footerTop - 4) {
+      issues.push(
+        `${vp.name}: spending Total touches footer (bottom ${Math.round(m.spendTotalBottom)} vs footer ${Math.round(m.footerTop)})`,
+      );
     }
     if (m.fdRowBottom > m.footerTop + 2) {
       if (!m.balListScrollable || m.balListOverflow !== "auto") {
