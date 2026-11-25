@@ -1,0 +1,49 @@
+/**
+ * Browser-only PDF text extraction. Uses pdfjs-dist; optional tesseract.js OCR
+ * when a page has no text layer. No third-party network APIs.
+ */
+export async function extract_pdf_text_local(
+  buffer: ArrayBuffer,
+): Promise<{ text: string; ocr_pages: number }> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+    import.meta.url,
+  ).toString();
+
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+  let ocr_pages = 0;
+  const parts: string[] = [];
+
+  for (let page_num = 1; page_num <= doc.numPages; page_num++) {
+    const page = await doc.getPage(page_num);
+    const content = await page.getTextContent();
+    const page_text = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ")
+      .trim();
+    if (page_text.length > 20) {
+      parts.push(page_text);
+      continue;
+    }
+    ocr_pages += 1;
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) continue;
+    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/png"),
+    );
+    if (!blob) continue;
+    const { createWorker } = await import("tesseract.js");
+    const worker = await createWorker("eng");
+    const { data } = await worker.recognize(blob);
+    await worker.terminate();
+    if (data.text?.trim()) parts.push(data.text.trim());
+  }
+
+  return { text: parts.join("\n"), ocr_pages };
+}

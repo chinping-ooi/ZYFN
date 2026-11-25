@@ -10,7 +10,8 @@
     "smoke:routes": "node scripts/smoke_dev_routes.mjs",
     "report:tng-parse": "npx tsx scripts/report_tng_parse.mjs",
     "smoke:tng-client-parse": "npx tsx scripts/smoke_tng_client_parse.mjs",
-    "audit:dashboard-month": "npx tsx scripts/audit_dashboard_month.mjs"
+    "audit:dashboard-month": "npx tsx scripts/audit_dashboard_month.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",
@@ -18,9 +19,11 @@
     "exceljs": "^4.4.0",
     "lucide-react": "^1.80.0",
     "next": "^16.0.3",
+    "pdfjs-dist": "^5.4.296",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
@@ -30,6 +33,7 @@
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.3",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }
