@@ -33,8 +33,6 @@ const routes = [
 
 const must_include = {
   "/transactions/hong-leong-bank": "Search all columns",
-  "/transactions/public-bank": "Search all columns",
-  "/wallets/tng": "Read from this device",
   "/fixed-deposits": "Deposit register",
   "/fixed-deposits/maybank": "Deposit register",
 };
