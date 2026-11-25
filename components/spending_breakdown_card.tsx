@@ -93,14 +93,14 @@ export function SpendingBreakdownCard({
       ) : (
         <>
           <div className={body_parts.join(" ")}>
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="spending-donut-layout flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
               <div
-                className="relative h-[108px] w-[108px] shrink-0 rounded-full lg:h-[120px] lg:w-[120px]"
+                className="spending-donut relative h-[112px] w-[112px] shrink-0 rounded-full lg:h-[124px] lg:w-[124px]"
                 style={{ background: donut_gradient(rows) }}
                 role="img"
-                aria-label={`Spending share by account, total ${format_rm(total_sen)}`}
+                aria-label={`Donut chart of spending by account, total ${format_rm(total_sen)}`}
               >
-                <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-white text-center">
+                <div className="absolute inset-[30%] flex flex-col items-center justify-center rounded-full border border-[#e8ecf0] bg-white text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8)]">
                   <span className="text-[9px] font-medium uppercase tracking-wide text-zyfn-muted lg:text-[10px]">
                     Total
                   </span>

@@ -244,6 +244,11 @@ async function verifyDashboard(page, vp) {
   }
   if (!m.chartFootVisible) issues.push(`${vp.name}: chart footer not visible`);
 
+  const hasDonut = await page.locator(".spending-donut").count();
+  if (hasDonut !== 1) {
+    issues.push(`${vp.name}: expected 1 spending donut chart, saw ${hasDonut}`);
+  }
+
   return { issues, gaps: m };
 }
 
