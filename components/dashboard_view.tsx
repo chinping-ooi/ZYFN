@@ -59,7 +59,7 @@ function dashboard_kpi_pair({
 }) {
   return (
     <div
-      className="grid grid-cols-1 items-start gap-5 md:grid-cols-2"
+      className="grid shrink-0 grid-cols-1 items-start gap-5 md:grid-cols-2"
       aria-label="Monthly financial summary"
     >
       <KpiCard
@@ -161,28 +161,30 @@ export function DashboardView({
       />
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-5 grid max-h-[760px] grid-cols-1 gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:items-start">
-          <div className="min-w-0 md:col-start-1 md:row-start-1">{kpi_pair}</div>
-          <SpendingBreakdownCard
-            content_sized
-            className="min-w-0 md:col-start-1 md:row-start-2"
-            rows={spending_rows}
-            month_label={month_label}
-          />
-          <CashFlowChart
-            className="min-w-0 shrink-0 md:col-start-2 md:row-start-1"
-            fill_height
-            labels={chart_labels}
-            income_sen={chart.map((m) => m.income_sen)}
-            spending_sen={chart.map((m) => m.spending_sen)}
-            period_note={chart_period}
-            monthly_income_sen={income_sen}
-            monthly_spending_sen={spending_sen}
-          />
-          <DashboardAccountBalancesCard
-            className="min-w-0 md:col-start-2 md:row-start-2"
-            rows={balance_rows}
-          />
+        <div className="dashboard-layout mt-5 flex max-h-[min(760px,calc(100vh-11rem))] flex-col gap-5 md:flex-row md:items-stretch">
+          <div className="flex min-h-0 min-w-0 flex-col gap-5 md:flex-[3] md:min-h-0">
+            {kpi_pair}
+            <SpendingBreakdownCard
+              column_fill
+              content_sized
+              className="min-h-0 md:flex-1"
+              rows={spending_rows.length > 0 ? spending_rows : []}
+              month_label={month_label}
+            />
+          </div>
+          <div className="flex min-h-0 min-w-0 flex-col gap-5 md:flex-[2] md:self-stretch">
+            <CashFlowChart
+              className="w-full shrink-0"
+              fill_height
+              labels={chart_labels}
+              income_sen={chart.map((m) => m.income_sen)}
+              spending_sen={chart.map((m) => m.spending_sen)}
+              period_note={chart_period}
+              monthly_income_sen={income_sen}
+              monthly_spending_sen={spending_sen}
+            />
+            <DashboardAccountBalancesCard className="shrink-0" rows={balance_rows} />
+          </div>
         </div>
       ) : (
         <div className="mt-5 shrink-0">{kpi_pair}</div>

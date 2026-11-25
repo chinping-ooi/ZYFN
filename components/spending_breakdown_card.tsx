@@ -8,25 +8,49 @@ export function SpendingBreakdownCard({
   month_label,
   className = "",
   content_sized = false,
+  column_fill = false,
 }: {
   rows: SpendingAccountRow[];
   month_label: string;
   className?: string;
-  /** Dashboard: h-fit with scroll after max list height. */
+  /** Dashboard: capped height with optional internal scroll. */
   content_sized?: boolean;
+  /** Grow within dashboard left column (flex-1) while keeping Total at card bottom. */
+  column_fill?: boolean;
 }) {
   const total_sen = spending_total_sen(rows);
 
-  const shell_class = content_sized
-    ? `card flex h-fit w-full max-h-[min(420px,55vh)] flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`
-    : `card flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
+  const shell_parts = [
+    "card",
+    "flex",
+    "w-full",
+    "flex-col",
+    "overflow-hidden",
+    "rounded-[3px]",
+    "border",
+    "border-zyfn-line",
+    "bg-white",
+  ];
 
-  const list_class = content_sized
-    ? "accounts max-h-[min(320px,42vh)] overflow-y-auto px-5"
-    : "accounts min-h-0 flex-1 overflow-y-auto px-5";
+  if (column_fill && content_sized) {
+    shell_parts.push("min-h-0", "h-full", "max-h-[min(480px,100%)]");
+  } else if (content_sized) {
+    shell_parts.push("h-fit", "max-h-[min(420px,55vh)]");
+  } else {
+    shell_parts.push("h-full", "min-h-0");
+  }
+
+  const list_parts = ["accounts", "px-5", "overflow-y-auto", "min-h-0"];
+  if (column_fill && content_sized) {
+    list_parts.push("flex-1");
+  } else if (content_sized) {
+    list_parts.push("max-h-[min(320px,42vh)]");
+  } else {
+    list_parts.push("flex-1");
+  }
 
   return (
-    <section className={shell_class}>
+    <section className={`${shell_parts.join(" ")} ${className}`}>
       <CardHead
         title="Spending breakdown"
         subtitle={`By account · ${month_label}`}
@@ -38,7 +62,7 @@ export function SpendingBreakdownCard({
         </p>
       ) : (
         <>
-          <div className={list_class}>
+          <div className={list_parts.join(" ")}>
             {rows.map((row) => (
               <div
                 key={row.id}
