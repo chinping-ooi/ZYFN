@@ -18,23 +18,20 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const SEGMENT_COLORS = [
   "#1e3a5f",
-  "#254670",
-  "#2c5282",
-  "#3d6a9c",
-  "#4a7e9e",
-  "#5a7fa8",
-  "#6b8fa8",
-  "#7a94b0",
+  "#14b8a6",
+  "#f59e0b",
+  "#f43f5e",
+  "#8b5cf6",
+  "#0ea5e9",
 ];
 
+const DONUT_PX = 220;
+
 function center_amount_class(total_label: string): string {
-  if (total_label.length > 16) {
-    return "text-[9px] font-semibold tabular-nums text-zyfn-ink leading-none";
+  if (total_label.length > 15) {
+    return "text-[17px] font-bold tabular-nums leading-tight text-zyfn-ink";
   }
-  if (total_label.length > 13) {
-    return "text-[10px] font-semibold tabular-nums text-zyfn-ink leading-tight";
-  }
-  return "text-[11px] font-semibold tabular-nums text-zyfn-ink md:text-xs";
+  return "text-[19px] font-bold tabular-nums leading-tight text-zyfn-ink md:text-xl";
 }
 
 function SpendingDonutPanel({
@@ -58,7 +55,9 @@ function SpendingDonutPanel({
           ),
           borderColor: "#ffffff",
           borderWidth: 2,
-          hoverOffset: 4,
+          borderRadius: 4,
+          spacing: 2,
+          hoverOffset: 6,
         },
       ],
     }),
@@ -68,8 +67,9 @@ function SpendingDonutPanel({
   const options: ChartOptions<"doughnut"> = useMemo(
     () => ({
       responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: 2 },
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      layout: { padding: 4 },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -92,56 +92,54 @@ function SpendingDonutPanel({
   );
 
   return (
-    <div className="spending-donut-layout flex min-h-0 w-full flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4">
-      <div
-        className="spending-donut relative min-h-[168px] w-full min-w-0 flex-1 lg:min-h-0"
-        aria-label={`Spending donut chart, total ${total_label}`}
-      >
-        <div className="absolute inset-0">
+    <div className="spending-donut-layout flex min-h-0 w-full flex-1 flex-col items-center justify-center">
+      <div className="flex w-full flex-col items-center justify-center gap-6 lg:flex-row lg:items-center lg:justify-center lg:gap-6">
+        <div
+          className="spending-donut relative mx-auto aspect-square w-full max-w-[220px] shrink-0"
+          style={{ height: DONUT_PX, width: DONUT_PX, maxHeight: DONUT_PX }}
+          aria-label={`Spending donut chart, total ${total_label}`}
+        >
           <Doughnut data={chart_data} options={options} />
-        </div>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div
-            className="flex max-w-[38%] flex-col items-center justify-center px-0.5 text-center"
-            style={{ maxWidth: "min(38%, 6.5rem)" }}
-          >
-            <span className="text-[8px] font-medium uppercase tracking-wide text-zyfn-muted md:text-[9px]">
-              Total
-            </span>
-            <span className={`${amount_class} block max-w-full truncate`}>
-              {total_label}
-            </span>
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="flex max-w-[58%] flex-col items-center justify-center text-center leading-tight">
+              <span className="text-xs font-medium uppercase tracking-wide text-zyfn-muted">
+                Total
+              </span>
+              <span className={`${amount_class} mt-0.5 max-w-full`}>
+                {total_label}
+              </span>
+            </div>
           </div>
         </div>
+        <ul
+          className="legend w-full max-w-[min(100%,20rem)] shrink-0 space-y-2 lg:max-w-[15.5rem]"
+          aria-label="Account spending legend"
+        >
+          {rows.map((row, i) => (
+            <li
+              key={row.id}
+              className="grid grid-cols-[auto_1fr_auto_auto] items-start gap-x-3 gap-y-0.5 text-xs leading-snug md:text-[13px]"
+            >
+              <span
+                className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                style={{
+                  backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+                }}
+                aria-hidden
+              />
+              <span className="font-medium text-zyfn-ink [overflow-wrap:anywhere]">
+                {row.label}
+              </span>
+              <span className="shrink-0 text-right font-semibold tabular-nums text-zyfn-ink">
+                {format_rm(row.amount_sen)}
+              </span>
+              <span className="w-10 shrink-0 text-right tabular-nums text-zyfn-muted">
+                {row.pct.toFixed(1)}%
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul
-        className="legend w-full max-w-full shrink-0 space-y-1.5 self-center sm:max-w-[13.5rem] lg:max-w-[12rem] lg:self-center lg:overflow-y-auto"
-        aria-label="Account spending legend"
-      >
-        {rows.map((row, i) => (
-          <li
-            key={row.id}
-            className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-2 text-[11px] md:text-xs"
-          >
-            <span
-              className="inline-block h-2 w-2 shrink-0 rounded-[1px]"
-              style={{
-                backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
-              }}
-              aria-hidden
-            />
-            <span className="truncate font-medium text-zyfn-ink" title={row.label}>
-              {row.label}
-            </span>
-            <span className="shrink-0 font-semibold tabular-nums text-zyfn-ink">
-              {format_rm(row.amount_sen)}
-            </span>
-            <span className="w-9 shrink-0 text-right tabular-nums text-zyfn-muted">
-              {row.pct.toFixed(0)}%
-            </span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
