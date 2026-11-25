@@ -4,6 +4,7 @@ import { SupabaseStatusPanel } from "@/components/supabase_status_panel";
 import { load_dashboard } from "@/lib/dashboard/load_dashboard";
 import { load_fixed_deposits } from "@/lib/fixed_deposits/load";
 import { summarize_fixed_deposits } from "@/lib/fixed_deposits/summary";
+import { latest_transaction_date_across } from "@/lib/last_updated";
 
 export const dynamic = "force-dynamic";
 
@@ -13,14 +14,17 @@ export default async function DashboardPage() {
     load_fixed_deposits(),
   ]);
   const fd_summary = summarize_fixed_deposits(fd_load.rows);
+  const last_updated =
+    result.kind === "data"
+      ? latest_transaction_date_across(result.statements)
+      : null;
 
   return (
     <AppShell
       viewport_lock
       dashboard_grid
       title="Dashboard"
-      description="Personal financial overview"
-      footer_note="Supabase ledger · MYR"
+      last_updated={last_updated}
     >
       {result.kind === "data" ? (
         <DashboardView

@@ -5,6 +5,7 @@ import {
   MOCK_METRICS,
   MOCK_STATEMENTS,
 } from "@/lib/dashboard/mock_dashboard_data";
+import { latest_transaction_date_across } from "@/lib/last_updated";
 
 /** Mock ledger layout preview for screenshot / QA (synthetic amounts only). */
 export default function DashboardPreviewPage() {
@@ -13,8 +14,7 @@ export default function DashboardPreviewPage() {
       viewport_lock
       dashboard_grid
       title="Dashboard"
-      description="Layout preview · synthetic data"
-      footer_note="Preview only · not live ledger"
+      last_updated={latest_transaction_date_across(MOCK_STATEMENTS)}
     >
       <DashboardView
         metrics={MOCK_METRICS}

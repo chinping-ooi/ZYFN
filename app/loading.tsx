@@ -3,13 +3,7 @@ import { DashboardLoadingContent } from "@/components/skeletons/dashboard_loadin
 
 export default function Loading() {
   return (
-    <AppShell
-      viewport_lock
-      dashboard_grid
-      title="Dashboard"
-      description="Personal financial overview"
-      footer_note="Supabase ledger · MYR"
-    >
+    <AppShell viewport_lock dashboard_grid title="Dashboard">
       <DashboardLoadingContent />
     </AppShell>
   );

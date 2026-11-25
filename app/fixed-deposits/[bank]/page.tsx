@@ -6,6 +6,7 @@ import {
   slug_to_bank_code,
 } from "@/lib/fixed_deposits/banks";
 import { load_fixed_deposits } from "@/lib/fixed_deposits/load";
+import { latest_fixed_deposit_date } from "@/lib/last_updated";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,7 @@ export default async function FixedDepositsBankPage({ params }: Props) {
   return (
     <AppShell
       title={`${label} · Fixed deposits`}
-      description="Deposit register and maturity tracking"
-      footer_note={`${label} fixed deposits · MYR`}
+      last_updated={latest_fixed_deposit_date(load.rows)}
     >
       <FixedDepositPageView
         title={`${label} fixed deposits`}

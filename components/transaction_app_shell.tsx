@@ -3,22 +3,15 @@ import { AppShell } from "@/components/app_shell";
 /** App shell for account statement routes — locks viewport; table scrolls inside. */
 export function TransactionAppShell({
   title,
-  description,
-  footer_note,
   children,
+  last_updated,
 }: {
   title: string;
-  description: string;
-  footer_note?: string;
   children: React.ReactNode;
+  last_updated?: string | null;
 }) {
   return (
-    <AppShell
-      title={title}
-      description={description}
-      footer_note={footer_note}
-      viewport_lock
-    >
+    <AppShell title={title} last_updated={last_updated} viewport_lock>
       {children}
     </AppShell>
   );

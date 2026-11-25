@@ -146,9 +146,6 @@ function SidebarPanel({
           />
         ))}
       </nav>
-      <footer className="side-foot shrink-0 border-t border-[#38465a] px-6 py-3 text-xs leading-5 text-[#aeb8c6]">
-        Supabase · read-only ledger
-      </footer>
     </>
   );
 }

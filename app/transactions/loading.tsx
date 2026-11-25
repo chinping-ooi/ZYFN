@@ -3,11 +3,7 @@ import { TransactionStatementSkeleton } from "@/components/skeletons/transaction
 
 export default function Loading() {
   return (
-    <TransactionAppShell
-      title="Account statement"
-      description="Loading transactions from Supabase"
-      footer_note="public.zyfn_transactions · MYR"
-    >
+    <TransactionAppShell title="Account statement">
       <TransactionStatementSkeleton />
     </TransactionAppShell>
   );

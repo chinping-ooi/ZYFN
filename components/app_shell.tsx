@@ -2,25 +2,28 @@
 
 import { useState } from "react";
 import { Sidebar } from "@/components/sidebar";
+import { WorkspaceProfileMenu } from "@/components/workspace_profile_menu";
+import { APP_VERSION } from "@/lib/app_version";
+import { format_last_updated_footer } from "@/lib/last_updated";
 
 export function AppShell({
   title,
-  description,
   children,
-  footer_note = "Illustrative figures · MYR",
+  last_updated = null,
   viewport_lock = false,
   dashboard_grid = false,
 }: {
   title: string;
-  description: string;
   children: React.ReactNode;
-  footer_note?: string;
-  /** When true, main area does not scroll; children manage internal scroll (statement pages). */
+  /** ISO date (YYYY-MM-DD) for footer; hidden when null/undefined. */
+  last_updated?: string | null;
   viewport_lock?: boolean;
-  /** Dashboard grid: single --dash-gap spacing and tall layout rules. */
   dashboard_grid?: boolean;
 }) {
   const [mobile_nav, set_mobile_nav] = useState(false);
+  const footer_right = last_updated
+    ? format_last_updated_footer(last_updated)
+    : null;
 
   return (
     <div className="shell flex h-screen min-h-screen min-w-0 overflow-hidden">
@@ -30,24 +33,19 @@ export function AppShell({
       />
       <div className="workspace flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="topbar flex min-h-16 shrink-0 items-center justify-between border-b border-zyfn-line bg-white px-6 lg:px-8">
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              className="page-btn mt-0.5 lg:hidden"
+              className="page-btn lg:hidden"
               aria-expanded={mobile_nav}
               aria-controls="mobile-sidebar"
               onClick={() => set_mobile_nav((v) => !v)}
             >
               Menu
             </button>
-            <div>
-              <h1 className="m-0 text-xl font-semibold">{title}</h1>
-              <p className="m-0 mt-0.5 text-xs text-zyfn-muted">{description}</p>
-            </div>
+            <h1 className="m-0 text-xl font-semibold">{title}</h1>
           </div>
-          <div className="hidden text-[13px] text-zyfn-muted sm:block">
-            Personal workspace
-          </div>
+          <WorkspaceProfileMenu />
         </header>
         <main
           className={`content mx-auto flex w-full max-w-[1560px] flex-1 flex-col ${
@@ -63,8 +61,10 @@ export function AppShell({
           {children}
         </main>
         <footer className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-zyfn-line bg-white px-6 py-3 text-xs leading-5 text-zyfn-muted lg:px-8">
-          <span>ZYFN · Personal finance</span>
-          <span>{footer_note}</span>
+          <span>
+            © 2026 ZYFN · v{APP_VERSION}
+          </span>
+          {footer_right ? <span>{footer_right}</span> : null}
         </footer>
       </div>
     </div>
