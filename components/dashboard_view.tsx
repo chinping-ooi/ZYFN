@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
 import { chart_window, snapshot_for_month } from "@/lib/dashboard/metrics";
 import { spending_breakdown_for_month } from "@/lib/dashboard/spending_breakdown";
@@ -12,8 +12,8 @@ import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { CashFlowChart } from "@/components/cash_flow_chart";
 import { PageToolbar } from "@/components/page_toolbar";
-import { CardHead } from "@/components/card_head";
 import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
+import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
 import { count_maturing_within_days } from "@/lib/fixed_deposits/maturity";
 import type { FixedDepositRecord } from "@/lib/fixed_deposits/types";
@@ -38,6 +38,16 @@ function spending_meta(change: ReturnType<typeof compute_spending_change>) {
   );
 }
 
+function net_cash_flow_meta(income_sen: number, spending_sen: number) {
+  return (
+    <>
+      Income {format_rm(income_sen)}
+      {" · "}
+      Spending {format_rm(spending_sen)}
+    </>
+  );
+}
+
 export function DashboardView({
   metrics,
   fd_summary,
@@ -50,15 +60,17 @@ export function DashboardView({
   statements: AccountStatementFromDb[];
 }) {
   const [month, set_month] = useState<MonthKey>(metrics.default_month);
-  const chart_measure_ref = useRef<HTMLDivElement>(null);
-  const [chart_height_px, set_chart_height_px] = useState<number | null>(null);
 
   const snapshot = snapshot_for_month(metrics, month);
   const month_index = metrics.monthly.findIndex((m) => m.month === month);
   const previous = month_index > 0 ? metrics.monthly[month_index - 1] : undefined;
 
+  const income_sen = snapshot?.income_sen ?? 0;
+  const spending_sen = snapshot?.spending_sen ?? 0;
+  const net_cash_flow_sen = income_sen - spending_sen;
+
   const spending_change = compute_spending_change(
-    snapshot?.spending_sen ?? 0,
+    spending_sen,
     previous?.spending_sen ?? 0,
   );
 
@@ -85,26 +97,29 @@ export function DashboardView({
       new Date(`${m.month}-01T00:00:00Z`),
     ),
   );
-  const chart_labels_key = chart_labels.join(",");
 
-  useLayoutEffect(() => {
-    const el = chart_measure_ref.current;
-    if (!el) return;
-
-    const measure = () => {
-      set_chart_height_px(el.getBoundingClientRect().height);
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [month, metrics.monthly.length, chart_labels_key]);
-
-  const spending_panel_style =
-    chart_height_px != null
-      ? ({ height: chart_height_px } as const)
-      : undefined;
+  const kpi_row = (
+    <section
+      className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 min-[1100px]:grid-cols-3"
+      aria-label="Monthly financial summary"
+    >
+      <KpiCard
+        label="Monthly spending"
+        amount_sen={spending_sen}
+        meta={spending_meta(spending_change)}
+      />
+      <KpiCard
+        label="Fixed deposits"
+        amount_sen={fd_principal_sen}
+        meta={fd_meta}
+      />
+      <KpiCard
+        label="Net cash flow"
+        amount_sen={net_cash_flow_sen}
+        meta={net_cash_flow_meta(income_sen, spending_sen)}
+      />
+    </section>
+  );
 
   return (
     <>
@@ -129,65 +144,24 @@ export function DashboardView({
       />
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout flex flex-col gap-[18px]">
-          <div className="dashboard-row-1 grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(300px,1fr)] min-[1100px]:items-stretch">
-            <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 min-[1100px]:grid-cols-1 min-[1100px]:grid-rows-2 min-[1100px]:h-full">
-              <KpiCard
-                label="Monthly spending"
-                amount_sen={snapshot?.spending_sen ?? 0}
-                meta={spending_meta(spending_change)}
-              />
-              <KpiCard
-                label="Fixed deposits"
-                amount_sen={fd_principal_sen}
-                meta={fd_meta}
-              />
-            </div>
-            <section className="card flex min-h-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white min-[1100px]:h-full">
-              <CardHead
-                title="Account balances"
-                subtitle="Latest balance_after per savings account"
-              />
-              <div className="grid min-h-0 flex-1 grid-rows-4 px-5">
-                {balance_rows.map((account) => (
-                  <div
-                    key={account.id}
-                    className="flex min-h-0 items-center gap-3 border-b border-[#dce1e7] last:border-0"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="bank-name text-sm font-semibold">
-                        {account.name}
-                      </div>
-                      <div className="account-type text-xs text-zyfn-muted">
-                        {account.sub_label}
-                      </div>
-                    </div>
-                    <div className="account-value ml-auto text-right text-sm font-semibold tabular-nums">
-                      {format_rm(account.balance_sen)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
+        <div className="dashboard-layout mt-5 flex flex-col gap-5">
+          {kpi_row}
 
-          <div className="dashboard-row-2 grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] min-[1100px]:items-start">
-            <div ref={chart_measure_ref} className="min-h-0 w-full min-w-0">
-              <CashFlowChart
-                className="h-fit w-full"
-                labels={chart_labels}
-                income_sen={chart.map((m) => m.income_sen)}
-                spending_sen={chart.map((m) => m.spending_sen)}
-                period_note={`${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`}
-                monthly_income_sen={snapshot?.income_sen ?? 0}
-                monthly_spending_sen={snapshot?.spending_sen ?? 0}
-              />
-            </div>
-            <div
-              className="min-h-0 w-full min-w-0 max-[1099px]:max-h-[min(70vh,640px)] min-[1100px]:overflow-hidden"
-              style={spending_panel_style}
-            >
+          <div className="dashboard-main grid min-h-[min(560px,calc(100vh-16rem))] grid-cols-1 gap-5 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] min-[1100px]:items-stretch">
+            <CashFlowChart
+              className="min-h-[320px] w-full min-[1100px]:min-h-0"
+              fill_height
+              labels={chart_labels}
+              income_sen={chart.map((m) => m.income_sen)}
+              spending_sen={chart.map((m) => m.spending_sen)}
+              period_note={`${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`}
+              monthly_income_sen={income_sen}
+              monthly_spending_sen={spending_sen}
+            />
+            <div className="flex min-h-0 w-full min-w-0 flex-col gap-5 max-[1099px]:min-h-[320px] min-[1100px]:h-full">
+              <DashboardAccountBalancesCard rows={balance_rows} />
               <SpendingBreakdownCard
+                className="min-h-0 flex-1"
                 rows={spending_rows}
                 month_label={snapshot?.label ?? month}
               />
@@ -195,21 +169,7 @@ export function DashboardView({
           </div>
         </div>
       ) : (
-        <section
-          className="kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2"
-          aria-label="Monthly financial summary"
-        >
-          <KpiCard
-            label="Monthly spending"
-            amount_sen={snapshot?.spending_sen ?? 0}
-            meta={spending_meta(spending_change)}
-          />
-          <KpiCard
-            label="Fixed deposits"
-            amount_sen={fd_principal_sen}
-            meta={fd_meta}
-          />
-        </section>
+        <div className="mt-5">{kpi_row}</div>
       )}
     </>
   );

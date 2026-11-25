@@ -21,6 +21,7 @@ export function SpendingBreakdownCard({
       <CardHead
         title="Spending breakdown"
         subtitle={`By account · ${month_label}`}
+        align="center"
       />
       {rows.length === 0 ? (
         <p className="px-5 py-6 text-center text-sm text-zyfn-muted">
@@ -32,7 +33,7 @@ export function SpendingBreakdownCard({
             {rows.map((row) => (
               <div
                 key={row.id}
-                className="account border-b border-[#dce1e7] py-3.5 last:border-0"
+                className="account border-b border-[#dce1e7] py-2 last:border-0"
               >
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
@@ -50,7 +51,7 @@ export function SpendingBreakdownCard({
                   </div>
                 </div>
                 <div
-                  className="mt-2.5 h-[3px] w-full overflow-hidden rounded-[2px] bg-[#e8ecf0]"
+                  className="mt-1.5 h-[3px] w-full overflow-hidden rounded-[2px] bg-[#e8ecf0]"
                   role="presentation"
                   aria-hidden
                 >
@@ -62,7 +63,7 @@ export function SpendingBreakdownCard({
               </div>
             ))}
           </div>
-          <div className="flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 py-3.5 text-sm">
+          <div className="flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 py-2.5 text-sm">
             <span className="font-semibold text-zyfn-ink">Total</span>
             <span className="font-semibold tabular-nums text-zyfn-ink">
               {format_rm(total_sen)}

@@ -2,6 +2,7 @@
 
 import { axis_labels, chart_axis_max } from "@/lib/chart_scale";
 import { format_rm, type MinorAmount } from "@/lib/money";
+import { CardHead } from "@/components/card_head";
 
 type Props = {
   labels: string[];
@@ -11,6 +12,7 @@ type Props = {
   monthly_income_sen: MinorAmount;
   monthly_spending_sen: MinorAmount;
   className?: string;
+  fill_height?: boolean;
 };
 
 export function CashFlowChart({
@@ -20,7 +22,8 @@ export function CashFlowChart({
   period_note,
   monthly_income_sen,
   monthly_spending_sen,
-  className = "h-fit w-full",
+  className = "",
+  fill_height = false,
 }: Props) {
   const net_sen = monthly_income_sen - monthly_spending_sen;
   const net_label =
@@ -40,28 +43,39 @@ export function CashFlowChart({
     )
     .join(". ");
 
+  const plot_class = fill_height
+    ? "plot flex min-h-[180px] flex-1 gap-3"
+    : "plot flex h-[190px] gap-3";
+
+  const shell_class = fill_height
+    ? `card flex h-full min-h-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`
+    : `card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
+
+  const body_class = fill_height
+    ? "flex min-h-0 flex-1 flex-col px-5 pt-4 pb-4"
+    : "px-5 pt-5 pb-4";
+
   return (
-    <section
-      className={`card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
-        <div>
-          <h3 className="m-0 text-[15px] font-semibold">Monthly cash flow</h3>
-          <p className="m-0 mt-0.5 text-xs text-zyfn-muted">{period_note}</p>
-        </div>
-        <div className="flex flex-wrap gap-3.5 pt-0.5 text-xs text-zyfn-muted">
-          <span>
-            <i className="mr-1.5 inline-block h-2.5 w-2.5 bg-zyfn-slate" />
-            Income
-          </span>
-          <span>
-            <i className="mr-1.5 inline-block h-2.5 w-2.5 bg-zyfn-navy" />
-            Spending
-          </span>
-        </div>
-      </div>
-      <div className="px-5 pt-5 pb-4">
-        <div className="plot flex h-[190px] gap-3" role="img" aria-label={aria_label}>
+    <section className={shell_class}>
+      <CardHead
+        title="Monthly cash flow"
+        subtitle={period_note}
+        align="center"
+        aside={
+          <div className="flex flex-wrap gap-3.5 text-xs text-zyfn-muted">
+            <span>
+              <i className="mr-1.5 inline-block h-2.5 w-2.5 bg-zyfn-slate" />
+              Income
+            </span>
+            <span>
+              <i className="mr-1.5 inline-block h-2.5 w-2.5 bg-zyfn-navy" />
+              Spending
+            </span>
+          </div>
+        }
+      />
+      <div className={body_class}>
+        <div className={plot_class} role="img" aria-label={aria_label}>
           <div
             className="flex min-w-[4.25rem] shrink-0 flex-col justify-between pb-[22px] text-[11px] leading-none text-zyfn-muted"
             aria-hidden
@@ -72,9 +86,7 @@ export function CashFlowChart({
               </span>
             ))}
           </div>
-          <div
-            className="relative mb-[22px] flex flex-1 gap-4 border-b border-zyfn-line bg-[repeating-linear-gradient(to_top,transparent_0,transparent_calc(25%-1px),#e5e8ed_calc(25%-1px),#e5e8ed_25%)]"
-          >
+          <div className="relative mb-[22px] flex min-h-0 flex-1 gap-4 border-b border-zyfn-line bg-[repeating-linear-gradient(to_top,transparent_0,transparent_calc(25%-1px),#e5e8ed_calc(25%-1px),#e5e8ed_25%)]">
             {labels.map((label, i) => {
               const income_pct = (income_sen[i] / max_sen) * 100;
               const spend_pct = (spending_sen[i] / max_sen) * 100;
@@ -82,7 +94,7 @@ export function CashFlowChart({
               return (
                 <div
                   key={label}
-                  className={`relative flex flex-1 items-end justify-center gap-[5px] ${
+                  className={`relative flex h-full min-h-0 flex-1 items-end justify-center gap-[5px] ${
                     is_current ? "font-semibold" : ""
                   }`}
                 >
@@ -102,7 +114,7 @@ export function CashFlowChart({
             })}
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap justify-between border-t border-zyfn-line pt-3.5 text-xs text-zyfn-muted">
+        <div className="mt-3 flex shrink-0 flex-wrap justify-between border-t border-zyfn-line pt-3 text-xs text-zyfn-muted">
           <span>
             Monthly income
             <strong className="ml-2 text-sm font-semibold text-zyfn-ink">
