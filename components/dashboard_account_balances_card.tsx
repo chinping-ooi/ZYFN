@@ -5,21 +5,40 @@ import { CardHead } from "@/components/card_head";
 export function DashboardAccountBalancesCard({
   rows,
   className = "",
+  column_fill = false,
 }: {
   rows: DashboardBalanceRow[];
   className?: string;
+  /** lg dashboard: grow in column; rows list scrolls internally. */
+  column_fill?: boolean;
 }) {
+  const shell = [
+    "card",
+    "flex",
+    "flex-col",
+    "rounded-[3px]",
+    "border",
+    "border-zyfn-line",
+    "bg-white",
+    column_fill
+      ? "min-h-0 shrink-0 overflow-visible lg:flex-1 lg:overflow-hidden"
+      : "shrink-0 overflow-visible",
+    className,
+  ].join(" ");
+
+  const list_class = column_fill
+    ? "balance-rows px-4 pb-2 md:px-5 md:pb-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+    : "balance-rows px-4 pb-2 md:px-5 md:pb-3";
+
   return (
-    <section
-      className={`card flex shrink-0 flex-col overflow-visible rounded-[3px] border border-zyfn-line bg-white ${className}`}
-    >
+    <section className={shell}>
       <CardHead
         compact
         title="Account balances"
         subtitle="Savings, wallet, and active fixed deposits"
         align="center"
       />
-      <div className="px-4 pb-2 md:px-5 md:pb-3">
+      <div className={list_class}>
         {rows.map((account) => (
           <div
             key={account.id}

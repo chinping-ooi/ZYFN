@@ -138,10 +138,23 @@ export function DashboardView({
   const chart_period = `${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`;
   const month_label = snapshot?.label ?? month;
 
+  const chart_props = {
+    className: "w-full shrink-0",
+    fill_height: true as const,
+    labels: chart_labels,
+    income_sen: chart.map((m) => m.income_sen),
+    spending_sen: chart.map((m) => m.spending_sen),
+    period_note: chart_period,
+    monthly_income_sen: income_sen,
+    monthly_spending_sen: spending_sen,
+  };
+
   return (
-    <div className="flex shrink-0 flex-col">
-      <PageToolbar
-        title="Monthly summary"
+    <div className="flex min-h-0 flex-col lg:flex-1">
+      <div className="shrink-0">
+        <PageToolbar
+          dense
+          title="Monthly summary"
         subtitle={
           <>
             Cash in/out only · excludes FD and internal transfers ·{" "}
@@ -158,47 +171,35 @@ export function DashboardView({
             />
           ) : null
         }
-      />
+        />
+      </div>
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-3 flex flex-col gap-4 lg:mt-4 lg:flex-row lg:items-start lg:gap-5">
-          <div className="flex min-w-0 flex-col gap-4 lg:flex-[3] lg:gap-5">
+        <div className="dashboard-layout mt-2 flex min-h-0 flex-col gap-4 lg:mt-2 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-4">
+          <div className="flex min-h-0 min-w-0 flex-col gap-4 lg:h-full lg:min-h-0 lg:flex-[3] lg:gap-4">
             {kpi_pair}
             <SpendingBreakdownCard
               content_sized
-              className="shrink-0"
+              column_fill
+              className="min-h-0 lg:flex-1"
               rows={spending_rows.length > 0 ? spending_rows : []}
               month_label={month_label}
             />
             <div className="flex flex-col gap-4 lg:hidden">
-              <CashFlowChart
-                className="w-full shrink-0"
-                fill_height
-                labels={chart_labels}
-                income_sen={chart.map((m) => m.income_sen)}
-                spending_sen={chart.map((m) => m.spending_sen)}
-                period_note={chart_period}
-                monthly_income_sen={income_sen}
-                monthly_spending_sen={spending_sen}
-              />
+              <CashFlowChart {...chart_props} />
               <DashboardAccountBalancesCard
                 className="shrink-0"
                 rows={balance_rows}
               />
             </div>
           </div>
-          <div className="hidden min-w-0 flex-col gap-4 lg:flex lg:flex-[2] lg:gap-5">
-            <CashFlowChart
-              className="w-full shrink-0"
-              fill_height
-              labels={chart_labels}
-              income_sen={chart.map((m) => m.income_sen)}
-              spending_sen={chart.map((m) => m.spending_sen)}
-              period_note={chart_period}
-              monthly_income_sen={income_sen}
-              monthly_spending_sen={spending_sen}
+          <div className="hidden min-h-0 min-w-0 flex-col gap-4 lg:flex lg:h-full lg:min-h-0 lg:flex-[2] lg:gap-4">
+            <CashFlowChart {...chart_props} />
+            <DashboardAccountBalancesCard
+              column_fill
+              className="min-h-0 flex-1"
+              rows={balance_rows}
             />
-            <DashboardAccountBalancesCard className="shrink-0" rows={balance_rows} />
           </div>
         </div>
       ) : (

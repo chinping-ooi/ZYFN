@@ -17,7 +17,9 @@ type Props = {
 };
 
 /** Plot area height — footer and month labels sit outside this box. */
-const PLOT_CLAMP_CLASS = "h-[clamp(120px,18vh,200px)]";
+/** Fixed compact plot on lg dashboard (viewport fit); vh fallback below lg single-col. */
+const PLOT_CLAMP_CLASS =
+  "h-[clamp(120px,18vh,200px)] lg:h-[min(100px,calc((100dvh-17.5rem)*0.36))]";
 
 const legend = (
   <div className="flex shrink-0 items-center gap-2 whitespace-nowrap text-[9px] text-zyfn-muted lg:gap-3 lg:text-[10px]">
@@ -65,7 +67,7 @@ export function CashFlowChart({
     : "plot flex h-[190px] gap-2 pb-7 md:gap-3";
 
   const shell_class = fill_height
-    ? `card flex h-fit w-full min-w-0 flex-col overflow-visible rounded-[3px] border border-zyfn-line bg-white ${className}`
+    ? `card flex h-fit w-full min-w-0 max-h-none flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white lg:max-h-[min(176px,calc(100dvh-20rem))] ${className}`
     : `card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
 
   const footer = (

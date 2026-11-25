@@ -33,7 +33,7 @@ export function SpendingBreakdownCard({
   ];
 
   if (column_fill && content_sized) {
-    shell_parts.push("min-h-0", "h-full");
+    shell_parts.push("min-h-0", "h-fit", "overflow-hidden", "lg:h-full", "lg:flex-1");
   } else if (content_sized) {
     shell_parts.push("h-fit");
   } else {
@@ -42,7 +42,7 @@ export function SpendingBreakdownCard({
 
   const list_parts = ["accounts", "px-5"];
   if (column_fill && content_sized) {
-    list_parts.push("min-h-0", "flex-1", "overflow-y-auto");
+    list_parts.push("lg:min-h-0", "lg:flex-1", "lg:overflow-y-auto");
   } else if (content_sized) {
     list_parts.push("overflow-visible");
   } else {

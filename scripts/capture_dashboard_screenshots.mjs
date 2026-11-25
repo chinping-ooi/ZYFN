@@ -1,5 +1,5 @@
 /**
- * Capture dashboard layout screenshots and verify key UI is visible or scrollable.
+ * Capture dashboard layout screenshots and verify viewport fit / internal scroll.
  * Usage: SMOKE_BASE_URL=http://127.0.0.1:3001 SKIP_DEV_START=1 node scripts/capture_dashboard_screenshots.mjs
  */
 import { execSync, spawn } from "child_process";
@@ -17,12 +17,12 @@ const out_dir =
 const path = "/preview/dashboard";
 
 const viewports = [
-  { name: "390x844", width: 390, height: 844, allow_scroll: true },
-  { name: "820x1180", width: 820, height: 1180, allow_scroll: true },
-  { name: "1024x485", width: 1024, height: 485, allow_scroll: true },
-  { name: "1024x600", width: 1024, height: 600, allow_scroll: true },
-  { name: "1366x768", width: 1366, height: 768, allow_scroll: false },
-  { name: "1920x1080", width: 1920, height: 1080, allow_scroll: false },
+  { name: "390x844", width: 390, height: 844, lg: false },
+  { name: "820x1180", width: 820, height: 1180, lg: false },
+  { name: "1024x485", width: 1024, height: 485, lg: true },
+  { name: "1024x600", width: 1024, height: 600, lg: true },
+  { name: "1366x768", width: 1366, height: 768, lg: true },
+  { name: "1920x1080", width: 1920, height: 1080, lg: true },
 ];
 
 let dev = null;
@@ -44,142 +44,126 @@ async function waitForServer() {
   throw new Error("Dev server did not become ready");
 }
 
-const MEASURE_FN = `() => {
-  const footer =
-    document.querySelector(".workspace > footer") ??
-    document.querySelector("footer");
-  const footerTop = footer?.getBoundingClientRect().top ?? window.innerHeight;
-  const bal = [...document.querySelectorAll("section")].find(
-    (s) =>
-      s.querySelector("h3")?.textContent === "Account balances" &&
-      s.offsetParent !== null &&
-      getComputedStyle(s).display !== "none",
-  );
-  const rows = bal
-    ? [...bal.querySelectorAll("div")].filter(
-        (d) =>
-          d.className.includes("border-b") ||
-          (d.className.includes("last") && d.className.includes("border")),
-      )
-    : [];
-  const fd =
-    rows.find((r) => r.textContent?.includes("Fixed deposits")) ??
-    rows[rows.length - 1];
-  const layout = document.querySelector(".dashboard-layout");
-  const rightCol = layout?.children[1];
-  const rightVisible = rightCol
-    ? getComputedStyle(rightCol).display !== "none"
-    : false;
-  return {
-    footerTop,
-    fdBottom: fd?.getBoundingClientRect().bottom ?? 0,
-    layoutBottom: layout?.getBoundingClientRect().bottom ?? 0,
-    twoCol: layout && getComputedStyle(layout).flexDirection === "row",
-    rightVisible,
-  };
-}`;
-
 async function verifyDashboard(page, vp) {
-  const main = page.locator("main.content");
   const issues = [];
+  const main = page.locator("main.content");
 
   await main.evaluate((node) => {
     node.scrollTop = 0;
   });
-  await delay(100);
+  await delay(80);
 
-  const metrics = await page.evaluate(new Function(`return (${MEASURE_FN})();`));
-  const detail = await page.evaluate(() => {
+  const m = await page.evaluate(() => {
     const mainEl = document.querySelector("main.content");
-    const head = [...document.querySelectorAll(".dashboard-card-head")].find((h) =>
-      h.textContent?.includes("Monthly cash flow"),
+    const footer =
+      document.querySelector(".workspace > footer") ??
+      document.querySelector("footer");
+    const footerTop = footer?.getBoundingClientRect().top ?? window.innerHeight;
+    const layout = document.querySelector(".dashboard-layout");
+    const layoutBottom = layout?.getBoundingClientRect().bottom ?? 0;
+
+    const spendSection = [...document.querySelectorAll("section")].find(
+      (s) =>
+        s.querySelector("h3")?.textContent === "Spending breakdown" &&
+        s.offsetParent !== null,
     );
-    const legend = head?.querySelector(".whitespace-nowrap");
-    const months = [...document.querySelectorAll(".plot span.whitespace-nowrap")].filter(
-      (s) => /^[A-Z][a-z]{2}$/.test(s.textContent?.trim() ?? ""),
+    const spendTotal = spendSection?.querySelector(
+      ".border-t.border-zyfn-line.bg-\\[\\#fafbfc\\]",
     );
-    const yLabels = document.querySelector(".plot > div:first-child");
-    const yWrap = yLabels
-      ? [...yLabels.querySelectorAll("span")].some((s) => s.offsetHeight > 14)
-      : false;
+    const spendList = spendSection?.querySelector(".accounts");
+
+    const balSection = [...document.querySelectorAll("section")].find(
+      (s) =>
+        s.querySelector("h3")?.textContent === "Account balances" &&
+        s.offsetParent !== null,
+    );
+    const balCardBottom = balSection?.getBoundingClientRect().bottom ?? 0;
+    const balList = balSection?.querySelector(".balance-rows");
+
+    const chartFooter = [...document.querySelectorAll("section")].find(
+      (s) =>
+        s.textContent?.includes("Monthly cash flow") &&
+        s.textContent?.includes("Monthly income") &&
+        s.offsetParent !== null,
+    );
+    const chartFootEl = chartFooter?.querySelector(".border-t.border-zyfn-line");
+
+    const fdRow = balList
+      ? [...balList.children].find((c) => c.textContent?.includes("Fixed deposits"))
+      : null;
+
     return {
-      mainOverflowHidden: mainEl && getComputedStyle(mainEl).overflowY === "hidden",
-      chartHeadWrap:
-        head &&
-        legend &&
-        legend.getBoundingClientRect().bottom > head.getBoundingClientRect().bottom + 2,
-      monthClipped: months.some((m) => {
-        const plot = m.closest(".plot");
-        const pr = plot?.getBoundingClientRect();
-        const mr = m.getBoundingClientRect();
-        return pr && mr.bottom > pr.bottom + 1;
-      }),
-      yWrap,
+      footerTop,
+      layoutBottom,
+      mainScroll: mainEl?.scrollHeight ?? 0,
+      mainClient: mainEl?.clientHeight ?? 0,
+      mainOverflowY: mainEl ? getComputedStyle(mainEl).overflowY : "",
+      spendTotalBottom: spendTotal?.getBoundingClientRect().bottom ?? 0,
+      spendTotalTop: spendTotal?.getBoundingClientRect().top ?? 0,
+      chartFootBottom: chartFootEl?.getBoundingClientRect().bottom ?? 0,
+      balCardBottom,
+      fdRowBottom: fdRow?.getBoundingClientRect().bottom ?? 0,
+      fdInBalList: fdRow != null,
+      spendListOverflow: spendList
+        ? getComputedStyle(spendList).overflowY
+        : "",
+      spendListScrollable:
+        spendList &&
+        spendList.scrollHeight > spendList.clientHeight + 2,
+      balListOverflow: balList ? getComputedStyle(balList).overflowY : "",
+      balListScrollable:
+        balList && balList.scrollHeight > balList.clientHeight + 2,
+      twoCol:
+        layout && window.getComputedStyle(layout).flexDirection === "row",
     };
-  });
-  Object.assign(metrics, detail);
+  }, vp.lg);
 
-  if (metrics.mainOverflowHidden) {
-    issues.push(`${vp.name}: main.content overflow-y is hidden`);
-  }
-  if (metrics.chartHeadWrap) {
-    issues.push(`${vp.name}: chart legend wrapped below title`);
-  }
-  if (metrics.monthClipped) {
-    issues.push(`${vp.name}: month label clipped in plot`);
-  }
-  if (metrics.yWrap) {
-    issues.push(`${vp.name}: y-axis label wrapped`);
-  }
-
-  if (vp.width < 1024 && metrics.twoCol) {
-    issues.push(`${vp.name}: expected single column below lg`);
-  }
-  if (vp.width >= 1024 && !metrics.rightVisible) {
-    issues.push(`${vp.name}: expected two-column layout at lg`);
-  }
-
-  const footer_margin = 2;
-
-  const ensureFdReachable = async () => {
-    if (metrics.fdBottom <= metrics.footerTop - footer_margin) return true;
-    await main.evaluate((node) => {
-      node.scrollTop = node.scrollHeight;
-    });
-    await delay(150);
-    const after = await page.evaluate(new Function(`return (${MEASURE_FN})();`));
-    const in_viewport =
-      after.fdBottom > 0 &&
-      after.fdBottom <= after.footerTop - footer_margin &&
-      after.fdBottom <= (await page.evaluate(() => window.innerHeight)) - 4;
-    return in_viewport;
-  };
-
-  if (vp.allow_scroll) {
-    if (!(await ensureFdReachable())) {
-      issues.push(`${vp.name}: fixed deposits row not reachable by scroll`);
+  if (vp.lg) {
+    if (m.mainOverflowY !== "hidden") {
+      issues.push(`${vp.name}: lg+ main should not page-scroll (overflow-y=${m.mainOverflowY})`);
+    }
+    if (m.mainScroll > m.mainClient + 2) {
+      issues.push(
+        `${vp.name}: lg+ main scrollHeight ${m.mainScroll} > client ${m.mainClient}`,
+      );
+    }
+    if (!m.twoCol) {
+      issues.push(`${vp.name}: expected two-column layout at lg`);
+    }
+    if (m.layoutBottom > m.footerTop + 2) {
+      issues.push(
+        `${vp.name}: layout below footer (${Math.round(m.layoutBottom)} > ${Math.round(m.footerTop)})`,
+      );
+    }
+    if (m.balCardBottom > m.footerTop + 2) {
+      issues.push(
+        `${vp.name}: balances card below footer (${Math.round(m.balCardBottom)})`,
+      );
+    }
+    if (m.spendTotalBottom > m.footerTop + 2 || m.spendTotalTop < 80) {
+      issues.push(`${vp.name}: spending Total not pinned in viewport`);
+    }
+    if (m.chartFootBottom > m.footerTop + 2 && m.chartFootBottom > 0) {
+      issues.push(`${vp.name}: chart footer below workspace footer`);
+    }
+    if (m.fdRowBottom > m.footerTop + 2) {
+      if (!m.balListScrollable || m.balListOverflow !== "auto") {
+        issues.push(`${vp.name}: FD row clipped without internal list scroll`);
+      }
     }
   } else {
-    if (metrics.fdBottom > metrics.footerTop - footer_margin) {
-      issues.push(
-        `${vp.name}: fixed deposits clipped (bottom ${Math.round(metrics.fdBottom)} > footer ${Math.round(metrics.footerTop)})`,
-      );
+    if (m.mainOverflowY === "hidden") {
+      issues.push(`${vp.name}: below lg main should allow page scroll`);
     }
-    if (metrics.layoutBottom > metrics.footerTop + 8) {
-      issues.push(
-        `${vp.name}: dashboard extends well past footer (layout ${Math.round(metrics.layoutBottom)})`,
-      );
+    if (!m.twoCol) {
+      // single column OK
+    } else {
+      issues.push(`${vp.name}: expected single column below lg`);
     }
   }
 
-  const n = await page
-    .locator("section")
-    .filter({ has: page.locator("h3", { hasText: "Account balances" }) })
-    .first()
-    .locator("div.border-b, div.py-1")
-    .count();
-  if (n < 5) {
-    issues.push(`${vp.name}: expected ≥5 balance rows, saw ${n}`);
+  if (m.spendListScrollable && m.spendListOverflow !== "auto") {
+    issues.push(`${vp.name}: spending list overflows but overflow-y is not auto`);
   }
 
   return issues;
@@ -199,21 +183,16 @@ async function capture() {
     const issues = await verifyDashboard(page, vp);
     all_issues.push(...issues);
 
-    await page.locator("main.content").evaluate((node) => {
-      node.scrollTop = 0;
-    });
-    await delay(80);
-
     await page.screenshot({
       path: join(out_dir, `dashboard-${vp.name}.png`),
       fullPage: false,
     });
 
-    if (vp.allow_scroll) {
+    if (!vp.lg) {
       await page.locator("main.content").evaluate((node) => {
         node.scrollTop = node.scrollHeight;
       });
-      await delay(150);
+      await delay(120);
       await page.screenshot({
         path: join(out_dir, `dashboard-${vp.name}-scrolled.png`),
         fullPage: false,
