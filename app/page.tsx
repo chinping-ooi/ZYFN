@@ -17,6 +17,7 @@ export default async function DashboardPage() {
   return (
     <AppShell
       viewport_lock
+      dashboard_grid
       title="Dashboard"
       description="Personal financial overview"
       footer_note="Supabase ledger · MYR"

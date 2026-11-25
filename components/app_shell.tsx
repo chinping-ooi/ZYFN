@@ -9,6 +9,7 @@ export function AppShell({
   children,
   footer_note = "Illustrative figures · MYR",
   viewport_lock = false,
+  dashboard_grid = false,
 }: {
   title: string;
   description: string;
@@ -16,6 +17,8 @@ export function AppShell({
   footer_note?: string;
   /** When true, main area does not scroll; children manage internal scroll (statement pages). */
   viewport_lock?: boolean;
+  /** Dashboard grid: single --dash-gap spacing and tall layout rules. */
+  dashboard_grid?: boolean;
 }) {
   const [mobile_nav, set_mobile_nav] = useState(false);
 
@@ -47,12 +50,14 @@ export function AppShell({
           </div>
         </header>
         <main
-          className={`content mx-auto flex w-full max-w-[1560px] flex-1 flex-col px-6 lg:px-8 ${
-            viewport_lock ? "py-3 lg:py-3" : "py-6"
-          } ${
-            viewport_lock
-              ? "min-h-0 overflow-x-hidden overflow-y-auto lg:overflow-y-hidden"
-              : "min-h-0 overflow-y-auto"
+          className={`content mx-auto flex w-full max-w-[1560px] flex-1 flex-col ${
+            dashboard_grid
+              ? "dashboard-main min-h-0 overflow-x-hidden"
+              : `px-6 lg:px-8 ${viewport_lock ? "py-3 lg:py-3" : "py-6"} min-h-0 overflow-x-hidden ${
+                  viewport_lock
+                    ? "overflow-y-auto lg:overflow-y-hidden"
+                    : "overflow-y-auto"
+                }`
           }`}
         >
           {children}

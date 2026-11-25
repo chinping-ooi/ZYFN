@@ -11,6 +11,7 @@ export default function DashboardPreviewPage() {
   return (
     <AppShell
       viewport_lock
+      dashboard_grid
       title="Dashboard"
       description="Layout preview · synthetic data"
       footer_note="Preview only · not live ledger"

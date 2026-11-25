@@ -6,12 +6,11 @@ import { chart_window, snapshot_for_month } from "@/lib/dashboard/metrics";
 import { spending_breakdown_for_month } from "@/lib/dashboard/spending_breakdown";
 import { dashboard_account_balances } from "@/lib/dashboard/dashboard_balances";
 import { compute_spending_change } from "@/lib/spending_change";
-import { format_rm, major_to_minor } from "@/lib/money";
+import { major_to_minor } from "@/lib/money";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { CashFlowChart } from "@/components/cash_flow_chart";
-import { PageToolbar } from "@/components/page_toolbar";
 import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
 import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
@@ -36,48 +35,9 @@ function spending_meta(change: ReturnType<typeof compute_spending_change>) {
   );
 }
 
-function net_cash_flow_meta(income_sen: number, spending_sen: number) {
-  return (
-    <>
-      Income {format_rm(income_sen)}
-      {" · "}
-      Spending {format_rm(spending_sen)}
-    </>
-  );
-}
-
-function dashboard_kpi_pair({
-  spending_sen,
-  spending_change,
-  net_cash_flow_sen,
-  income_sen,
-}: {
-  spending_sen: number;
-  spending_change: ReturnType<typeof compute_spending_change>;
-  net_cash_flow_sen: number;
-  income_sen: number;
-}) {
-  return (
-    <div
-      className="grid shrink-0 grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-5"
-      aria-label="Monthly financial summary"
-    >
-      <KpiCard
-        compact_amount
-        snug
-        label="Monthly spending"
-        amount_sen={spending_sen}
-        meta={spending_meta(spending_change)}
-      />
-      <KpiCard
-        compact_amount
-        snug
-        label="Net cash flow"
-        amount_sen={net_cash_flow_sen}
-        meta={net_cash_flow_meta(income_sen, spending_sen)}
-      />
-    </div>
-  );
+function fd_meta(active_count: number) {
+  if (active_count <= 0) return "No active placements";
+  return `${active_count} active placement${active_count === 1 ? "" : "s"}`;
 }
 
 export function DashboardView({
@@ -128,19 +88,12 @@ export function DashboardView({
     ),
   );
 
-  const kpi_pair = dashboard_kpi_pair({
-    spending_sen,
-    spending_change,
-    net_cash_flow_sen,
-    income_sen,
-  });
-
   const chart_period = `${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`;
   const month_label = snapshot?.label ?? month;
 
   const chart_props = {
-    className: "w-full shrink-0",
     fill_height: true as const,
+    cell_fill: true as const,
     labels: chart_labels,
     income_sen: chart.map((m) => m.income_sen),
     spending_sen: chart.map((m) => m.spending_sen),
@@ -150,61 +103,83 @@ export function DashboardView({
   };
 
   return (
-    <div className="flex min-h-0 flex-col lg:flex-1">
-      <div className="shrink-0">
-        <PageToolbar
-          dense
-          title="Monthly summary"
-        subtitle={
-          <>
-            Cash in/out only · excludes FD and internal transfers ·{" "}
-            {month_label}
-          </>
-        }
-        controls={
-          metrics.months.length > 0 ? (
-            <MonthSelect
-              label="Dashboard month"
-              value={month}
-              options={metrics.months}
-              onChange={(v) => set_month(v)}
-            />
-          ) : null
-        }
-        />
-      </div>
+    <div className="dashboard-shell lg:flex-1">
+      <header className="dashboard-toolbar">
+        <div className="min-w-0">
+          <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>
+          <p className="m-0 mt-[3px] text-[13px] text-zyfn-muted">
+            Cash in/out only · excludes FD and internal transfers · {month_label}
+          </p>
+        </div>
+        {metrics.months.length > 0 ? (
+          <MonthSelect
+            label="Dashboard month"
+            value={month}
+            options={metrics.months}
+            onChange={(v) => set_month(v)}
+          />
+        ) : null}
+      </header>
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-1 flex min-h-0 flex-col gap-4 pb-0 lg:mt-1 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-2 lg:pb-1">
-          <div className="flex min-h-0 min-w-0 flex-col gap-4 lg:h-full lg:min-h-0 lg:flex-[3] lg:gap-2">
-            {kpi_pair}
-            <SpendingBreakdownCard
-              content_sized
-              column_fill
-              className="min-h-0 lg:flex-1"
-              rows={spending_rows.length > 0 ? spending_rows : []}
-              month_label={month_label}
+        <>
+          <div
+            className="dashboard-kpi-row"
+            aria-label="Monthly financial summary"
+          >
+            <KpiCard
+              compact_amount
+              snug
+              label="Monthly spending"
+              amount_sen={spending_sen}
+              meta={spending_meta(spending_change)}
             />
-            <div className="flex flex-col gap-4 lg:hidden">
-              <CashFlowChart {...chart_props} />
+            <KpiCard
+              compact_amount
+              snug
+              label="Net cash flow"
+              amount_sen={net_cash_flow_sen}
+              meta={<>Excludes FD · {month_label}</>}
+            />
+            <KpiCard
+              compact_amount
+              snug
+              label="Monthly income"
+              amount_sen={income_sen}
+              meta={<>Cash in · {month_label}</>}
+            />
+            <KpiCard
+              compact_amount
+              snug
+              label="FD principal (active)"
+              amount_sen={fd_principal_sen}
+              meta={fd_meta(fd_summary.active_count)}
+            />
+          </div>
+
+          <div className="dashboard-body" data-gap-check="body">
+            <div className="dashboard-body-cell">
+              <SpendingBreakdownCard
+                content_sized
+                column_fill
+                className="h-full min-h-0"
+                rows={spending_rows.length > 0 ? spending_rows : []}
+                month_label={month_label}
+              />
+            </div>
+            <div className="dashboard-body-cell">
+              <CashFlowChart className="h-full min-h-0" {...chart_props} />
+            </div>
+            <div className="dashboard-body-cell">
               <DashboardAccountBalancesCard
-                className="shrink-0"
+                column_fill
+                className="h-full min-h-0"
                 rows={balance_rows}
               />
             </div>
           </div>
-          <div className="hidden min-h-0 min-w-0 flex-col gap-2 lg:flex lg:h-full lg:min-h-0 lg:flex-[2]">
-            <CashFlowChart {...chart_props} />
-            <DashboardAccountBalancesCard
-              column_fill
-              className="min-h-0 flex-1"
-              rows={balance_rows}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="mt-5 shrink-0">{kpi_pair}</div>
-      )}
+        </>
+      ) : null}
     </div>
   );
 }

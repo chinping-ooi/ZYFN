@@ -18,6 +18,8 @@ type Props = {
   className?: string;
   /** Dashboard: fixed compact plot on lg+ (footer always visible). */
   fill_height?: boolean;
+  /** Fill dashboard grid cell (equal-height row). */
+  cell_fill?: boolean;
 };
 
 /** Plot box only — month labels in pb; card footer is separate. */
@@ -45,6 +47,7 @@ export function CashFlowChart({
   monthly_spending_sen,
   className = "",
   fill_height = false,
+  cell_fill = false,
 }: Props) {
   const net_sen = monthly_income_sen - monthly_spending_sen;
   const net_label =
@@ -72,7 +75,11 @@ export function CashFlowChart({
     : "plot flex h-[190px] gap-2 pb-7 md:gap-3";
 
   const shell_class = fill_height
-    ? `card flex h-fit w-full min-w-0 shrink-0 flex-col overflow-visible rounded-[3px] border border-zyfn-line bg-white ${className}`
+    ? `card flex w-full min-w-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${
+        cell_fill
+          ? "h-full min-h-0 flex-1"
+          : "h-fit shrink-0 overflow-visible"
+      } ${className}`
     : `card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
 
   const footer = (

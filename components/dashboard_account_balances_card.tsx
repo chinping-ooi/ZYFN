@@ -21,13 +21,13 @@ export function DashboardAccountBalancesCard({
     "border-zyfn-line",
     "bg-white",
     column_fill
-      ? "min-h-0 shrink-0 overflow-visible lg:flex-1 lg:overflow-hidden"
+      ? "min-h-0 h-fit overflow-visible lg:h-full lg:min-h-0 lg:overflow-hidden"
       : "shrink-0 overflow-visible",
     className,
   ].join(" ");
 
   const list_class = column_fill
-    ? "balance-rows px-4 pb-2 md:px-5 md:pb-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+    ? "balance-rows min-h-0 px-4 pb-2 md:px-5 md:pb-3 lg:flex-1 lg:overflow-y-auto"
     : "balance-rows px-4 pb-2 md:px-5 md:pb-3";
 
   return (
