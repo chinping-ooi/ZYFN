@@ -35,11 +35,6 @@ function spending_meta(change: ReturnType<typeof compute_spending_change>) {
   );
 }
 
-function fd_meta(active_count: number) {
-  if (active_count <= 0) return "No active placements";
-  return `${active_count} active placement${active_count === 1 ? "" : "s"}`;
-}
-
 export function DashboardView({
   metrics,
   fd_summary,
@@ -123,57 +118,40 @@ export function DashboardView({
 
       {metrics.monthly.length > 0 ? (
         <>
-          <div
-            className="dashboard-kpi-row"
-            aria-label="Monthly financial summary"
-          >
-            <KpiCard
-              compact_amount
-              snug
-              label="Monthly spending"
-              amount_sen={spending_sen}
-              meta={spending_meta(spending_change)}
-            />
-            <KpiCard
-              compact_amount
-              snug
-              label="Net cash flow"
-              amount_sen={net_cash_flow_sen}
-              meta={<>Excludes FD · {month_label}</>}
-            />
-            <KpiCard
-              compact_amount
-              snug
-              label="Monthly income"
-              amount_sen={income_sen}
-              meta={<>Cash in · {month_label}</>}
-            />
-            <KpiCard
-              compact_amount
-              snug
-              label="FD principal (active)"
-              amount_sen={fd_principal_sen}
-              meta={fd_meta(fd_summary.active_count)}
-            />
-          </div>
-
-          <div className="dashboard-body" data-gap-check="body">
-            <div className="dashboard-body-cell">
+          <div className="dashboard-columns" data-gap-check="body">
+            <div className="dashboard-column dashboard-column-left">
+              <div
+                className="dashboard-kpi-row"
+                aria-label="Monthly financial summary"
+              >
+                <KpiCard
+                  compact_amount
+                  snug
+                  label="Monthly spending"
+                  amount_sen={spending_sen}
+                  meta={spending_meta(spending_change)}
+                />
+                <KpiCard
+                  compact_amount
+                  snug
+                  label="Net cash flow"
+                  amount_sen={net_cash_flow_sen}
+                  meta={<>Excludes FD · {month_label}</>}
+                />
+              </div>
               <SpendingBreakdownCard
                 content_sized
                 column_fill
-                className="h-full min-h-0"
+                className="min-h-0"
                 rows={spending_rows.length > 0 ? spending_rows : []}
                 month_label={month_label}
               />
             </div>
-            <div className="dashboard-body-cell">
-              <CashFlowChart className="h-full min-h-0" {...chart_props} />
-            </div>
-            <div className="dashboard-body-cell">
+            <div className="dashboard-column dashboard-column-right">
+              <CashFlowChart className="min-h-0 flex-1" {...chart_props} />
               <DashboardAccountBalancesCard
                 column_fill
-                className="h-full min-h-0"
+                className="min-h-0 flex-1"
                 rows={balance_rows}
               />
             </div>

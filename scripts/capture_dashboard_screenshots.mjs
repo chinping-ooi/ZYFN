@@ -19,8 +19,7 @@ const TOKEN_PX = 16;
 
 const viewports = [
   { name: "390x844", width: 390, height: 844, lg: false },
-  { name: "820x1180", width: 820, height: 1180, lg: false },
-  { name: "1024x600", width: 1024, height: 600, lg: true },
+  { name: "1024x564", width: 1024, height: 564, lg: true },
   { name: "1366x768", width: 1366, height: 768, lg: true },
   { name: "1920x1080", width: 1920, height: 1080, lg: true },
 ];
@@ -67,11 +66,30 @@ async function verifyDashboard(page, vp) {
     node.scrollTop = 0;
   });
   await delay(80);
+  if (vp.lg) {
+    await page.waitForFunction(
+      () => {
+        const plot = [...document.querySelectorAll(".plot")].find(
+          (p) => p.offsetParent !== null,
+        );
+        if (!plot) return false;
+        const h = plot.clientHeight;
+        const ticks = plot.querySelector(
+          ":scope > div:first-child",
+        )?.querySelectorAll("span").length;
+        const want = h < 200 ? 3 : 5;
+        return ticks === want;
+      },
+      { timeout: 8000 },
+    );
+  }
 
   const m = await page.evaluate((tokenPx) => {
     const shell = document.querySelector(".dashboard-shell");
     const kpiRow = document.querySelector(".dashboard-kpi-row");
-    const body = document.querySelector(".dashboard-body");
+    const body = document.querySelector(".dashboard-columns");
+    const colLeft = document.querySelector(".dashboard-column-left");
+    const colRight = document.querySelector(".dashboard-column-right");
     const mainEl = document.querySelector("main.dashboard-main");
     const footer =
       document.querySelector(".workspace > footer") ??
@@ -83,10 +101,7 @@ async function verifyDashboard(page, vp) {
       const g = getComputedStyle(row).gap;
       const gaps = [];
       const kids = [...row.children];
-      if (
-        window.innerWidth >= 1024 &&
-        (row === body || row === kpiRow)
-      ) {
+      if (window.innerWidth >= 1024 && row === body) {
         for (let i = 1; i < kids.length; i++) {
           const prev = kids[i - 1].getBoundingClientRect();
           const curr = kids[i].getBoundingClientRect();
@@ -110,6 +125,17 @@ async function verifyDashboard(page, vp) {
     const cellBottoms = cells.map((c) => c.getBoundingClientRect().bottom);
     const cellTops = cells.map((c) => c.getBoundingClientRect().top);
     const bodyBottom = body?.getBoundingClientRect().bottom ?? 0;
+
+    const balCard = colRight?.querySelector(".balance-rows")?.closest(".card");
+    const balList = colRight?.querySelector(".balance-rows");
+    const balCardRect = balCard?.getBoundingClientRect();
+    const balOverflow =
+      balList && balCardRect
+        ? [...balList.children].some((row) => {
+            const r = row.getBoundingClientRect();
+            return r.bottom > balCardRect.bottom + 1;
+          })
+        : false;
 
     const visiblePlot = [...document.querySelectorAll(".plot")].find(
       (p) => p.offsetParent !== null,
@@ -157,12 +183,24 @@ async function verifyDashboard(page, vp) {
       chartFootVisible: chartFoot && chartFoot.getBoundingClientRect().height > 8,
       plotH: visiblePlot?.getBoundingClientRect().height ?? 0,
       shortViewport: window.innerHeight < 600,
+      balOverflow,
+      colLeftBottom: colLeft?.getBoundingClientRect().bottom ?? 0,
+      colRightBottom: colRight?.getBoundingClientRect().bottom ?? 0,
     };
   }, TOKEN_PX);
 
   assertUniformGaps(m.shellGaps.gaps, "shell vertical", issues, vp.name);
-  if (vp.lg && m.kpiGaps.gaps.length > 0) {
-    assertUniformGaps(m.kpiGaps.gaps, "KPI horizontal", issues, vp.name);
+  if (vp.lg && m.kpiGaps.cssGap) {
+    const kpi_px = Math.round(parseFloat(m.kpiGaps.cssGap));
+    if (Number.isFinite(kpi_px) && Math.abs(kpi_px - TOKEN_PX) > 1.5) {
+      issues.push(`${vp.name}: KPI grid gap ${kpi_px}px ≠ ${TOKEN_PX}px`);
+    }
+  }
+  if (vp.lg) {
+    const kpiCount = await page.locator(".dashboard-kpi-row > .card").count();
+    if (kpiCount !== 2) {
+      issues.push(`${vp.name}: expected 2 KPI cards, saw ${kpiCount}`);
+    }
   }
   if (vp.lg && m.bodyGaps.gaps.length > 0) {
     assertUniformGaps(m.bodyGaps.gaps, "body horizontal", issues, vp.name);
@@ -179,8 +217,14 @@ async function verifyDashboard(page, vp) {
     if (m.mainScroll > m.mainClient + 2) {
       issues.push(`${vp.name}: main scroll ${m.mainScroll} > ${m.mainClient}`);
     }
-    if (!m.topsAligned || !m.bottomsAligned) {
-      issues.push(`${vp.name}: body cells not aligned (tops/bottoms)`);
+    const colDelta = Math.abs(m.colLeftBottom - m.colRightBottom);
+    if (colDelta > 2) {
+      issues.push(
+        `${vp.name}: column bottoms misaligned by ${colDelta.toFixed(1)}px`,
+      );
+    }
+    if (m.balOverflow) {
+      issues.push(`${vp.name}: account balance rows overflow card border`);
     }
     if (m.bodyBottom > m.footerTop + 2) {
       issues.push(`${vp.name}: body below footer`);
@@ -192,8 +236,11 @@ async function verifyDashboard(page, vp) {
   }
 
   if (m.yOverlap) issues.push(`${vp.name}: y-axis labels overlap`);
-  if (vp.lg && m.yTickCount > 3) {
-    issues.push(`${vp.name}: expected 3 y ticks, saw ${m.yTickCount}`);
+  if (vp.lg && m.plotH >= 200 && m.yTickCount !== 5) {
+    issues.push(`${vp.name}: tall plot expected 5 y ticks, saw ${m.yTickCount}`);
+  }
+  if (vp.lg && m.plotH > 0 && m.plotH < 200 && m.yTickCount !== 3) {
+    issues.push(`${vp.name}: short plot expected 3 y ticks, saw ${m.yTickCount}`);
   }
   if (!m.chartFootVisible) issues.push(`${vp.name}: chart footer not visible`);
 

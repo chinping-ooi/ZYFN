@@ -3,6 +3,31 @@ import type { SpendingAccountRow } from "@/lib/dashboard/spending_breakdown";
 import { spending_total_sen } from "@/lib/dashboard/spending_breakdown";
 import { CardHead } from "@/components/card_head";
 
+const SEGMENT_COLORS = [
+  "#1e3a5f",
+  "#2c5282",
+  "#3d6a9c",
+  "#5a7fa8",
+  "#7a94b0",
+  "#9aabc4",
+];
+
+function donut_gradient(rows: SpendingAccountRow[]): string {
+  let cursor = 0;
+  const parts: string[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const pct = Math.max(0, Math.min(100, rows[i].pct));
+    const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+    const end = cursor + pct;
+    parts.push(`${color} ${cursor}% ${end}%`);
+    cursor = end;
+  }
+  if (cursor < 100) {
+    parts.push(`#e8ecf0 ${cursor}% 100%`);
+  }
+  return `conic-gradient(from -90deg, ${parts.join(", ")})`;
+}
+
 export function SpendingBreakdownCard({
   rows,
   month_label,
@@ -13,9 +38,7 @@ export function SpendingBreakdownCard({
   rows: SpendingAccountRow[];
   month_label: string;
   className?: string;
-  /** Dashboard: capped height with optional internal scroll. */
   content_sized?: boolean;
-  /** Grow within dashboard left column (flex-1) while keeping Total at card bottom. */
   column_fill?: boolean;
 }) {
   const total_sen = spending_total_sen(rows);
@@ -33,20 +56,26 @@ export function SpendingBreakdownCard({
   ];
 
   if (column_fill && content_sized) {
-    shell_parts.push("min-h-0", "h-fit", "overflow-hidden", "lg:h-full", "lg:min-h-0");
+    shell_parts.push("min-h-0", "lg:flex-1", "lg:h-auto");
   } else if (content_sized) {
     shell_parts.push("h-fit");
   } else {
     shell_parts.push("h-full", "min-h-0");
   }
 
-  const list_parts = ["accounts", "px-5"];
+  const body_parts = [
+    "spending-chart-body",
+    "flex",
+    "min-h-0",
+    "flex-col",
+    "gap-3",
+    "px-4",
+    "pb-3",
+    "md:px-5",
+    "md:pb-4",
+  ];
   if (column_fill && content_sized) {
-    list_parts.push("min-h-0", "lg:flex-1", "lg:overflow-y-auto");
-  } else if (content_sized) {
-    list_parts.push("overflow-visible");
-  } else {
-    list_parts.push("min-h-0", "flex-1", "overflow-y-auto");
+    body_parts.push("lg:flex-1", "lg:justify-center", "lg:overflow-y-auto");
   }
 
   return (
@@ -63,42 +92,49 @@ export function SpendingBreakdownCard({
         </p>
       ) : (
         <>
-          <div className={list_parts.join(" ")}>
-            {rows.map((row) => (
+          <div className={body_parts.join(" ")}>
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
               <div
-                key={row.id}
-                className={`account border-b border-[#dce1e7] last:border-0 ${
-                  content_sized ? "py-1.5 md:py-2" : "py-2"
-                }`}
+                className="relative h-[108px] w-[108px] shrink-0 rounded-full lg:h-[120px] lg:w-[120px]"
+                style={{ background: donut_gradient(rows) }}
+                role="img"
+                aria-label={`Spending share by account, total ${format_rm(total_sen)}`}
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`bank-name min-w-0 flex-1 font-semibold ${
-                      content_sized ? "text-xs md:text-sm" : "text-sm"
-                    }`}
-                  >
-                    {row.label}
-                  </div>
-                  <div
-                    className={`account-value shrink-0 text-right font-semibold tabular-nums ${
-                      content_sized ? "text-xs md:text-sm" : "text-sm"
-                    }`}
-                  >
-                    {format_rm(row.amount_sen)}
-                  </div>
-                </div>
-                <div
-                  className={`${content_sized ? "mt-1.5" : "mt-2"} h-[3px] w-full overflow-hidden rounded-[2px] bg-[#e8ecf0]`}
-                  role="presentation"
-                  aria-hidden
-                >
-                  <div
-                    className="h-full rounded-[2px] bg-zyfn-navy"
-                    style={{ width: `${Math.min(100, row.pct)}%` }}
-                  />
+                <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-white text-center">
+                  <span className="text-[9px] font-medium uppercase tracking-wide text-zyfn-muted lg:text-[10px]">
+                    Total
+                  </span>
+                  <span className="text-[11px] font-semibold tabular-nums text-zyfn-ink lg:text-xs">
+                    {format_rm(total_sen)}
+                  </span>
                 </div>
               </div>
-            ))}
+              <ul
+                className="legend w-full min-w-0 flex-1 space-y-1.5 sm:max-h-[min(140px,100%)] sm:overflow-y-auto"
+                aria-label="Account spending legend"
+              >
+                {rows.map((row, i) => (
+                  <li
+                    key={row.id}
+                    className="flex items-center gap-2 text-xs md:text-sm"
+                  >
+                    <span
+                      className="inline-block h-2 w-2 shrink-0 rounded-[1px]"
+                      style={{
+                        backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+                      }}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 truncate font-medium text-zyfn-ink">
+                      {row.label}
+                    </span>
+                    <span className="shrink-0 font-semibold tabular-nums text-zyfn-ink">
+                      {format_rm(row.amount_sen)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           <div
             className={`flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 text-sm ${
