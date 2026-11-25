@@ -84,5 +84,5 @@ export function transaction_columns(
   const money_cols =
     kind === "tng_go_plus" ? go_plus_money_columns() : sen_money_columns(kind);
 
-  return [DATE_COL, DESCRIPTION_COL, TYPE_COL, DETAIL_COL, ...money_cols];
+  return [DATE_COL, TYPE_COL, DETAIL_COL, DESCRIPTION_COL, ...money_cols];
 }
