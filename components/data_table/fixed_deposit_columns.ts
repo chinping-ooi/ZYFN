@@ -13,7 +13,7 @@ const BASE_COLUMNS: DataTableColumn<FixedDepositDataRow>[] = [
   },
   {
     key: "principal_sen",
-    label: "Principal (RM)",
+    label: "Principal",
     type: "money",
     headerClassName: "w-[7.25rem] min-w-[7.25rem]",
   },
@@ -43,7 +43,7 @@ const BASE_COLUMNS: DataTableColumn<FixedDepositDataRow>[] = [
   },
   {
     key: "interest_earned_sen",
-    label: "Int. earned (RM)",
+    label: "Int. earned",
     type: "money",
     zero_as_blank: true,
     headerClassName: "w-[7.5rem] min-w-[7.5rem]",

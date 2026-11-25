@@ -31,10 +31,9 @@ const DETAIL_COL: DataTableColumn<TransactionTableRow> = {
 function sen_money_columns(
   kind: TransactionAccountKind,
 ): DataTableColumn<TransactionTableRow>[] {
-  const in_label = kind === "credit_card" ? "Credit (RM)" : "In (RM)";
-  const out_label = kind === "credit_card" ? "Debit (RM)" : "Out (RM)";
-  const balance_label =
-    kind === "credit_card" ? "Owed (RM)" : "Balance (RM)";
+  const in_label = kind === "credit_card" ? "Credit" : "In";
+  const out_label = kind === "credit_card" ? "Debit" : "Out";
+  const balance_label = kind === "credit_card" ? "Owed" : "Balance";
 
   return [
     {
@@ -57,21 +56,21 @@ function go_plus_money_columns(): DataTableColumn<TransactionTableRow>[] {
   return [
     {
       key: "in_micro",
-      label: "In (RM)",
+      label: "In",
       type: "money_micro",
       account_key: "tng_sub_account",
       zero_as_blank: true,
     },
     {
       key: "out_micro",
-      label: "Out (RM)",
+      label: "Out",
       type: "money_micro",
       account_key: "tng_sub_account",
       zero_as_blank: true,
     },
     {
       key: "balance_micro",
-      label: "Balance (RM)",
+      label: "Balance",
       type: "money_micro",
       account_key: "tng_sub_account",
     },
