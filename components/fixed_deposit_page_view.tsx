@@ -6,6 +6,8 @@ import type { FixedDepositDataRow } from "@/components/data_table/fixed_deposit_
 import type { FixedDepositLoadResult } from "@/lib/fixed_deposits/types";
 import { summarize_fixed_deposits } from "@/lib/fixed_deposits/summary";
 import { to_table_rows } from "@/lib/fixed_deposits/transform";
+import { PageToolbar } from "@/components/page_toolbar";
+import { CardHead } from "@/components/card_head";
 
 export function FixedDepositPageView({
   title,
@@ -32,11 +34,7 @@ export function FixedDepositPageView({
 
   return (
     <>
-      <FixedDepositPageHeader
-        title={title}
-        subtitle={subtitle}
-        source_note={source_note}
-      />
+      <PageToolbar title={title} subtitle={`${subtitle} · ${source_note}`} />
 
       {load.configured && load.empty_from_supabase ? (
         <aside
@@ -53,15 +51,12 @@ export function FixedDepositPageView({
 
       <FixedDepositSummaryCards summary={summary} />
 
-      <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
-        <div className="border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
-          <h3 className="m-0 text-[15px] font-semibold">Deposit register</h3>
-          <p className="m-0 mt-0.5 text-xs text-zyfn-muted">
-            {table_rows.length} record{table_rows.length === 1 ? "" : "s"} ·
-            sorted by maturity date
-          </p>
-        </div>
-        <div className="border-t border-zyfn-line px-5 py-4">
+      <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+        <CardHead
+          title="Deposit register"
+          subtitle={`${table_rows.length} record${table_rows.length === 1 ? "" : "s"} · sorted by maturity date`}
+        />
+        <div className="table-wrap px-5 pt-[18px] pb-4">
           <FixedDepositDataTable
             label={title}
             scope={table_scope}
@@ -71,23 +66,5 @@ export function FixedDepositPageView({
         </div>
       </section>
     </>
-  );
-}
-
-function FixedDepositPageHeader({
-  title,
-  subtitle,
-  source_note,
-}: {
-  title: string;
-  subtitle: string;
-  source_note: string;
-}) {
-  return (
-    <div className="mb-5">
-      <h2 className="m-0 text-[17px] font-semibold">{title}</h2>
-      <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">{subtitle}</p>
-      <p className="m-0 mt-1 text-xs text-zyfn-muted">{source_note}</p>
-    </div>
   );
 }

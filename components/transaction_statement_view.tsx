@@ -11,6 +11,8 @@ import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
+import { PageToolbar } from "@/components/page_toolbar";
+import { CardHead } from "@/components/card_head";
 
 export function TransactionStatementView({
   data,
@@ -48,43 +50,45 @@ export function TransactionStatementView({
 
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="m-0 text-[17px] font-semibold">Account statement</h2>
-          <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">
-            Supabase · {subtitle_ref} · {statement.period_label}
-          </p>
-        </div>
-        <MonthSelect
-          label="Statement month"
-          value={month}
-          options={month_options}
-          onChange={(v) => set_month(v as typeof month)}
-        />
-      </div>
+      <PageToolbar
+        title="Account statement"
+        subtitle={`Supabase · ${subtitle_ref} · ${statement.period_label}`}
+        controls={
+          <MonthSelect
+            label="Statement month"
+            value={month}
+            options={month_options}
+            onChange={(v) => set_month(v as typeof month)}
+          />
+        }
+      />
 
       <section
-        className="mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
+        className="statement-summary kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Statement summary"
       >
         <KpiCard
+          compact_amount
           label={labels.total_in}
           amount_sen={use_micro ? null : statement.total_in_sen}
           amount_micro={use_micro ? statement.total_in_micro : null}
           money_dp={money_dp}
         />
         <KpiCard
+          compact_amount
           label={labels.total_out}
           amount_sen={use_micro ? null : statement.total_out_sen}
           amount_micro={use_micro ? statement.total_out_micro : null}
           money_dp={money_dp}
         />
         <KpiCard
+          compact_amount
           label="Transactions"
           hide_amount
           meta={`${row_count_in_view} row${row_count_in_view === 1 ? "" : "s"} in view`}
         />
         <KpiCard
+          compact_amount
           label={labels.closing}
           amount_sen={use_micro ? null : statement.closing_sen}
           amount_micro={use_micro ? statement.closing_micro : null}
@@ -92,15 +96,12 @@ export function TransactionStatementView({
         />
       </section>
 
-      <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
-        <div className="border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
-          <h3 className="m-0 text-[15px] font-semibold">Transaction activity</h3>
-          <p className="m-0 mt-0.5 text-xs text-zyfn-muted">
-            {table_rows.length} transaction{table_rows.length === 1 ? "" : "s"} in
-            view · read-only from public.zyfn_transactions · newest first
-          </p>
-        </div>
-        <div className="border-t border-zyfn-line px-5 py-4">
+      <section className="statement-table card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+        <CardHead
+          title="Transaction activity"
+          subtitle={`${table_rows.length} transaction${table_rows.length === 1 ? "" : "s"} in view · read-only from public.zyfn_transactions · newest first`}
+        />
+        <div className="table-wrap px-5 pt-[18px] pb-4">
           <TransactionDataTable
             label={`${data.account_label} activity`}
             scope={`${data.account_ref}-${month}`}

@@ -39,7 +39,7 @@ export function CashFlowChart({
     .join(". ");
 
   return (
-    <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+    <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
         <div>
           <h3 className="m-0 text-[15px] font-semibold">Monthly cash flow</h3>

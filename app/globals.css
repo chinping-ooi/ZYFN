@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+:root {
+  --navy: #263d5b;
+  --slate: #a4b1c0;
+  --ink: #233044;
+  --muted: #657185;
+  --line: #cbd2dc;
+  --bg: #f1f3f5;
+  --green: #276b54;
+  --control-height: 36px;
+}
+
 @theme {
   --color-zyfn-navy: #263d5b;
   --color-zyfn-sidebar: #1e2c40;

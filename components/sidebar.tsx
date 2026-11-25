@@ -27,15 +27,15 @@ function NavGroupSection({
   const initial_open = default_open ?? contains_active;
 
   return (
-    <details className="group/nav mb-0.5" open={initial_open}>
-      <summary className="flex list-none cursor-pointer items-center justify-between rounded-[3px] px-3.5 py-2 text-sm text-[#c1cad7] hover:bg-zyfn-sidebar-hover hover:text-white [&::-webkit-details-marker]:hidden">
+    <details className="nav-section group/nav mb-0.5" open={initial_open}>
+      <summary className="nav-group flex list-none cursor-pointer items-center justify-between rounded-[3px] px-3.5 py-2 text-sm text-[#c1cad7] hover:bg-zyfn-sidebar-hover hover:text-white [&::-webkit-details-marker]:hidden">
         {title}
         <span
           className="mr-0.5 h-1.5 w-1.5 -rotate-45 border-r border-b border-current transition-transform duration-200 group-open/nav:rotate-45 motion-reduce:transition-none"
           aria-hidden
         />
       </summary>
-      <div className="pb-1">
+      <div className="nav-children pb-1">
         {items.map((item) => {
           const active = pathname === item.href;
           return (
@@ -43,9 +43,9 @@ function NavGroupSection({
               key={item.href}
               href={item.href}
               onClick={on_navigate}
-              className={`mb-0.5 flex min-h-[38px] items-center rounded-[3px] py-2 pr-3.5 pl-7 text-sm ${
+              className={`nav-item mb-0.5 flex min-h-[38px] items-center rounded-[3px] py-2 pr-3.5 pl-7 text-sm no-underline ${
                 active
-                  ? "bg-zyfn-sidebar-active font-semibold text-white"
+                  ? "active bg-zyfn-sidebar-active font-semibold text-white"
                   : "font-normal text-[#c1cad7] hover:bg-zyfn-sidebar-hover hover:text-white"
               }`}
               aria-current={active ? "page" : undefined}
@@ -70,16 +70,16 @@ function SidebarPanel({
 }) {
   return (
     <>
-      <header className="flex min-h-16 items-center border-b border-[#38465a] px-6 text-[22px] font-semibold tracking-[2px]">
+      <header className="brand flex min-h-16 items-center border-b border-[#38465a] px-6 text-[22px] font-semibold tracking-[2px]">
         ZYFN
       </header>
-      <nav className="flex-1 overflow-y-auto p-3 pt-4" aria-label="Workspace pages">
+      <nav className="nav flex-1 overflow-y-auto p-3 pt-4" aria-label="Workspace pages">
         <Link
           href={DASHBOARD_HREF}
           onClick={on_navigate}
-          className={`mb-0.5 flex min-h-[38px] items-center rounded-[3px] px-3.5 py-2 text-sm ${
+          className={`nav-item mb-0.5 flex min-h-[38px] items-center rounded-[3px] px-3.5 py-2 text-sm no-underline ${
             pathname === DASHBOARD_HREF
-              ? "bg-zyfn-sidebar-active font-semibold text-white"
+              ? "active bg-zyfn-sidebar-active font-semibold text-white"
               : "text-[#c1cad7] hover:bg-zyfn-sidebar-hover hover:text-white"
           }`}
           aria-current={pathname === DASHBOARD_HREF ? "page" : undefined}
@@ -97,7 +97,7 @@ function SidebarPanel({
           />
         ))}
       </nav>
-      <footer className="shrink-0 border-t border-[#38465a] px-6 py-3 text-xs leading-5 text-[#aeb8c6]">
+      <footer className="side-foot shrink-0 border-t border-[#38465a] px-6 py-3 text-xs leading-5 text-[#aeb8c6]">
         Supabase · read-only ledger
       </footer>
     </>
@@ -111,7 +111,7 @@ export function Sidebar({ mobile_open, on_close }: SidebarProps) {
   return (
     <>
       <aside
-        className="sticky top-0 hidden h-screen w-56 shrink-0 flex flex-col border-r border-[#152235] bg-zyfn-sidebar text-white lg:flex"
+        className="sidebar sticky top-0 hidden h-screen w-[224px] shrink-0 flex flex-col border-r border-[#152235] bg-zyfn-sidebar text-white lg:flex"
         aria-label="Main navigation"
       >
         <SidebarPanel

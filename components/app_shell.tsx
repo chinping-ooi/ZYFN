@@ -17,13 +17,13 @@ export function AppShell({
   const [mobile_nav, set_mobile_nav] = useState(false);
 
   return (
-    <div className="flex min-h-screen min-w-0">
+    <div className="shell flex min-h-screen min-w-[1100px]">
       <Sidebar
         mobile_open={mobile_nav}
         on_close={() => set_mobile_nav(false)}
       />
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="flex min-h-16 shrink-0 items-center justify-between border-b border-zyfn-line bg-white px-6 lg:px-8">
+        <header className="topbar flex min-h-16 shrink-0 items-center justify-between border-b border-zyfn-line bg-white px-6 lg:px-8">
           <div className="flex items-start gap-3">
             <button
               type="button"
@@ -43,7 +43,7 @@ export function AppShell({
             Personal workspace
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1560px] flex-1 px-6 py-6 lg:px-8">
+        <main className="content mx-auto w-full max-w-[1560px] flex-1 px-6 py-6 lg:px-8">
           {children}
         </main>
         <footer className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-zyfn-line bg-white px-6 py-3 text-xs leading-5 text-zyfn-muted lg:px-8">

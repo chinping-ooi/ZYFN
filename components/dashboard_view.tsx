@@ -4,10 +4,16 @@ import { useMemo, useState } from "react";
 import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
 import { chart_window, snapshot_for_month } from "@/lib/dashboard/metrics";
 import { compute_spending_change } from "@/lib/spending_change";
-import { format_rm } from "@/lib/money";
+import { format_rm, major_to_minor } from "@/lib/money";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { CashFlowChart } from "@/components/cash_flow_chart";
+import { PageToolbar } from "@/components/page_toolbar";
+import { CardHead } from "@/components/card_head";
+import { DashboardFixedDeposits } from "@/components/dashboard_fixed_deposits";
+import type { FixedDepositRecord } from "@/lib/fixed_deposits/types";
+import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
+import { count_maturing_within_days } from "@/lib/fixed_deposits/maturity";
 
 function account_type_label(name: string) {
   const lower = name.toLowerCase();
@@ -16,7 +22,35 @@ function account_type_label(name: string) {
   return "Savings account";
 }
 
-export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
+function spending_meta(change: ReturnType<typeof compute_spending_change>) {
+  if (change.direction === "flat") {
+    return change.label;
+  }
+  const pct = `${Math.abs(change.pct).toFixed(1)}%`;
+  const word = change.direction === "down" ? "lower" : "higher";
+  return (
+    <>
+      <span
+        className={`font-semibold ${
+          change.direction === "down" ? "text-zyfn-green" : "text-zyfn-red"
+        }`}
+      >
+        {pct} {word}{" "}
+      </span>
+      vs. previous month
+    </>
+  );
+}
+
+export function DashboardView({
+  metrics,
+  fd_summary,
+  fd_rows,
+}: {
+  metrics: DashboardMetrics;
+  fd_summary: FixedDepositSummary;
+  fd_rows: FixedDepositRecord[];
+}) {
   const [month, set_month] = useState<MonthKey>(metrics.default_month);
 
   const snapshot = snapshot_for_month(metrics, month);
@@ -33,6 +67,13 @@ export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
     [metrics.accounts],
   );
 
+  const fd_principal_sen = major_to_minor(fd_summary.active_principal_major);
+  const maturing_soon = count_maturing_within_days(fd_rows, 30);
+  const fd_meta =
+    fd_summary.active_count > 0
+      ? `${fd_summary.active_count} active placement${fd_summary.active_count === 1 ? "" : "s"} · ${maturing_soon} maturing within 30 days`
+      : "No active fixed deposits";
+
   const chart = chart_window(metrics, month, 6);
   const chart_labels = chart.map((m) =>
     new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" }).format(
@@ -40,64 +81,51 @@ export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
     ),
   );
 
-  const net_sen =
-    (snapshot?.income_sen ?? 0) - (snapshot?.spending_sen ?? 0);
-
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>
-          <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">
+      <PageToolbar
+        title="Monthly summary"
+        subtitle={
+          <>
             Cash in/out only · excludes FD and internal transfers ·{" "}
             {snapshot?.label ?? month}
-          </p>
-        </div>
-        {metrics.months.length > 0 ? (
-          <MonthSelect
-            label="Dashboard month"
-            value={month}
-            options={metrics.months}
-            onChange={(v) => set_month(v)}
-          />
-        ) : null}
-      </div>
+          </>
+        }
+        controls={
+          metrics.months.length > 0 ? (
+            <MonthSelect
+              label="Dashboard month"
+              value={month}
+              options={metrics.months}
+              onChange={(v) => set_month(v)}
+            />
+          ) : null
+        }
+      />
 
       <section
-        className="mb-5 grid grid-cols-1 gap-[18px] md:grid-cols-3"
+        className="kpis mb-5 grid grid-cols-1 gap-[18px] md:grid-cols-3"
         aria-label="Monthly financial summary"
       >
         <KpiCard
           label="Monthly spending"
           amount_sen={snapshot?.spending_sen ?? 0}
-          meta={
-            <span
-              className={`font-semibold ${
-                spending_change.direction === "up"
-                  ? "text-zyfn-red"
-                  : spending_change.direction === "down"
-                    ? "text-zyfn-green"
-                    : "text-zyfn-muted"
-              }`}
-            >
-              {spending_change.label}
-            </span>
-          }
+          meta={spending_meta(spending_change)}
         />
         <KpiCard
           label="Available balance"
           amount_sen={available_sen}
-          meta="HLB, Public Bank savings, TNG wallet, and GO+ · latest ledger balances"
+          meta={`Across ${metrics.accounts.length} accounts · excludes fixed deposits`}
         />
         <KpiCard
-          label="Net cash flow"
-          amount_sen={net_sen}
-          meta="Credits − debits · excludes FD, transfers, and card bill pays"
+          label="Fixed deposits"
+          amount_sen={fd_principal_sen}
+          meta={fd_meta}
         />
       </section>
 
       {metrics.monthly.length > 0 ? (
-        <div className="mb-5 grid grid-cols-1 gap-[18px] xl:grid-cols-[1.5fr_1fr]">
+        <div className="middle mb-5 grid grid-cols-1 gap-[18px] xl:grid-cols-[minmax(0,1.5fr)_minmax(330px,1fr)]">
           <CashFlowChart
             labels={chart_labels}
             income_sen={chart.map((m) => m.income_sen)}
@@ -106,31 +134,34 @@ export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
             monthly_income_sen={snapshot?.income_sen ?? 0}
             monthly_spending_sen={snapshot?.spending_sen ?? 0}
           />
-          <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
-            <div className="border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
-              <h3 className="m-0 text-[15px] font-semibold">Account balances</h3>
-              <p className="m-0 mt-0.5 text-xs text-zyfn-muted">
-                Latest balance_after from each Supabase account
-              </p>
-            </div>
-            <div className="px-5">
+          <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+            <CardHead
+              title="Account balances"
+              subtitle="Latest recorded balance in selected period"
+            />
+            <div className="accounts px-5">
               {metrics.accounts.map((account) => (
                 <div
                   key={account.id}
-                  className="flex items-center gap-3 border-b border-[#dce1e7] py-3.5 last:border-0"
+                  className="account flex items-center gap-3 border-b border-[#dce1e7] py-3.5 last:border-0"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold">{account.name}</div>
-                    <div className="text-xs text-zyfn-muted">
+                    <div className="bank-name text-sm font-semibold">
+                      {account.name}
+                    </div>
+                    <div className="account-type text-xs text-zyfn-muted">
                       {account_type_label(account.name)}
                     </div>
                   </div>
-                  <div className="text-right text-sm font-semibold tabular-nums">
+                  <div className="account-value ml-auto text-right text-sm font-semibold tabular-nums">
                     {format_rm(account.balance_sen)}
                   </div>
                 </div>
               ))}
             </div>
+            <p className="account-note px-5 pb-[15px] pt-2 text-xs text-zyfn-muted">
+              GO+ is shown separately from the TNG wallet.
+            </p>
           </section>
         </div>
       ) : (
@@ -138,6 +169,8 @@ export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
           No transactions found in dashboard accounts to chart.
         </p>
       )}
+
+      <DashboardFixedDeposits rows={fd_rows} />
     </>
   );
 }

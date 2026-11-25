@@ -9,6 +9,7 @@ export function KpiCard({
   money_dp = 2,
   meta,
   hide_amount,
+  compact_amount,
 }: {
   label: string;
   amount_sen?: MinorAmount | null;
@@ -16,12 +17,18 @@ export function KpiCard({
   money_dp?: 2 | 4;
   meta?: ReactNode;
   hide_amount?: boolean;
+  /** Statement summary uses 24px amounts per UI reference. */
+  compact_amount?: boolean;
 }) {
   return (
-    <article className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white pt-[3px]">
-      <div className="border-t-[3px] border-zyfn-navy px-5 py-[19px]">
+    <article className="card kpi overflow-hidden rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white">
+      <div className="px-[21px] py-[19px]">
         <div className="text-sm font-semibold text-[#526075]">{label}</div>
-        <div className="my-2.5 text-[30px] leading-snug font-medium whitespace-nowrap tabular-nums">
+        <div
+          className={`kpi-amount my-2.5 leading-snug font-medium whitespace-nowrap tabular-nums ${
+            compact_amount ? "text-2xl" : "text-[30px]"
+          }`}
+        >
           {!hide_amount ? (
             amount_micro != null ? (
               <>

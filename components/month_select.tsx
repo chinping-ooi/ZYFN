@@ -14,11 +14,11 @@ export function MonthSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="relative inline-block">
+    <label className="select-wrap relative inline-block">
       <span className="sr-only">{label}</span>
       <select
         aria-label={label}
-        className="h-9 min-w-40 appearance-none rounded-[3px] border border-[#b8c2cf] bg-white pr-9 pl-3 text-sm text-zyfn-ink"
+        className="h-[var(--control-height,36px)] min-w-40 appearance-none rounded-[3px] border border-[#b8c2cf] bg-white pr-9 pl-3 text-sm leading-5 text-zyfn-ink"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
