@@ -85,6 +85,26 @@ export function DashboardView({
       new Date(`${m.month}-01T00:00:00Z`),
     ),
   );
+  const chart_labels_key = chart_labels.join(",");
+
+  useLayoutEffect(() => {
+    const el = chart_measure_ref.current;
+    if (!el) return;
+
+    const measure = () => {
+      set_chart_height_px(el.getBoundingClientRect().height);
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [month, metrics.monthly.length, chart_labels_key]);
+
+  const spending_panel_style =
+    chart_height_px != null
+      ? ({ height: chart_height_px } as const)
+      : undefined;
 
   useLayoutEffect(() => {
     const el = chart_measure_ref.current;
