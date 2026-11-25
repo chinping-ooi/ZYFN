@@ -20,7 +20,7 @@ export function AppShell({
   const [mobile_nav, set_mobile_nav] = useState(false);
 
   return (
-    <div className="shell flex h-screen min-h-screen min-w-[1100px] overflow-hidden">
+    <div className="shell flex h-screen min-h-screen min-w-0 overflow-hidden">
       <Sidebar
         mobile_open={mobile_nav}
         on_close={() => set_mobile_nav(false)}

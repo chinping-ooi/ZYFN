@@ -22,11 +22,15 @@ export function KpiCard({
 }) {
   return (
     <article className="card kpi flex h-full flex-col overflow-hidden rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white">
-      <div className="flex flex-1 flex-col px-[21px] py-[19px]">
+      <div
+        className={`flex flex-1 flex-col py-[19px] ${
+          compact_amount ? "px-4 md:px-[18px]" : "px-[21px]"
+        }`}
+      >
         <div className="text-sm font-semibold text-[#526075]">{label}</div>
         <div
-          className={`kpi-amount my-2.5 leading-snug font-medium whitespace-nowrap tabular-nums ${
-            compact_amount ? "text-2xl" : "text-[30px]"
+          className={`kpi-amount my-2 leading-snug font-medium whitespace-nowrap tabular-nums ${
+            compact_amount ? "text-xl md:text-2xl" : "text-[30px]"
           }`}
         >
           {!hide_amount ? (
@@ -37,7 +41,11 @@ export function KpiCard({
               </>
             ) : amount_sen != null ? (
               <>
-                <span className="mr-1.5 text-base text-zyfn-muted">RM</span>
+                <span
+                  className={`mr-1 text-zyfn-muted ${compact_amount ? "text-sm" : "text-base"}`}
+                >
+                  RM
+                </span>
                 {format_money(amount_sen)}
               </>
             ) : null

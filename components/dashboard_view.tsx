@@ -59,15 +59,17 @@ function dashboard_kpi_pair({
 }) {
   return (
     <div
-      className="grid h-full min-h-0 grid-cols-1 items-stretch gap-5 sm:grid-cols-2"
+      className="grid h-full min-h-0 grid-cols-1 items-stretch gap-5 md:grid-cols-2"
       aria-label="Monthly financial summary"
     >
       <KpiCard
+        compact_amount
         label="Monthly spending"
         amount_sen={spending_sen}
         meta={spending_meta(spending_change)}
       />
       <KpiCard
+        compact_amount
         label="Net cash flow"
         amount_sen={net_cash_flow_sen}
         meta={net_cash_flow_meta(income_sen, spending_sen)}
@@ -155,17 +157,17 @@ export function DashboardView({
 
       {metrics.monthly.length > 0 ? (
         <div
-          className="dashboard-layout mt-5 grid min-h-[min(520px,calc(100vh-12rem))] grid-cols-1 gap-5 min-[1100px]:grid-cols-2 min-[1100px]:grid-rows-[auto_minmax(0,1fr)]"
+          className="dashboard-layout mt-5 grid min-h-[min(520px,calc(100vh-12rem))] grid-cols-1 gap-5 md:grid-cols-2 md:grid-rows-[auto_minmax(0,1fr)]"
         >
-          <div className="min-h-0 min-[1100px]:row-start-1 min-[1100px]:h-full">
+          <div className="min-h-0 md:row-start-1 md:h-full">
             {kpi_pair}
           </div>
           <DashboardAccountBalancesCard
-            className="min-h-0 min-[1100px]:row-start-1 min-[1100px]:h-full"
+            className="min-h-0 md:row-start-1 md:h-full"
             rows={balance_rows}
           />
           <CashFlowChart
-            className="min-h-[280px] w-full min-[1100px]:row-start-2 min-[1100px]:min-h-0 min-[1100px]:h-full"
+            className="min-h-[280px] w-full md:row-start-2 md:h-full md:min-h-0"
             fill_height
             labels={chart_labels}
             income_sen={chart.map((m) => m.income_sen)}
@@ -175,7 +177,7 @@ export function DashboardView({
             monthly_spending_sen={spending_sen}
           />
           <SpendingBreakdownCard
-            className="min-h-[280px] min-[1100px]:row-start-2 min-[1100px]:min-h-0 min-[1100px]:h-full"
+            className="min-h-[280px] md:row-start-2 md:h-full md:min-h-0"
             rows={spending_rows}
             month_label={snapshot?.label ?? month}
           />
