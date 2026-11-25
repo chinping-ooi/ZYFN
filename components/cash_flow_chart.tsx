@@ -10,6 +10,7 @@ type Props = {
   period_note: string;
   monthly_income_sen: MinorAmount;
   monthly_spending_sen: MinorAmount;
+  className?: string;
 };
 
 export function CashFlowChart({
@@ -19,6 +20,7 @@ export function CashFlowChart({
   period_note,
   monthly_income_sen,
   monthly_spending_sen,
+  className = "h-fit w-full",
 }: Props) {
   const net_sen = monthly_income_sen - monthly_spending_sen;
   const net_label =
@@ -39,7 +41,9 @@ export function CashFlowChart({
     .join(". ");
 
   return (
-    <section className="card h-fit self-start overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+    <section
+      className={`card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
         <div>
           <h3 className="m-0 text-[15px] font-semibold">Monthly cash flow</h3>

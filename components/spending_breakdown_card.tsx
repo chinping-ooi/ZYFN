@@ -6,14 +6,18 @@ import { CardHead } from "@/components/card_head";
 export function SpendingBreakdownCard({
   rows,
   month_label,
+  className = "",
 }: {
   rows: SpendingTransactionRow[];
   month_label: string;
+  className?: string;
 }) {
   const total_sen = spending_total_sen(rows);
 
   return (
-    <section className="card flex max-h-[min(70vh,640px)] min-h-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+    <section
+      className={`card flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`}
+    >
       <CardHead
         title="Spending breakdown"
         subtitle={`Transactions · ${month_label}`}
