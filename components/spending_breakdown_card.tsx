@@ -26,7 +26,7 @@ const SEGMENT_COLORS = [
   "#0ea5e9",
 ];
 
-const DONUT_PX = 220;
+const DONUT_PX = 200;
 const MIN_SLICE_PCT = 3;
 
 /** Chart arc weights: each slice at least MIN_SLICE_PCT, renormalised to 100%. */
@@ -43,9 +43,6 @@ function center_amount_class(total_label: string): string {
   }
   return "text-[19px] font-bold tabular-nums leading-tight text-zyfn-ink md:text-xl";
 }
-
-const LEGEND_GRID =
-  "grid grid-cols-[auto_minmax(7.5rem,11rem)_minmax(4.75rem,auto)_2.75rem] items-center gap-x-3";
 
 function SpendingDonutPanel({
   rows,
@@ -145,65 +142,43 @@ function SpendingDonutPanel({
             </div>
           </div>
         </div>
-        <div
-          className="legend w-full min-w-0 shrink-0 sm:min-w-[18.5rem] lg:min-w-[19.5rem]"
-          role="table"
+        <ul
+          className="legend m-0 w-fit max-w-[320px] shrink-0 list-none p-0"
           aria-label="Account spending legend"
         >
-          <div
-            className={`${LEGEND_GRID} mb-2.5 text-[11px] font-medium uppercase tracking-wide text-zyfn-muted`}
-            role="row"
-          >
-            <span aria-hidden />
-            <span role="columnheader">Account</span>
-            <span className="text-right" role="columnheader">
-              Amount
-            </span>
-            <span className="text-right" role="columnheader">
-              Share
-            </span>
-          </div>
-          <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
-            {rows.map((row, i) => (
-              <li
-                key={row.id}
-                className={`${LEGEND_GRID} rounded-[2px] text-sm leading-none transition-colors hover:bg-[#f4f6f8]`}
-                role="row"
-                onMouseEnter={() => set_highlight(i)}
-                onMouseLeave={() => set_highlight(null)}
-                onFocus={() => set_highlight(i)}
-                onBlur={() => set_highlight(null)}
-              >
+          {rows.map((row, i) => (
+            <li
+              key={row.id}
+              className="grid min-h-9 grid-cols-[auto_6rem_3rem] items-center gap-4 border-b border-slate-100 text-sm last:border-b-0 hover:bg-slate-50"
+              onMouseEnter={() => set_highlight(i)}
+              onMouseLeave={() => set_highlight(null)}
+              onFocus={() => set_highlight(i)}
+              onBlur={() => set_highlight(null)}
+            >
+              <span className="inline-flex min-w-0 items-center gap-2">
                 <span
-                  className="inline-block h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                  className="size-2.5 shrink-0 rounded-full"
                   style={{
                     backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
                   }}
                   aria-hidden
                 />
                 <span
-                  className="min-w-0 truncate font-medium whitespace-nowrap text-zyfn-ink"
+                  className="truncate font-medium whitespace-nowrap text-zyfn-ink"
                   title={row.label}
-                  role="cell"
                 >
                   {row.label}
                 </span>
-                <span
-                  className="text-right font-semibold tabular-nums text-zyfn-ink"
-                  role="cell"
-                >
-                  {format_rm(row.amount_sen)}
-                </span>
-                <span
-                  className="text-right tabular-nums text-zyfn-muted"
-                  role="cell"
-                >
-                  {row.pct.toFixed(1)}%
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+              </span>
+              <span className="text-right font-semibold tabular-nums text-zyfn-ink">
+                {format_rm(row.amount_sen)}
+              </span>
+              <span className="text-right tabular-nums text-zyfn-muted">
+                {row.pct.toFixed(1)}%
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
