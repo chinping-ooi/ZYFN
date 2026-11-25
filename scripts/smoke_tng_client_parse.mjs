@@ -2,7 +2,7 @@
  * Client-parse parity: same entry as a future import UI (`parse_tng_text`).
  * Uses embedded synthetic dump — no committed bank fixtures.
  */
-const { parse_tng_text } = await import("../lib/tng/parse_text.ts");
+const { parse_tng_text } = await import("../lib/tng/import/parse_text.ts");
 
 /** Minimal TNG export shape for smoke (labels only, not real data). */
 const SYNTHETIC_DUMP = `Date Status Type Reference

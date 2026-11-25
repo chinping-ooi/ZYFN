@@ -1,20 +1,20 @@
-import { parse_tng_dump_date } from "@/lib/tng/date_parse";
+import { parse_tng_dump_date } from "@/lib/tng/import/date_parse";
 import {
   display_dp_for_account,
   major_text_to_micro,
   micro_to_sen_display,
   type MicroAmount,
 } from "@/lib/tng/money_micro";
-import { classify_tng_direction } from "@/lib/tng/direction";
-import { normalize_tng_type } from "@/lib/tng/normalize_type";
-import { finalize_tng_rows } from "@/lib/tng/reconcile";
-import { detect_dump_chronology } from "@/lib/tng/sort_rows";
+import { classify_tng_direction } from "@/lib/tng/import/direction";
+import { normalize_tng_type } from "@/lib/tng/import/normalize_type";
+import { finalize_tng_rows } from "@/lib/tng/import/reconcile";
+import { detect_dump_chronology } from "@/lib/tng/import/sort_rows";
 import type {
   ParsedTngDump,
   SkippedTngRecord,
   TngAccount,
   TngLedgerRow,
-} from "@/lib/tng/types";
+} from "@/lib/tng/import/types";
 
 const DISCLAIMER = [
   "system generated email",

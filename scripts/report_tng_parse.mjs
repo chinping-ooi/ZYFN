@@ -8,7 +8,7 @@ const argv = process.argv.slice(2);
 const diagnose = argv.includes("--diagnose");
 const path_args = argv.filter((a) => a !== "--diagnose");
 
-const { parse_tng_dump } = await import("../lib/tng/parse_dump.ts");
+const { parse_tng_dump } = await import("../lib/tng/import/parse_dump.ts");
 
 function usage() {
   console.error(

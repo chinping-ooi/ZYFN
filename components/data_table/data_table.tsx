@@ -20,6 +20,10 @@ import {
 } from "@/components/data_table/data_table_skeleton";
 import { TableSelect } from "@/components/data_table/table_select";
 import { StatusBadge } from "@/components/status_badge";
+import {
+  LEDGER_CELL_DIVIDER,
+  LEDGER_HEAD_CELL,
+} from "@/components/data_table/ledger_styles";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
 
@@ -29,11 +33,6 @@ const TABLE_CONTROL_BORDER = "border-[#b8c2cf]";
 
 const pagination_icon_btn =
   `inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] border ${TABLE_CONTROL_BORDER} bg-white text-zyfn-ink hover:bg-[#f8f9fb] disabled:cursor-default disabled:border-[#dce1e7] disabled:bg-[#f5f6f8] disabled:text-[#929baa]`;
-
-const LEDGER_CELL_DIVIDER =
-  "border-0 border-r border-b border-slate-200 last:border-r-0";
-
-const LEDGER_HEAD_CELL = `${LEDGER_CELL_DIVIDER} sticky top-0 z-10 bg-[#edf0f4] shadow-[inset_0_1px_0_0_#e2e8f0,inset_0_-1px_0_0_#e2e8f0]`;
 
 type Props<T extends Record<string, unknown>> = {
   label: string;
@@ -372,12 +371,4 @@ export function DataTable<T extends Record<string, unknown>>({
       />
     </div>
   );
-}
-
-export function DataTableToolbarSlot({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return children;
 }

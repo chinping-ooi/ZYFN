@@ -17,7 +17,7 @@ function days_until_maturity(maturity_date: string): number {
   return Math.ceil((mat.getTime() - today.getTime()) / 86_400_000);
 }
 
-export function to_table_row(row: FixedDepositRecord): FixedDepositTableRow {
+function to_table_row(row: FixedDepositRecord): FixedDepositTableRow {
   const active = row.status === 1;
   return {
     ...row,
@@ -33,7 +33,7 @@ export function to_table_row(row: FixedDepositRecord): FixedDepositTableRow {
   };
 }
 
-export function sort_by_maturity(
+function sort_by_maturity(
   rows: FixedDepositRecord[],
 ): FixedDepositRecord[] {
   return [...rows].sort((a, b) =>

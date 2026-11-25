@@ -1,4 +1,4 @@
-import type { TngLedgerRow } from "@/lib/tng/types";
+import type { TngLedgerRow } from "@/lib/tng/import/types";
 
 export type DumpChronology = "asc" | "desc";
 

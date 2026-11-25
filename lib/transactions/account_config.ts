@@ -1,122 +1,27 @@
-export type TransactionAccountKind =
-  | "bank"
-  | "credit_card"
-  | "tng_wallet"
-  | "tng_go_plus";
+export type {
+  TransactionAccountKind,
+  TransactionAccountConfig,
+} from "@/lib/accounts/types";
+export {
+  ACCOUNTS,
+  DASHBOARD_ACCOUNTS,
+  to_transaction_config,
+  account_config_by_ref,
+} from "@/lib/accounts/registry";
+export {
+  statement_kpi_labels,
+  spending_breakdown_account_bucket,
+} from "@/lib/accounts/helpers";
 
-export type TransactionAccountConfig = {
-  account_ref: string;
-  account_label: string;
-  kind: TransactionAccountKind;
-  account_id?: number;
-  account_code?: string;
-};
+import { account_config_by_ref } from "@/lib/accounts/registry";
 
-export const HLB_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "HLB",
-  account_label: "Hong Leong Bank",
-  account_code: "HLB",
-  kind: "bank",
-};
-
-export const PBE_SAVINGS_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "PBE_SAVINGS",
-  account_label: "Public Bank Savings",
-  account_id: 1,
-  kind: "bank",
-};
-
-export const MBB_SAVINGS_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "MBB_SAVINGS",
-  account_label: "Maybank Savings",
-  account_id: 3,
-  kind: "bank",
-};
-
-export const MBB_VISA_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "MBB_VISA_1697",
-  account_label: "MBB Visa 1697",
-  account_id: 8,
-  kind: "credit_card",
-};
-
-export const MBB_AMEX_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "MBB_AMEX_8060",
-  account_label: "MBB Amex 8060",
-  account_id: 9,
-  kind: "credit_card",
-};
-
-export const PBE_VISA_4104_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "PBE_VISA_4104",
-  account_label: "Public Bank Visa Gold 4104",
-  account_id: 6,
-  kind: "credit_card",
-};
-
-export const PBE_MASTERCARD_6357_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "PBE_MASTERCARD_6357",
-  account_label: "Public Bank Quantum MasterCard 6357",
-  account_id: 7,
-  kind: "credit_card",
-};
-
-export const TNG_EWALLET_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "TNG_EWALLET",
-  account_label: "TNG eWallet",
-  account_id: 4,
-  kind: "tng_wallet",
-};
-
-export const TNG_GO_PLUS_ACCOUNT: TransactionAccountConfig = {
-  account_ref: "TNG_GO_PLUS",
-  account_label: "TNG GO+",
-  account_id: 5,
-  kind: "tng_go_plus",
-};
-
-/** All ledger accounts used for dashboard cash-flow, spending breakdown, and balances. */
-export const DASHBOARD_ACCOUNTS: TransactionAccountConfig[] = [
-  HLB_ACCOUNT,
-  PBE_SAVINGS_ACCOUNT,
-  MBB_SAVINGS_ACCOUNT,
-  MBB_VISA_ACCOUNT,
-  MBB_AMEX_ACCOUNT,
-  PBE_VISA_4104_ACCOUNT,
-  PBE_MASTERCARD_6357_ACCOUNT,
-  TNG_EWALLET_ACCOUNT,
-  TNG_GO_PLUS_ACCOUNT,
-];
-
-const TNG_SPENDING_BREAKDOWN_REFS = new Set([
-  TNG_EWALLET_ACCOUNT.account_ref,
-  TNG_GO_PLUS_ACCOUNT.account_ref,
-]);
-
-export function spending_breakdown_account_bucket(statement: {
-  account_ref: string;
-  account_label: string;
-}): { id: string; label: string } {
-  if (TNG_SPENDING_BREAKDOWN_REFS.has(statement.account_ref)) {
-    return { id: "tng", label: "TNG" };
-  }
-  return {
-    id: statement.account_ref.toLowerCase(),
-    label: statement.account_label,
-  };
-}
-
-export function statement_kpi_labels(kind: TransactionAccountKind) {
-  if (kind === "credit_card") {
-    return {
-      total_in: "Total credits",
-      total_out: "Total debits",
-      closing: "Amount owed",
-    };
-  }
-  return {
-    total_in: "Total in",
-    total_out: "Total out",
-    closing: "Current balance",
-  };
-}
+export const HLB_ACCOUNT = account_config_by_ref("HLB")!;
+export const PBE_SAVINGS_ACCOUNT = account_config_by_ref("PBE_SAVINGS")!;
+export const MBB_SAVINGS_ACCOUNT = account_config_by_ref("MBB_SAVINGS")!;
+export const MBB_VISA_ACCOUNT = account_config_by_ref("MBB_VISA_1697")!;
+export const MBB_AMEX_ACCOUNT = account_config_by_ref("MBB_AMEX_8060")!;
+export const PBE_VISA_4104_ACCOUNT = account_config_by_ref("PBE_VISA_4104")!;
+export const PBE_MASTERCARD_6357_ACCOUNT =
+  account_config_by_ref("PBE_MASTERCARD_6357")!;
+export const TNG_EWALLET_ACCOUNT = account_config_by_ref("TNG_EWALLET")!;
+export const TNG_GO_PLUS_ACCOUNT = account_config_by_ref("TNG_GO_PLUS")!;

@@ -1,10 +1,7 @@
-import { format_rm, major_to_minor } from "@/lib/money";
+import { format_calendar_date } from "@/lib/format/date";
+import { format_rm_from_major, major_to_minor } from "@/lib/format/money";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
 import { KpiCard } from "@/components/kpi_card";
-
-function format_major_rm(major: number): string {
-  return format_rm(major_to_minor(major));
-}
 
 export function FixedDepositSummaryCards({
   summary,
@@ -12,14 +9,7 @@ export function FixedDepositSummaryCards({
   summary: FixedDepositSummary;
 }) {
   const next_label = summary.next_maturity_date
-    ? `${new Intl.DateTimeFormat("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(
-        new Date(`${summary.next_maturity_date}T00:00:00Z`),
-      )} · ${summary.next_maturity_receipt ?? ""}`
+    ? `${format_calendar_date(summary.next_maturity_date)} · ${summary.next_maturity_receipt ?? ""}`
     : "—";
 
   return (
@@ -32,7 +22,7 @@ export function FixedDepositSummaryCards({
           Active principal
         </div>
         <div className="mt-2 text-2xl font-medium tabular-nums">
-          {format_major_rm(summary.active_principal_major)}
+          {format_rm_from_major(summary.active_principal_major)}
         </div>
       </article>
       <article className="rounded-[3px] border border-zyfn-line bg-white px-5 py-4">

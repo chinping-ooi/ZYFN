@@ -1,4 +1,4 @@
-import type { TngDirection } from "@/lib/tng/types";
+import type { TngDirection } from "@/lib/tng/import/types";
 
 /**
  * Classify cash-flow for dashboard totals (transfers excluded from income/spense).

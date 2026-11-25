@@ -1,3 +1,4 @@
+import { format_last_updated_footer } from "@/lib/format/date";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import type { FixedDepositRecord } from "@/lib/fixed_deposits/types";
 
@@ -33,13 +34,4 @@ export function latest_fixed_deposit_date(
   return max_iso_date(dates);
 }
 
-export function format_last_updated_footer(iso_date: string): string {
-  const d = new Date(`${iso_date.slice(0, 10)}T12:00:00Z`);
-  const label = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(d);
-  return `Last updated ${label}`;
-}
+export { format_last_updated_footer };

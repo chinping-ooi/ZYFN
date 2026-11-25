@@ -1,5 +1,4 @@
-/** Lowercase slug for export filenames (non-alphanumerics → underscore). */
-export function account_label_slug(label: string): string {
+function account_label_slug(label: string): string {
   return label
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")

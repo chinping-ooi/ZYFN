@@ -5,7 +5,7 @@
 
 export type MicroAmount = number;
 
-export const MICRO_PER_SEN = 100;
+const MICRO_PER_SEN = 100;
 export const MICRO_PER_RM = 10_000;
 
 const MAJOR_PATTERN = /^-?\d+(?:\.\d{1,4})?$/;
@@ -44,10 +44,6 @@ export function format_micro_money(micro: MicroAmount, max_dp: 2 | 4): string {
   if (frac.length === 0) frac = "00";
   else if (frac.length === 1) frac = `${frac}0`;
   return `${negative ? "-" : ""}${whole}.${frac}`;
-}
-
-export function format_micro_rm(micro: MicroAmount, max_dp: 2 | 4): string {
-  return `RM ${format_micro_money(micro, max_dp)}`;
 }
 
 export function micro_to_sen_display(micro: MicroAmount): number {

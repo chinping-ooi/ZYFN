@@ -3,13 +3,13 @@
  * optional UI via `TNG_RECONCILE_ENABLED`; semantics still being validated on real exports.
  */
 import type { MicroAmount } from "@/lib/tng/money_micro";
-import type { ReconcileWarning, TngAccount, TngLedgerRow } from "@/lib/tng/types";
+import type { ReconcileWarning, TngAccount, TngLedgerRow } from "@/lib/tng/import/types";
 import {
   detect_dump_chronology,
   sort_tng_rows,
   type DumpChronology,
   type TngRowWithOrder,
-} from "@/lib/tng/sort_rows";
+} from "@/lib/tng/import/sort_rows";
 
 function movement_amount(row: TngLedgerRow): MicroAmount {
   return row.debit_micro > 0 ? row.debit_micro : row.credit_micro;

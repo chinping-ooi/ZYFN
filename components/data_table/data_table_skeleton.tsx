@@ -1,11 +1,10 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-
-const LEDGER_CELL_DIVIDER =
-  "border-0 border-r border-b border-slate-200 last:border-r-0";
-
-const LEDGER_HEAD_CELL = `${LEDGER_CELL_DIVIDER} bg-[#edf0f4] shadow-[inset_0_1px_0_0_#e2e8f0,inset_0_-1px_0_0_#e2e8f0]`;
+import {
+  LEDGER_CELL_DIVIDER,
+  LEDGER_HEAD_CELL_SKELETON as LEDGER_HEAD_CELL,
+} from "@/components/data_table/ledger_styles";
 
 const TRANSACTION_HEADER_WIDTHS = [
   "w-[6.75rem] max-w-[6.75rem]",
