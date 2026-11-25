@@ -12,6 +12,8 @@ export type DataTableColumn<T> = {
   key: keyof T & string;
   label: string;
   type?: ColumnType;
+  /** IANA zone for `date` columns (default UTC). */
+  time_zone?: string;
   zero_as_blank?: boolean;
   className?: string;
   headerClassName?: string;

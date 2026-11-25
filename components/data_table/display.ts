@@ -31,13 +31,18 @@ export function display_cell<T extends Record<string, unknown>>(
       );
       return format_micro_money(micro, dp);
     }
-    case "date":
+    case "date": {
+      const raw = String(value);
+      const instant = raw.includes("T")
+        ? new Date(raw)
+        : new Date(`${raw}T00:00:00Z`);
       return new Intl.DateTimeFormat("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
-        timeZone: "UTC",
-      }).format(new Date(String(value) + (String(value).includes("T") ? "" : "T00:00:00Z")));
+        timeZone: column.time_zone ?? "UTC",
+      }).format(instant);
+    }
     case "rate":
       return `${(Number(value) / 100).toFixed(2)}%`;
     case "percent":
