@@ -15,7 +15,7 @@ export function DashboardAccountBalancesCard({
     >
       <CardHead
         title="Account balances"
-        subtitle="Latest balance_after per savings account"
+        subtitle="Savings, wallet, and active fixed deposits"
         align="center"
       />
       <div className="px-5">

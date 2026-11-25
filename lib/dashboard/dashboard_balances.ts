@@ -30,9 +30,11 @@ function latest_balance_sen(statement: AccountStatementFromDb): number {
   return statement.closing_sen;
 }
 
-/** Four savings wallet rows for the dashboard (no credit cards). */
+/** Savings, wallet, and fixed-deposit rows for the dashboard balance card. */
 export function dashboard_account_balances(
   statements: AccountStatementFromDb[],
+  fd_active_principal_sen: MinorAmount,
+  fd_active_count: number,
 ): DashboardBalanceRow[] {
   const pbe = find_statement(statements, PBE_SAVINGS_ACCOUNT.account_ref);
   const hlb = find_statement(statements, HLB_ACCOUNT.account_ref);
@@ -43,6 +45,11 @@ export function dashboard_account_balances(
   const tng_sen =
     (tng_wallet ? latest_balance_sen(tng_wallet) : 0) +
     (tng_go ? latest_balance_sen(tng_go) : 0);
+
+  const fd_sub =
+    fd_active_count > 0
+      ? `${fd_active_count} active placement${fd_active_count === 1 ? "" : "s"}`
+      : "No active placements";
 
   return [
     {
@@ -68,6 +75,12 @@ export function dashboard_account_balances(
       name: "TNG",
       sub_label: "eWallet + GO+",
       balance_sen: tng_sen,
+    },
+    {
+      id: "fixed_deposits",
+      name: "Fixed deposits",
+      sub_label: fd_sub,
+      balance_sen: fd_active_principal_sen,
     },
   ];
 }

@@ -15,8 +15,6 @@ import { PageToolbar } from "@/components/page_toolbar";
 import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
 import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
-import { count_maturing_within_days } from "@/lib/fixed_deposits/maturity";
-import type { FixedDepositRecord } from "@/lib/fixed_deposits/types";
 
 function spending_meta(change: ReturnType<typeof compute_spending_change>) {
   if (change.direction === "flat") {
@@ -48,15 +46,43 @@ function net_cash_flow_meta(income_sen: number, spending_sen: number) {
   );
 }
 
+function dashboard_kpi_pair({
+  spending_sen,
+  spending_change,
+  net_cash_flow_sen,
+  income_sen,
+}: {
+  spending_sen: number;
+  spending_change: ReturnType<typeof compute_spending_change>;
+  net_cash_flow_sen: number;
+  income_sen: number;
+}) {
+  return (
+    <div
+      className="grid h-full min-h-0 grid-cols-1 items-stretch gap-5 sm:grid-cols-2"
+      aria-label="Monthly financial summary"
+    >
+      <KpiCard
+        label="Monthly spending"
+        amount_sen={spending_sen}
+        meta={spending_meta(spending_change)}
+      />
+      <KpiCard
+        label="Net cash flow"
+        amount_sen={net_cash_flow_sen}
+        meta={net_cash_flow_meta(income_sen, spending_sen)}
+      />
+    </div>
+  );
+}
+
 export function DashboardView({
   metrics,
   fd_summary,
-  fd_rows,
   statements,
 }: {
   metrics: DashboardMetrics;
   fd_summary: FixedDepositSummary;
-  fd_rows: FixedDepositRecord[];
   statements: AccountStatementFromDb[];
 }) {
   const [month, set_month] = useState<MonthKey>(metrics.default_month);
@@ -75,15 +101,15 @@ export function DashboardView({
   );
 
   const fd_principal_sen = major_to_minor(fd_summary.active_principal_major);
-  const maturing_soon = count_maturing_within_days(fd_rows, 30);
-  const fd_meta =
-    fd_summary.active_count > 0
-      ? `${fd_summary.active_count} active placement${fd_summary.active_count === 1 ? "" : "s"} · ${maturing_soon} maturing within 30 days`
-      : "No active fixed deposits";
 
   const balance_rows = useMemo(
-    () => dashboard_account_balances(statements),
-    [statements],
+    () =>
+      dashboard_account_balances(
+        statements,
+        fd_principal_sen,
+        fd_summary.active_count,
+      ),
+    [statements, fd_principal_sen, fd_summary.active_count],
   );
 
   const spending_rows = useMemo(
@@ -98,28 +124,12 @@ export function DashboardView({
     ),
   );
 
-  const kpi_row = (
-    <section
-      className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 min-[1100px]:grid-cols-3"
-      aria-label="Monthly financial summary"
-    >
-      <KpiCard
-        label="Monthly spending"
-        amount_sen={spending_sen}
-        meta={spending_meta(spending_change)}
-      />
-      <KpiCard
-        label="Fixed deposits"
-        amount_sen={fd_principal_sen}
-        meta={fd_meta}
-      />
-      <KpiCard
-        label="Net cash flow"
-        amount_sen={net_cash_flow_sen}
-        meta={net_cash_flow_meta(income_sen, spending_sen)}
-      />
-    </section>
-  );
+  const kpi_pair = dashboard_kpi_pair({
+    spending_sen,
+    spending_change,
+    net_cash_flow_sen,
+    income_sen,
+  });
 
   return (
     <>
@@ -144,32 +154,34 @@ export function DashboardView({
       />
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-5 flex flex-col gap-5">
-          {kpi_row}
-
-          <div className="dashboard-main grid min-h-[min(560px,calc(100vh-16rem))] grid-cols-1 gap-5 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] min-[1100px]:items-stretch">
-            <CashFlowChart
-              className="min-h-[320px] w-full min-[1100px]:min-h-0"
-              fill_height
-              labels={chart_labels}
-              income_sen={chart.map((m) => m.income_sen)}
-              spending_sen={chart.map((m) => m.spending_sen)}
-              period_note={`${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`}
-              monthly_income_sen={income_sen}
-              monthly_spending_sen={spending_sen}
-            />
-            <div className="flex min-h-0 w-full min-w-0 flex-col gap-5 max-[1099px]:min-h-[320px] min-[1100px]:h-full">
-              <DashboardAccountBalancesCard rows={balance_rows} />
-              <SpendingBreakdownCard
-                className="min-h-0 flex-1"
-                rows={spending_rows}
-                month_label={snapshot?.label ?? month}
-              />
-            </div>
+        <div
+          className="dashboard-layout mt-5 grid min-h-[min(520px,calc(100vh-12rem))] grid-cols-1 gap-5 min-[1100px]:grid-cols-2 min-[1100px]:grid-rows-[auto_minmax(0,1fr)]"
+        >
+          <div className="min-h-0 min-[1100px]:row-start-1 min-[1100px]:h-full">
+            {kpi_pair}
           </div>
+          <DashboardAccountBalancesCard
+            className="min-h-0 min-[1100px]:row-start-1 min-[1100px]:h-full"
+            rows={balance_rows}
+          />
+          <CashFlowChart
+            className="min-h-[280px] w-full min-[1100px]:row-start-2 min-[1100px]:min-h-0 min-[1100px]:h-full"
+            fill_height
+            labels={chart_labels}
+            income_sen={chart.map((m) => m.income_sen)}
+            spending_sen={chart.map((m) => m.spending_sen)}
+            period_note={`${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`}
+            monthly_income_sen={income_sen}
+            monthly_spending_sen={spending_sen}
+          />
+          <SpendingBreakdownCard
+            className="min-h-[280px] min-[1100px]:row-start-2 min-[1100px]:min-h-0 min-[1100px]:h-full"
+            rows={spending_rows}
+            month_label={snapshot?.label ?? month}
+          />
         </div>
       ) : (
-        <div className="mt-5">{kpi_row}</div>
+        <div className="mt-5">{kpi_pair}</div>
       )}
     </>
   );

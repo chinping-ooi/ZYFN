@@ -24,7 +24,6 @@ export default async function DashboardPage() {
         <DashboardView
           metrics={result.metrics}
           fd_summary={fd_summary}
-          fd_rows={fd_load.rows}
           statements={result.statements}
         />
       ) : (
