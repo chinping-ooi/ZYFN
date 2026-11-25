@@ -12,6 +12,8 @@ export type TransactionDbRow = {
   description: string;
   detail: string;
   txn_type: string;
+  fixed_deposit_id?: number | null;
+  pair_ref?: string | null;
   in_sen: MinorAmount;
   out_sen: MinorAmount;
   balance_sen: MinorAmount;
@@ -32,6 +34,8 @@ export type ZyfnTransactionRow = {
   amount: string | number;
   balance_after: string | number;
   detail: string | null;
+  fixed_deposit_id?: number | null;
+  pair_ref?: string | null;
 };
 
 function amount_scale_for_kind(kind: TransactionAccountKind): AmountScale {
@@ -62,6 +66,8 @@ export function map_transaction_row(
     description: (row.description ?? "").trim(),
     detail: (row.detail ?? "").trim(),
     txn_type: (row.txn_type ?? "").trim(),
+    fixed_deposit_id: row.fixed_deposit_id ?? null,
+    pair_ref: row.pair_ref ?? null,
     in_sen,
     out_sen,
     balance_sen,

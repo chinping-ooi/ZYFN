@@ -1,3 +1,4 @@
+import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import { micro_to_sen_display } from "@/lib/tng/money_micro";
@@ -41,6 +42,7 @@ function accumulate_row(
   row: TransactionDbRow,
   use_micro: boolean,
 ) {
+  if (is_cash_flow_excluded(row)) return;
   const key = month_key(row.date);
   const bucket = buckets.get(key) ?? { income_sen: 0, spending_sen: 0 };
   if (use_micro) {

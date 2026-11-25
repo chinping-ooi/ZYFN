@@ -14,7 +14,7 @@ import type { AccountStatementResult } from "@/lib/supabase/types";
 const PAGE_SIZE = 1000;
 
 const TXN_COLUMNS =
-  "id, txn_at, txn_type, description, direction, amount, balance_after, detail";
+  "id, txn_at, txn_type, description, direction, amount, balance_after, detail, fixed_deposit_id, pair_ref";
 
 function account_id_param(id: number | string): number | string {
   if (typeof id === "number") return id;

@@ -49,7 +49,7 @@ export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
         <div>
           <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>
           <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">
-            Supabase ledger · HLB, PBE savings, TNG eWallet, GO+ ·{" "}
+            Cash in/out only · excludes FD and internal transfers ·{" "}
             {snapshot?.label ?? month}
           </p>
         </div>
@@ -92,7 +92,7 @@ export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
         <KpiCard
           label="Net cash flow"
           amount_sen={net_sen}
-          meta="Credits − debits for selected month (dashboard accounts)"
+          meta="Credits − debits · excludes FD, transfers, and card bill pays"
         />
       </section>
 
