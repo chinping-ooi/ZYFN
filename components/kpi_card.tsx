@@ -21,8 +21,8 @@ export function KpiCard({
   compact_amount?: boolean;
 }) {
   return (
-    <article className="card kpi overflow-hidden rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white">
-      <div className="px-[21px] py-[19px]">
+    <article className="card kpi flex h-full flex-col overflow-hidden rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white">
+      <div className="flex flex-1 flex-col px-[21px] py-[19px]">
         <div className="text-sm font-semibold text-[#526075]">{label}</div>
         <div
           className={`kpi-amount my-2.5 leading-snug font-medium whitespace-nowrap tabular-nums ${
@@ -44,8 +44,12 @@ export function KpiCard({
           ) : null}
         </div>
         {meta ? (
-          <div className="text-[13px] text-zyfn-muted">{meta}</div>
-        ) : null}
+          <div className="mt-auto min-h-[2.5rem] text-[13px] text-zyfn-muted">
+            {meta}
+          </div>
+        ) : (
+          <div className="mt-auto min-h-[2.5rem]" aria-hidden />
+        )}
       </div>
     </article>
   );

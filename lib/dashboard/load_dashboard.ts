@@ -7,21 +7,7 @@ import {
 import { load_account_transactions } from "@/lib/supabase/load_account_transactions";
 import { is_account_statement_data } from "@/lib/supabase/account_statement_guards";
 import { supabase_configured } from "@/lib/supabase/env";
-import type { TransactionAccountConfig } from "@/lib/transactions/account_config";
-import {
-  HLB_ACCOUNT,
-  PBE_SAVINGS_ACCOUNT,
-  TNG_EWALLET_ACCOUNT,
-  TNG_GO_PLUS_ACCOUNT,
-} from "@/lib/transactions/account_config";
-
-/** Ledger accounts summarized on the dashboard (savings + TNG; not credit cards). */
-const DASHBOARD_LEDGER_ACCOUNTS: TransactionAccountConfig[] = [
-  HLB_ACCOUNT,
-  PBE_SAVINGS_ACCOUNT,
-  TNG_EWALLET_ACCOUNT,
-  TNG_GO_PLUS_ACCOUNT,
-];
+import { DASHBOARD_ACCOUNTS } from "@/lib/transactions/account_config";
 
 async function load_dashboard_impl(): Promise<DashboardLoadResult> {
   noStore();
@@ -37,7 +23,7 @@ async function load_dashboard_impl(): Promise<DashboardLoadResult> {
   const statements = [];
   const errors: string[] = [];
 
-  for (const config of DASHBOARD_LEDGER_ACCOUNTS) {
+  for (const config of DASHBOARD_ACCOUNTS) {
     const result = await load_account_transactions(
       config.account_ref,
       config.account_label,

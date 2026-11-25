@@ -39,7 +39,7 @@ export function CashFlowChart({
     .join(". ");
 
   return (
-    <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+    <section className="card h-fit self-start overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
         <div>
           <h3 className="m-0 text-[15px] font-semibold">Monthly cash flow</h3>
@@ -59,11 +59,13 @@ export function CashFlowChart({
       <div className="px-5 pt-5 pb-4">
         <div className="plot flex h-[190px] gap-3" role="img" aria-label={aria_label}>
           <div
-            className="flex w-10 flex-col justify-between pb-[22px] text-[11px] text-zyfn-muted"
+            className="flex min-w-[3.25rem] shrink-0 flex-col justify-between pb-[22px] text-[11px] text-zyfn-muted"
             aria-hidden
           >
             {y_labels.map((label) => (
-              <span key={label}>{label}</span>
+              <span key={label} className="whitespace-nowrap">
+                {label}
+              </span>
             ))}
           </div>
           <div

@@ -13,7 +13,7 @@ export function SpendingBreakdownCard({
     <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
       <CardHead
         title="Spending breakdown"
-        subtitle={`By transaction type · ${month_label}`}
+        subtitle={`By account · ${month_label}`}
       />
       <div className="accounts px-5">
         {rows.length === 0 ? (

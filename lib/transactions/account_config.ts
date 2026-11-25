@@ -75,6 +75,37 @@ export const TNG_GO_PLUS_ACCOUNT: TransactionAccountConfig = {
   kind: "tng_go_plus",
 };
 
+/** All ledger accounts used for dashboard cash-flow, spending breakdown, and balances. */
+export const DASHBOARD_ACCOUNTS: TransactionAccountConfig[] = [
+  HLB_ACCOUNT,
+  PBE_SAVINGS_ACCOUNT,
+  MBB_SAVINGS_ACCOUNT,
+  MBB_VISA_ACCOUNT,
+  MBB_AMEX_ACCOUNT,
+  PBE_VISA_4104_ACCOUNT,
+  PBE_MASTERCARD_6357_ACCOUNT,
+  TNG_EWALLET_ACCOUNT,
+  TNG_GO_PLUS_ACCOUNT,
+];
+
+const TNG_SPENDING_BREAKDOWN_REFS = new Set([
+  TNG_EWALLET_ACCOUNT.account_ref,
+  TNG_GO_PLUS_ACCOUNT.account_ref,
+]);
+
+export function spending_breakdown_account_bucket(statement: {
+  account_ref: string;
+  account_label: string;
+}): { id: string; label: string } {
+  if (TNG_SPENDING_BREAKDOWN_REFS.has(statement.account_ref)) {
+    return { id: "tng", label: "TNG" };
+  }
+  return {
+    id: statement.account_ref.toLowerCase(),
+    label: statement.account_label,
+  };
+}
+
 export function statement_kpi_labels(kind: TransactionAccountKind) {
   if (kind === "credit_card") {
     return {

@@ -66,9 +66,14 @@ export function DashboardView({
     previous?.spending_sen ?? 0,
   );
 
-  const available_sen = useMemo(
-    () => metrics.accounts.reduce((t, a) => t + a.balance_sen, 0),
+  const cash_accounts = useMemo(
+    () => metrics.accounts.filter((a) => a.kind !== "credit_card"),
     [metrics.accounts],
+  );
+
+  const available_sen = useMemo(
+    () => cash_accounts.reduce((t, a) => t + a.balance_sen, 0),
+    [cash_accounts],
   );
 
   const fd_principal_sen = major_to_minor(fd_summary.active_principal_major);
@@ -113,7 +118,7 @@ export function DashboardView({
       />
 
       <section
-        className="kpis mb-5 grid grid-cols-1 gap-[18px] md:grid-cols-3"
+        className="kpis mb-5 grid grid-cols-1 items-stretch gap-[18px] md:grid-cols-3"
         aria-label="Monthly financial summary"
       >
         <KpiCard
@@ -124,7 +129,7 @@ export function DashboardView({
         <KpiCard
           label="Available balance"
           amount_sen={available_sen}
-          meta={`Across ${metrics.accounts.length} accounts · excludes fixed deposits`}
+          meta={`Across ${cash_accounts.length} accounts · excludes fixed deposits and cards`}
         />
         <KpiCard
           label="Fixed deposits"
@@ -134,7 +139,7 @@ export function DashboardView({
       </section>
 
       {metrics.monthly.length > 0 ? (
-        <div className="middle mb-5 grid grid-cols-1 gap-[18px] xl:grid-cols-[minmax(0,1.5fr)_minmax(330px,1fr)]">
+        <div className="middle mb-5 grid grid-cols-1 items-start gap-[18px] xl:grid-cols-[minmax(0,1.5fr)_minmax(330px,1fr)]">
           <CashFlowChart
             labels={chart_labels}
             income_sen={chart.map((m) => m.income_sen)}

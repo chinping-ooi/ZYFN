@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "smoke:routes": "node scripts/smoke_dev_routes.mjs",
     "report:tng-parse": "npx tsx scripts/report_tng_parse.mjs",
-    "smoke:tng-client-parse": "npx tsx scripts/smoke_tng_client_parse.mjs"
+    "smoke:tng-client-parse": "npx tsx scripts/smoke_tng_client_parse.mjs",
+    "audit:dashboard-month": "npx tsx scripts/audit_dashboard_month.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",

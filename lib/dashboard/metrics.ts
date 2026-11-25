@@ -1,4 +1,5 @@
 import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
+import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import { micro_to_sen_display } from "@/lib/tng/money_micro";
@@ -16,7 +17,12 @@ export type MonthlyAggregate = {
 export type DashboardMetrics = {
   months: { value: MonthKey; label: string }[];
   default_month: MonthKey;
-  accounts: { id: string; name: string; balance_sen: MinorAmount }[];
+  accounts: {
+    id: string;
+    name: string;
+    balance_sen: MinorAmount;
+    kind: TransactionAccountKind;
+  }[];
   monthly: MonthlyAggregate[];
 };
 
@@ -98,6 +104,7 @@ export function build_dashboard_metrics(
       id,
       name: s.account_label,
       balance_sen,
+      kind: s.account_kind,
     };
   });
 
