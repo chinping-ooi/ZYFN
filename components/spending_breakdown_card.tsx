@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
   Tooltip,
   Legend,
   type ChartOptions,
+  type Chart as ChartInstance,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { format_rm } from "@/lib/money";
@@ -26,6 +27,15 @@ const SEGMENT_COLORS = [
 ];
 
 const DONUT_PX = 220;
+const MIN_SLICE_PCT = 3;
+
+/** Chart arc weights: each slice at least MIN_SLICE_PCT, renormalised to 100%. */
+function chart_display_majors(rows: SpendingAccountRow[], total_sen: number): number[] {
+  const floored = rows.map((r) => Math.max(r.pct, MIN_SLICE_PCT));
+  const sum = floored.reduce((a, b) => a + b, 0);
+  const total_major = total_sen / 100;
+  return floored.map((p) => (p / sum) * total_major);
+}
 
 function center_amount_class(total_label: string): string {
   if (total_label.length > 15) {
@@ -33,6 +43,9 @@ function center_amount_class(total_label: string): string {
   }
   return "text-[19px] font-bold tabular-nums leading-tight text-zyfn-ink md:text-xl";
 }
+
+const LEGEND_GRID =
+  "grid grid-cols-[auto_minmax(7.5rem,11rem)_minmax(4.75rem,auto)_2.75rem] items-center gap-x-3";
 
 function SpendingDonutPanel({
   rows,
@@ -43,25 +56,31 @@ function SpendingDonutPanel({
 }) {
   const total_label = format_rm(total_sen);
   const amount_class = center_amount_class(total_label);
+  const chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
+
+  const display_majors = useMemo(
+    () => chart_display_majors(rows, total_sen),
+    [rows, total_sen],
+  );
 
   const chart_data = useMemo(
     () => ({
       labels: rows.map((r) => r.label),
       datasets: [
         {
-          data: rows.map((r) => r.amount_sen / 100),
+          data: display_majors,
           backgroundColor: rows.map(
             (_, i) => SEGMENT_COLORS[i % SEGMENT_COLORS.length],
           ),
           borderColor: "#ffffff",
-          borderWidth: 2,
-          borderRadius: 4,
-          spacing: 2,
+          borderWidth: 1,
+          borderRadius: 3,
+          spacing: 1,
           hoverOffset: 6,
         },
       ],
     }),
-    [rows],
+    [rows, display_majors],
   );
 
   const options: ChartOptions<"doughnut"> = useMemo(
@@ -91,15 +110,30 @@ function SpendingDonutPanel({
     [rows],
   );
 
+  const set_highlight = useCallback((index: number | null) => {
+    const chart = chart_ref.current;
+    if (!chart) return;
+    if (index === null) {
+      chart.setActiveElements([]);
+    } else {
+      chart.setActiveElements([{ datasetIndex: 0, index }]);
+    }
+    chart.update();
+  }, []);
+
   return (
     <div className="spending-donut-layout flex min-h-0 w-full flex-1 flex-col items-center justify-center">
-      <div className="flex w-full flex-col items-center justify-center gap-6 lg:flex-row lg:items-center lg:justify-center lg:gap-6">
+      <div className="mx-auto flex w-fit max-w-full flex-col items-center justify-center gap-8 lg:flex-row lg:items-center">
         <div
-          className="spending-donut relative mx-auto aspect-square w-full max-w-[220px] shrink-0"
-          style={{ height: DONUT_PX, width: DONUT_PX, maxHeight: DONUT_PX }}
+          className="spending-donut relative shrink-0"
+          style={{ height: DONUT_PX, width: DONUT_PX }}
           aria-label={`Spending donut chart, total ${total_label}`}
         >
-          <Doughnut data={chart_data} options={options} />
+          <Doughnut
+            ref={chart_ref}
+            data={chart_data}
+            options={options}
+          />
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <div className="flex max-w-[58%] flex-col items-center justify-center text-center leading-tight">
               <span className="text-xs font-medium uppercase tracking-wide text-zyfn-muted">
@@ -111,34 +145,65 @@ function SpendingDonutPanel({
             </div>
           </div>
         </div>
-        <ul
-          className="legend w-full max-w-[min(100%,20rem)] shrink-0 space-y-2 lg:max-w-[15.5rem]"
+        <div
+          className="legend w-full min-w-0 shrink-0 sm:min-w-[18.5rem] lg:min-w-[19.5rem]"
+          role="table"
           aria-label="Account spending legend"
         >
-          {rows.map((row, i) => (
-            <li
-              key={row.id}
-              className="grid grid-cols-[auto_1fr_auto_auto] items-start gap-x-3 gap-y-0.5 text-xs leading-snug md:text-[13px]"
-            >
-              <span
-                className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                style={{
-                  backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
-                }}
-                aria-hidden
-              />
-              <span className="font-medium text-zyfn-ink [overflow-wrap:anywhere]">
-                {row.label}
-              </span>
-              <span className="shrink-0 text-right font-semibold tabular-nums text-zyfn-ink">
-                {format_rm(row.amount_sen)}
-              </span>
-              <span className="w-10 shrink-0 text-right tabular-nums text-zyfn-muted">
-                {row.pct.toFixed(1)}%
-              </span>
-            </li>
-          ))}
-        </ul>
+          <div
+            className={`${LEGEND_GRID} mb-2.5 text-[11px] font-medium uppercase tracking-wide text-zyfn-muted`}
+            role="row"
+          >
+            <span aria-hidden />
+            <span role="columnheader">Account</span>
+            <span className="text-right" role="columnheader">
+              Amount
+            </span>
+            <span className="text-right" role="columnheader">
+              Share
+            </span>
+          </div>
+          <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+            {rows.map((row, i) => (
+              <li
+                key={row.id}
+                className={`${LEGEND_GRID} rounded-[2px] text-sm leading-none transition-colors hover:bg-[#f4f6f8]`}
+                role="row"
+                onMouseEnter={() => set_highlight(i)}
+                onMouseLeave={() => set_highlight(null)}
+                onFocus={() => set_highlight(i)}
+                onBlur={() => set_highlight(null)}
+              >
+                <span
+                  className="inline-block h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                  style={{
+                    backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+                  }}
+                  aria-hidden
+                />
+                <span
+                  className="min-w-0 truncate font-medium whitespace-nowrap text-zyfn-ink"
+                  title={row.label}
+                  role="cell"
+                >
+                  {row.label}
+                </span>
+                <span
+                  className="text-right font-semibold tabular-nums text-zyfn-ink"
+                  role="cell"
+                >
+                  {format_rm(row.amount_sen)}
+                </span>
+                <span
+                  className="text-right tabular-nums text-zyfn-muted"
+                  role="cell"
+                >
+                  {row.pct.toFixed(1)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
