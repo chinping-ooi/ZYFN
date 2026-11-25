@@ -2,12 +2,11 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { DataTableColumn } from "@/components/data_table/types";
-import { display_cell } from "@/components/data_table/display";
+import { TableSelect } from "@/components/data_table/table_select";
 import {
-  build_csv,
-  download_csv,
+  build_and_download_xlsx,
   export_date_range,
-} from "@/lib/csv_export";
+} from "@/lib/xlsx_export";
 
 type Props<T extends Record<string, unknown>> = {
   open: boolean;
@@ -45,6 +44,7 @@ export function ExportDialog<T extends Record<string, unknown>>({
   const [custom_start, set_custom_start] = useState(anchor.slice(0, 7) + "-01");
   const [custom_end, set_custom_end] = useState(anchor);
   const [error, set_error] = useState("");
+  const [exporting, set_exporting] = useState(false);
 
   const reset = useCallback(() => {
     set_error("");
@@ -60,9 +60,10 @@ export function ExportDialog<T extends Record<string, unknown>>({
 
   const date_column = columns.find((c) => c.key === date_key);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     set_error("");
+    set_exporting(true);
     try {
       const period_anchor =
         period === "week"
@@ -90,12 +91,18 @@ export function ExportDialog<T extends Record<string, unknown>>({
       if (!filtered.length) {
         throw new Error("No matching records in this date range.");
       }
-      const csv = build_csv(columns, filtered, display_cell);
-      download_csv(`zyfn-${scope}-${start}-to-${end}.csv`, csv);
+      await build_and_download_xlsx(
+        `zyfn-${scope}-${start}-to-${end}.xlsx`,
+        label,
+        columns,
+        filtered,
+      );
       reset();
       onClose();
     } catch (err) {
       set_error(err instanceof Error ? err.message : "Export failed.");
+    } finally {
+      set_exporting(false);
     }
   }
 
@@ -109,24 +116,22 @@ export function ExportDialog<T extends Record<string, unknown>>({
         <form className="flex flex-col gap-4" onSubmit={submit}>
           <h3 className="m-0 text-lg font-semibold">Export records</h3>
           <p className="m-0 text-[13px] text-zyfn-muted">
-            CSV includes matching records loaded in this table across all pages.
-            Date field: {date_column?.label ?? "unavailable"}. Weeks run Monday
-            through Sunday.
+            Excel file includes matching records loaded in this table across all
+            pages. Date field: {date_column?.label ?? "unavailable"}. Weeks run
+            Monday through Sunday.
           </p>
           <label className="flex flex-col gap-1.5 text-sm">
             Period
-            <select
-              className="h-9 rounded-[3px] border border-[#b8c2cf] px-3 text-sm"
+            <TableSelect
+              className="h-9"
               value={period}
-              onChange={(e) =>
-                setPeriod(e.target.value as typeof period)
-              }
+              onChange={(e) => setPeriod(e.target.value as typeof period)}
             >
               <option value="week">Week</option>
               <option value="month">Month</option>
               <option value="year">Year</option>
               <option value="custom">Custom range</option>
-            </select>
+            </TableSelect>
           </label>
           {period === "custom" ? (
             <div className="grid grid-cols-2 gap-3.5">
@@ -207,8 +212,9 @@ export function ExportDialog<T extends Record<string, unknown>>({
             <button
               type="submit"
               className="page-btn bg-zyfn-navy text-white border-zyfn-navy"
+              disabled={exporting}
             >
-              Export CSV
+              {exporting ? "Exporting…" : "Export Excel"}
             </button>
           </div>
         </form>

@@ -14,6 +14,7 @@ import {
 } from "@/components/data_table/column_layout";
 import { compare_rows, display_cell } from "@/components/data_table/display";
 import { ExportDialog } from "@/components/data_table/export_dialog";
+import { TableSelect } from "@/components/data_table/table_select";
 import { StatusBadge } from "@/components/status_badge";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
@@ -264,8 +265,9 @@ export function DataTable<T extends Record<string, unknown>>({
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 whitespace-nowrap">
             Rows per page
-            <select
-              className={`h-8 min-w-[4.5rem] rounded-[3px] border ${TABLE_CONTROL_BORDER} bg-white px-2 text-sm text-zyfn-ink`}
+            <TableSelect
+              wrapperClassName="min-w-[4.5rem]"
+              className="h-8 px-2"
               value={String(page_size)}
               onChange={(e) => {
                 const v = e.target.value;
@@ -279,7 +281,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 </option>
               ))}
               <option value="all">All</option>
-            </select>
+            </TableSelect>
           </label>
           <div className="flex items-center gap-2">
             <button
