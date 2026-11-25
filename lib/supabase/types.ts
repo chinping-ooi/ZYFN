@@ -32,12 +32,6 @@ export type AccountStatementResult =
   | SupabaseMissing
   | SupabaseError;
 
-export function is_account_statement_data(
-  result: AccountStatementResult,
-): result is AccountStatementFromDb {
-  return result.kind === "data";
-}
-
 /** @deprecated Use AccountStatementFromDb */
 export type HlbStatementFromDb = AccountStatementFromDb & {
   account_code?: string;
@@ -45,6 +39,3 @@ export type HlbStatementFromDb = AccountStatementFromDb & {
 
 /** @deprecated Use AccountStatementResult */
 export type HlbLoadResult = AccountStatementResult;
-
-/** @deprecated Use is_account_statement_data */
-export const is_hlb_db_data = is_account_statement_data;

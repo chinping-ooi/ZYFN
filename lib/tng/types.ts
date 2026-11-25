@@ -72,7 +72,3 @@ export type TngError = {
 };
 
 export type TngLoadResult = ParsedTngDump | TngMissing | TngError;
-
-export function is_tng_data(result: TngLoadResult): result is ParsedTngDump {
-  return "rows" in result;
-}

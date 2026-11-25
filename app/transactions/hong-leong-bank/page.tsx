@@ -5,7 +5,7 @@ import { WorkbookStatusPanel } from "@/components/workbook_status";
 import { HLB_ACCOUNT } from "@/lib/transactions/account_config";
 import { supabase_configured } from "@/lib/supabase/env";
 import { load_transaction_workbook } from "@/lib/workbook/load";
-import { is_workbook_data } from "@/lib/workbook/types";
+import { is_workbook_data } from "@/lib/workbook/workbook_guards";
 
 export const dynamic = "force-dynamic";
 

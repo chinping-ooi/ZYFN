@@ -46,9 +46,3 @@ export type WorkbookError = {
 };
 
 export type WorkbookResult = WorkbookData | WorkbookMissing | WorkbookError;
-
-export function is_workbook_data(
-  result: WorkbookResult,
-): result is WorkbookData {
-  return "hlb" in result;
-}

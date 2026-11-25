@@ -2,7 +2,7 @@ import { AppShell } from "@/components/app_shell";
 import { TngWalletPage, type ServerTngPayload } from "@/components/tng_wallet_page";
 import { tng_reconcile_enabled } from "@/lib/tng/config";
 import { load_tng_data } from "@/lib/tng/load";
-import { is_tng_data } from "@/lib/tng/types";
+import { is_tng_data } from "@/lib/tng/tng_guards";
 
 export const dynamic = "force-dynamic";
 

@@ -1,7 +1,7 @@
 import { TransactionStatementFromSupabase } from "@/components/transaction_statement_from_supabase";
 import { SupabaseStatusPanel } from "@/components/supabase_status_panel";
 import { load_account_transactions } from "@/lib/supabase/load_account_transactions";
-import { is_account_statement_data } from "@/lib/supabase/types";
+import { is_account_statement_data } from "@/lib/supabase/account_statement_guards";
 import { supabase_configured } from "@/lib/supabase/env";
 import type { TransactionAccountConfig } from "@/lib/transactions/account_config";
 
