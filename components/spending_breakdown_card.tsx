@@ -7,17 +7,26 @@ export function SpendingBreakdownCard({
   rows,
   month_label,
   className = "",
+  content_sized = false,
 }: {
   rows: SpendingAccountRow[];
   month_label: string;
   className?: string;
+  /** Dashboard: h-fit with scroll after max list height. */
+  content_sized?: boolean;
 }) {
   const total_sen = spending_total_sen(rows);
 
+  const shell_class = content_sized
+    ? `card flex h-fit w-full max-h-[min(420px,55vh)] flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`
+    : `card flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
+
+  const list_class = content_sized
+    ? "accounts max-h-[min(320px,42vh)] overflow-y-auto px-5"
+    : "accounts min-h-0 flex-1 overflow-y-auto px-5";
+
   return (
-    <section
-      className={`card flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`}
-    >
+    <section className={shell_class}>
       <CardHead
         title="Spending breakdown"
         subtitle={`By account · ${month_label}`}
@@ -29,7 +38,7 @@ export function SpendingBreakdownCard({
         </p>
       ) : (
         <>
-          <div className="accounts min-h-0 flex-1 overflow-y-auto px-5">
+          <div className={list_class}>
             {rows.map((row) => (
               <div
                 key={row.id}

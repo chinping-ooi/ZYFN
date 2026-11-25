@@ -136,7 +136,7 @@ export function DashboardView({
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex shrink-0 flex-col">
       <PageToolbar
         title="Monthly summary"
         subtitle={
@@ -158,11 +158,11 @@ export function DashboardView({
       />
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-5 flex min-h-0 flex-1 flex-col gap-5 md:flex-row md:items-stretch">
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5">
+        <div className="dashboard-layout mt-5 flex max-h-[760px] flex-col gap-5 md:flex-row md:items-start">
+          <div className="flex min-w-0 flex-1 flex-col gap-5">
             <div className="shrink-0">{kpi_pair}</div>
             <CashFlowChart
-              className="w-full min-h-[240px] flex-1 md:min-h-0"
+              className="w-full shrink-0"
               fill_height
               labels={chart_labels}
               income_sen={chart.map((m) => m.income_sen)}
@@ -172,10 +172,10 @@ export function DashboardView({
               monthly_spending_sen={spending_sen}
             />
           </div>
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 max-md:min-h-[280px]">
+          <div className="flex min-w-0 flex-1 flex-col gap-5">
             <DashboardAccountBalancesCard className="shrink-0" rows={balance_rows} />
             <SpendingBreakdownCard
-              className="min-h-0 flex-1"
+              content_sized
               rows={spending_rows}
               month_label={snapshot?.label ?? month}
             />
