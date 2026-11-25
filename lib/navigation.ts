@@ -57,7 +57,12 @@ const BASE_NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "Wallets",
-    items: [{ href: "/wallets/tng", label: "TNG" }],
+    defaultOpen: true,
+    items: [
+      { href: "/transactions/tng-ewallet", label: "TNG eWallet" },
+      { href: "/transactions/tng-go-plus", label: "TNG GO+" },
+      { href: "/wallets/tng", label: "TNG (data.txt)" },
+    ],
   },
   {
     title: "Fixed deposits",

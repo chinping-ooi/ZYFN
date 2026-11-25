@@ -13,9 +13,9 @@ const DATE_COL: DataTableColumn<TransactionTableRow> = {
   time_zone: "Asia/Kuala_Lumpur",
 };
 
-const DETAIL_COL: DataTableColumn<TransactionTableRow> = {
-  key: "detail",
-  label: "Detail",
+const DESCRIPTION_COL: DataTableColumn<TransactionTableRow> = {
+  key: "description",
+  label: "Description",
 };
 
 const TYPE_COL: DataTableColumn<TransactionTableRow> = {
@@ -23,7 +23,12 @@ const TYPE_COL: DataTableColumn<TransactionTableRow> = {
   label: "Type",
 };
 
-export function transaction_db_columns(
+const DETAIL_COL: DataTableColumn<TransactionTableRow> = {
+  key: "detail",
+  label: "Detail",
+};
+
+function sen_columns(
   kind: TransactionAccountKind,
 ): DataTableColumn<TransactionTableRow>[] {
   const in_label = kind === "credit_card" ? "Credit (RM)" : "In (RM)";
@@ -32,9 +37,6 @@ export function transaction_db_columns(
     kind === "credit_card" ? "Owed (RM)" : "Balance (RM)";
 
   return [
-    DATE_COL,
-    DETAIL_COL,
-    TYPE_COL,
     {
       key: "in_sen",
       label: in_label,
@@ -49,4 +51,38 @@ export function transaction_db_columns(
     },
     { key: "balance_sen", label: balance_label, type: "money" },
   ];
+}
+
+function go_plus_money_columns(): DataTableColumn<TransactionTableRow>[] {
+  return [
+    {
+      key: "in_micro",
+      label: "In (RM)",
+      type: "money_micro",
+      account_key: "tng_sub_account",
+      zero_as_blank: true,
+    },
+    {
+      key: "out_micro",
+      label: "Out (RM)",
+      type: "money_micro",
+      account_key: "tng_sub_account",
+      zero_as_blank: true,
+    },
+    {
+      key: "balance_micro",
+      label: "Balance (RM)",
+      type: "money_micro",
+      account_key: "tng_sub_account",
+    },
+  ];
+}
+
+export function transaction_db_columns(
+  kind: TransactionAccountKind,
+): DataTableColumn<TransactionTableRow>[] {
+  const money_cols =
+    kind === "tng_go_plus" ? go_plus_money_columns() : sen_columns(kind);
+
+  return [DATE_COL, DESCRIPTION_COL, TYPE_COL, DETAIL_COL, ...money_cols];
 }

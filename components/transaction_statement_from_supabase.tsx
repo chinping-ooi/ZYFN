@@ -18,6 +18,9 @@ export function TransactionStatementFromSupabase({
   data: AccountStatementFromDb;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
+  const use_micro = data.amount_scale === "micro";
+  const money_dp = use_micro ? 4 : 2;
+
   const month_options = useMemo(
     () => transaction_month_options(data.rows),
     [data.rows],
@@ -27,8 +30,14 @@ export function TransactionStatementFromSupabase({
   );
 
   const statement = useMemo(
-    () => build_transaction_statement(data.rows, month, data.closing_sen),
-    [data.rows, month, data.closing_sen],
+    () =>
+      build_transaction_statement(
+        data.rows,
+        month,
+        data.closing_sen,
+        data.closing_micro,
+      ),
+    [data.rows, month, data.closing_sen, data.closing_micro],
   );
 
   const table_rows = statement.rows as TransactionTableRow[];
@@ -58,14 +67,29 @@ export function TransactionStatementFromSupabase({
         className="mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Statement summary"
       >
-        <KpiCard label={labels.total_in} amount_sen={statement.total_in_sen} />
-        <KpiCard label={labels.total_out} amount_sen={statement.total_out_sen} />
+        <KpiCard
+          label={labels.total_in}
+          amount_sen={use_micro ? null : statement.total_in_sen}
+          amount_micro={use_micro ? statement.total_in_micro : null}
+          money_dp={money_dp}
+        />
+        <KpiCard
+          label={labels.total_out}
+          amount_sen={use_micro ? null : statement.total_out_sen}
+          amount_micro={use_micro ? statement.total_out_micro : null}
+          money_dp={money_dp}
+        />
         <KpiCard
           label="Transactions"
           hide_amount
           meta={`${row_count_in_view} row${row_count_in_view === 1 ? "" : "s"} in view`}
         />
-        <KpiCard label={labels.closing} amount_sen={statement.closing_sen} />
+        <KpiCard
+          label={labels.closing}
+          amount_sen={use_micro ? null : statement.closing_sen}
+          amount_micro={use_micro ? statement.closing_micro : null}
+          money_dp={money_dp}
+        />
       </section>
 
       <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">

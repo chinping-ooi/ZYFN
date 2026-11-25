@@ -1,4 +1,8 @@
-export type TransactionAccountKind = "bank" | "credit_card";
+export type TransactionAccountKind =
+  | "bank"
+  | "credit_card"
+  | "tng_wallet"
+  | "tng_go_plus";
 
 export type TransactionAccountConfig = {
   account_ref: string;
@@ -34,6 +38,20 @@ export const MBB_AMEX_ACCOUNT: TransactionAccountConfig = {
   account_label: "MBB Amex 8060",
   account_id: 9,
   kind: "credit_card",
+};
+
+export const TNG_EWALLET_ACCOUNT: TransactionAccountConfig = {
+  account_ref: "TNG_EWALLET",
+  account_label: "TNG eWallet",
+  account_id: 4,
+  kind: "tng_wallet",
+};
+
+export const TNG_GO_PLUS_ACCOUNT: TransactionAccountConfig = {
+  account_ref: "TNG_GO_PLUS",
+  account_label: "TNG GO+",
+  account_id: 5,
+  kind: "tng_go_plus",
 };
 
 export function statement_kpi_labels(kind: TransactionAccountKind) {

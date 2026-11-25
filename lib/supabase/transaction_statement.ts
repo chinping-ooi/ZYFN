@@ -1,5 +1,6 @@
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import type { MinorAmount } from "@/lib/money";
+import type { MicroAmount } from "@/lib/tng/money_micro";
 
 const KL = "Asia/Kuala_Lumpur";
 
@@ -9,6 +10,9 @@ export type TransactionStatementSlice = {
   total_in_sen: MinorAmount;
   total_out_sen: MinorAmount;
   closing_sen: MinorAmount;
+  total_in_micro: MicroAmount;
+  total_out_micro: MicroAmount;
+  closing_micro: MicroAmount;
   rows: TransactionDbRow[];
 };
 
@@ -53,6 +57,7 @@ export function build_transaction_statement(
   all_rows: TransactionDbRow[],
   month: string | "all",
   closing_sen_full: MinorAmount,
+  closing_micro_full: MicroAmount,
 ): TransactionStatementSlice {
   const rows =
     month === "all"
@@ -61,10 +66,18 @@ export function build_transaction_statement(
 
   const total_in_sen = rows.reduce((t, row) => t + row.in_sen, 0);
   const total_out_sen = rows.reduce((t, row) => t + row.out_sen, 0);
+  const total_in_micro = rows.reduce((t, row) => t + row.in_micro, 0);
+  const total_out_micro = rows.reduce((t, row) => t + row.out_micro, 0);
+
   const closing_sen =
     month === "all"
       ? closing_sen_full
       : (rows[0]?.balance_sen ?? closing_sen_full);
+
+  const closing_micro =
+    month === "all"
+      ? closing_micro_full
+      : (rows[0]?.balance_micro ?? closing_micro_full);
 
   const period_label =
     rows.length === 0
@@ -77,6 +90,9 @@ export function build_transaction_statement(
     total_in_sen,
     total_out_sen,
     closing_sen,
+    total_in_micro,
+    total_out_micro,
+    closing_micro,
     rows,
   };
 }

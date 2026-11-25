@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { cache } from "react";
 import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 import {
+  amount_scale_for_account,
   map_transaction_row,
   type ZyfnTransactionRow,
 } from "@/lib/supabase/transaction_rows";
@@ -105,26 +106,34 @@ async function load_account_transactions_impl(
 
     const { account_id: resolved_id, account_code: resolved_code } = resolved;
     const supabase = create_supabase_data_client();
+    const amount_scale = amount_scale_for_account(kind);
 
-    const { data: transactions, error: txn_error } = await supabase
-      .from("zyfn_transactions")
-      .select(TXN_COLUMNS)
-      .eq("account_id", resolved_id)
-      .order("txn_at", { ascending: false })
-      .order("id", { ascending: false })
-      .range(0, PAGE_SIZE - 1);
+    const raw_rows: ZyfnTransactionRow[] = [];
+    let from = 0;
+    while (true) {
+      const { data: transactions, error: txn_error } = await supabase
+        .from("zyfn_transactions")
+        .select(TXN_COLUMNS)
+        .eq("account_id", resolved_id)
+        .order("txn_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
 
-    if (txn_error) {
-      console.error(`zyfn_transactions (${account_ref}):`, txn_error.message);
-      const formatted = format_postgrest_error(txn_error);
-      return {
-        kind: "error",
-        message: `Could not load transactions for ${account_label}: ${formatted.message}`,
-        details: formatted.details,
-      };
+      if (txn_error) {
+        console.error(`zyfn_transactions (${account_ref}):`, txn_error.message);
+        const formatted = format_postgrest_error(txn_error);
+        return {
+          kind: "error",
+          message: `Could not load transactions for ${account_label}: ${formatted.message}`,
+          details: formatted.details,
+        };
+      }
+
+      const page = (transactions ?? []) as ZyfnTransactionRow[];
+      raw_rows.push(...page);
+      if (page.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
     }
-
-    const raw_rows = (transactions ?? []) as ZyfnTransactionRow[];
 
     if (raw_rows.length === 0) {
       return {
@@ -140,10 +149,13 @@ async function load_account_transactions_impl(
       };
     }
 
-    const rows = raw_rows.map((row) => map_transaction_row(row));
+    const rows = raw_rows.map((row) => map_transaction_row(row, kind));
     const total_in_sen = rows.reduce((sum, row) => sum + row.in_sen, 0);
     const total_out_sen = rows.reduce((sum, row) => sum + row.out_sen, 0);
     const closing_sen = rows[0]?.balance_sen ?? 0;
+    const total_in_micro = rows.reduce((sum, row) => sum + row.in_micro, 0);
+    const total_out_micro = rows.reduce((sum, row) => sum + row.out_micro, 0);
+    const closing_micro = rows[0]?.balance_micro ?? 0;
 
     return {
       kind: "data",
@@ -151,11 +163,15 @@ async function load_account_transactions_impl(
       account_code: resolved_code,
       account_label,
       account_kind: kind,
+      amount_scale,
       source: "supabase",
       rows,
       total_in_sen,
       total_out_sen,
       closing_sen,
+      total_in_micro,
+      total_out_micro,
+      closing_micro,
       row_count: rows.length,
     };
   } catch (err) {

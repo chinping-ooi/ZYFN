@@ -20,6 +20,8 @@ const routes = [
   "/transactions/maybank",
   "/credit-cards/mbb-visa-1697",
   "/credit-cards/mbb-amex-8060",
+  "/transactions/tng-ewallet",
+  "/transactions/tng-go-plus",
   "/wallets/tng",
   "/fixed-deposits",
   "/fixed-deposits/maybank",
