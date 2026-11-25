@@ -1,18 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { DashboardMetrics, MonthKey } from "@/lib/workbook/dashboard_metrics";
-import { chart_window, snapshot_for_month } from "@/lib/workbook/dashboard_metrics";
+import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
+import { chart_window, snapshot_for_month } from "@/lib/dashboard/metrics";
 import { compute_spending_change } from "@/lib/spending_change";
 import { format_rm } from "@/lib/money";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { CashFlowChart } from "@/components/cash_flow_chart";
 
-export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }) {
-  const [month, set_month] = useState<MonthKey>(
-    metrics.default_month,
-  );
+function account_type_label(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("go+")) return "Investment balance";
+  if (lower.includes("tng") || lower.includes("ewallet")) return "Wallet balance";
+  return "Savings account";
+}
+
+export function DashboardView({ metrics }: { metrics: DashboardMetrics }) {
+  const [month, set_month] = useState<MonthKey>(metrics.default_month);
 
   const snapshot = snapshot_for_month(metrics, month);
   const month_index = metrics.monthly.findIndex((m) => m.month === month);
@@ -38,19 +43,14 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
   const net_sen =
     (snapshot?.income_sen ?? 0) - (snapshot?.spending_sen ?? 0);
 
-  const account_type = (id: string) => {
-    if (id === "tng") return "Wallet balance";
-    if (id === "go_plus") return "Investment balance";
-    return "Savings account";
-  };
-
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>
           <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">
-            Transaction.xlsx (HLB + PBE) and data.txt (TNG) · {snapshot?.label ?? month}
+            Supabase ledger · HLB, PBE savings, TNG eWallet, GO+ ·{" "}
+            {snapshot?.label ?? month}
           </p>
         </div>
         {metrics.months.length > 0 ? (
@@ -87,12 +87,12 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
         <KpiCard
           label="Available balance"
           amount_sen={available_sen}
-          meta="Hong Leong, Public Bank, TNG wallet, and GO+ · latest parsed balances"
+          meta="HLB, Public Bank savings, TNG wallet, and GO+ · latest ledger balances"
         />
         <KpiCard
           label="Net cash flow"
           amount_sen={net_sen}
-          meta="Credits − debits for selected month (banks + TNG; transfers excluded)"
+          meta="Credits − debits for selected month (dashboard accounts)"
         />
       </section>
 
@@ -110,7 +110,7 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
             <div className="border-b border-zyfn-line bg-[#fafbfc] px-5 py-4">
               <h3 className="m-0 text-[15px] font-semibold">Account balances</h3>
               <p className="m-0 mt-0.5 text-xs text-zyfn-muted">
-                Closing balance from each sheet
+                Latest balance_after from each Supabase account
               </p>
             </div>
             <div className="px-5">
@@ -122,7 +122,7 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold">{account.name}</div>
                     <div className="text-xs text-zyfn-muted">
-                      {account_type(account.id)}
+                      {account_type_label(account.name)}
                     </div>
                   </div>
                   <div className="text-right text-sm font-semibold tabular-nums">
@@ -135,7 +135,7 @@ export function DashboardFromWorkbook({ metrics }: { metrics: DashboardMetrics }
         </div>
       ) : (
         <p className="text-sm text-zyfn-muted">
-          No transactions found in HLB or PBE to chart.
+          No transactions found in dashboard accounts to chart.
         </p>
       )}
     </>

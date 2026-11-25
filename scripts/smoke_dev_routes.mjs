@@ -1,17 +1,13 @@
 /**
- * Smoke-test all app routes against `next dev` (no real workbook).
- * Usage: start dev with TRANSACTION_XLSX_PATH=fixtures/transaction_synthetic.xlsx
- * then: node scripts/smoke_dev_routes.mjs
+ * Smoke-test app routes against `next dev` (Supabase env optional).
+ * Usage: node scripts/smoke_dev_routes.mjs
  */
 import { execSync, spawn } from "child_process";
 import { setTimeout as delay } from "timers/promises";
-import { existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const fixture = join(root, "fixtures", "transaction_synthetic.xlsx");
-const tng_fixture = join(root, "fixtures", "data_synthetic.txt");
 const base = process.env.SMOKE_BASE_URL ?? "http://127.0.0.1:3000";
 const routes = [
   "/",
@@ -53,10 +49,6 @@ async function waitForServer() {
 }
 
 async function run() {
-  if (!existsSync(fixture)) {
-    await import("./generate_synthetic_workbook.mjs");
-  }
-
   const ownDev = process.env.SMOKE_SKIP_DEV_START !== "1";
   if (ownDev) {
     try {
@@ -69,11 +61,7 @@ async function run() {
     await delay(500);
     dev = spawn("npm", ["run", "dev", "--", "-p", "3000"], {
       cwd: root,
-      env: {
-        ...process.env,
-        TRANSACTION_XLSX_PATH: fixture,
-        TNG_DATA_PATH: tng_fixture,
-      },
+      env: { ...process.env },
       stdio: ["ignore", "pipe", "pipe"],
     });
     await waitForServer();
@@ -109,15 +97,6 @@ async function run() {
   }
 
   if (dev) dev.kill("SIGTERM");
-
-  try {
-    execSync("npm run smoke:tng-client-parse", {
-      cwd: root,
-      stdio: "inherit",
-    });
-  } catch {
-    failed = true;
-  }
 
   if (failed) process.exit(1);
 }

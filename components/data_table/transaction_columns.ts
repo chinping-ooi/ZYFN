@@ -28,7 +28,7 @@ const DETAIL_COL: DataTableColumn<TransactionTableRow> = {
   label: "Detail",
 };
 
-function sen_columns(
+function sen_money_columns(
   kind: TransactionAccountKind,
 ): DataTableColumn<TransactionTableRow>[] {
   const in_label = kind === "credit_card" ? "Credit (RM)" : "In (RM)";
@@ -78,11 +78,12 @@ function go_plus_money_columns(): DataTableColumn<TransactionTableRow>[] {
   ];
 }
 
-export function transaction_db_columns(
+/** Shared column layout for every Supabase account statement table. */
+export function transaction_columns(
   kind: TransactionAccountKind,
 ): DataTableColumn<TransactionTableRow>[] {
   const money_cols =
-    kind === "tng_go_plus" ? go_plus_money_columns() : sen_columns(kind);
+    kind === "tng_go_plus" ? go_plus_money_columns() : sen_money_columns(kind);
 
   return [DATE_COL, DESCRIPTION_COL, TYPE_COL, DETAIL_COL, ...money_cols];
 }

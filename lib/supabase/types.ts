@@ -36,11 +36,3 @@ export type AccountStatementResult =
   | AccountStatementFromDb
   | SupabaseMissing
   | SupabaseError;
-
-/** @deprecated Use AccountStatementFromDb */
-export type HlbStatementFromDb = AccountStatementFromDb & {
-  account_code?: string;
-};
-
-/** @deprecated Use AccountStatementResult */
-export type HlbLoadResult = AccountStatementResult;

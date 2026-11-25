@@ -24,8 +24,8 @@ export function FixedDepositPageView({
   const table_rows = to_table_rows(load.rows) as FixedDepositDataRow[];
 
   const source_note =
-    load.source === "mock"
-      ? "Showing illustrative sample data (Supabase env not set)."
+    load.source === "unconfigured"
+      ? "Supabase is not configured — fixed deposit tables are empty."
       : load.empty_from_supabase
         ? "Supabase returned no rows."
         : "Loaded from Supabase.";

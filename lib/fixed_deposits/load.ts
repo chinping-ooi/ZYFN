@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { MOCK_FIXED_DEPOSITS } from "@/lib/fixed_deposits/mock_data";
 import {
+  DEFAULT_FD_BANK_CODES,
   bank_code_to_label,
   ordered_bank_codes,
 } from "@/lib/fixed_deposits/banks";
@@ -55,17 +55,12 @@ function map_row(row: SupabaseFdRow): FixedDepositRecord {
   };
 }
 
-function mock_result(filter_code?: string): FixedDepositLoadResult {
-  const rows = filter_code
-    ? MOCK_FIXED_DEPOSITS.filter((r) => r.bank_code === filter_code)
-    : MOCK_FIXED_DEPOSITS;
+function unconfigured_result(): FixedDepositLoadResult {
   return {
-    source: "mock",
+    source: "unconfigured",
     configured: false,
-    rows,
-    bank_codes: ordered_bank_codes(
-      MOCK_FIXED_DEPOSITS.map((r) => r.bank_code),
-    ),
+    rows: [],
+    bank_codes: DEFAULT_FD_BANK_CODES,
     empty_from_supabase: false,
   };
 }
@@ -76,7 +71,7 @@ async function load_fixed_deposits_impl(
   noStore();
 
   if (!supabase_configured()) {
-    return mock_result(filter_code);
+    return unconfigured_result();
   }
 
   try {
@@ -109,7 +104,7 @@ async function load_fixed_deposits_impl(
         source: "supabase",
         configured: true,
         rows: [],
-        bank_codes: [],
+        bank_codes: DEFAULT_FD_BANK_CODES,
         empty_from_supabase: true,
       };
     }
@@ -136,7 +131,8 @@ async function load_fixed_deposits_impl(
       source: "supabase",
       configured: true,
       rows,
-      bank_codes,
+      bank_codes:
+        bank_codes.length > 0 ? bank_codes : DEFAULT_FD_BANK_CODES,
       empty_from_supabase: rows.length === 0,
     };
   } catch (error) {
@@ -145,7 +141,7 @@ async function load_fixed_deposits_impl(
       source: "supabase",
       configured: true,
       rows: [],
-      bank_codes: [],
+      bank_codes: DEFAULT_FD_BANK_CODES,
       empty_from_supabase: true,
     };
   }
@@ -156,7 +152,9 @@ export const load_fixed_deposits = cache(load_fixed_deposits_impl);
 
 async function list_fd_bank_codes_impl(): Promise<string[]> {
   const loaded = await load_fixed_deposits();
-  return loaded.bank_codes;
+  return loaded.bank_codes.length > 0
+    ? loaded.bank_codes
+    : DEFAULT_FD_BANK_CODES;
 }
 
 /** Cached per request — shared by layout and FD pages. */

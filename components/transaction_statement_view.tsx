@@ -9,10 +9,10 @@ import {
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
-import { TransactionDbDataTable } from "@/components/data_table/transaction_db_data_table";
-import type { TransactionTableRow } from "@/components/data_table/transaction_db_columns";
+import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
+import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
 
-export function TransactionStatementFromSupabase({
+export function TransactionStatementView({
   data,
 }: {
   data: AccountStatementFromDb;
@@ -101,9 +101,9 @@ export function TransactionStatementFromSupabase({
           </p>
         </div>
         <div className="border-t border-zyfn-line px-5 py-4">
-          <TransactionDbDataTable
+          <TransactionDataTable
             label={`${data.account_label} activity`}
-            scope={`${data.account_ref}-db-${month}`}
+            scope={`${data.account_ref}-${month}`}
             rows={table_rows}
             kind={data.account_kind}
           />

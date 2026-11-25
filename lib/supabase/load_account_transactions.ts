@@ -81,13 +81,20 @@ async function resolve_account_id(
   };
 }
 
+export type LoadAccountTransactionsOptions = {
+  /** When true, an empty ledger returns zero rows instead of an error. */
+  allow_empty?: boolean;
+};
+
 async function load_account_transactions_impl(
   account_ref: string,
   account_label: string,
   kind: TransactionAccountKind,
   account_id: number | null,
   account_code: string | null,
+  options: LoadAccountTransactionsOptions = {},
 ): Promise<AccountStatementResult> {
+  const allow_empty = options.allow_empty ?? false;
   noStore();
 
   if (!supabase_configured()) {
@@ -136,6 +143,25 @@ async function load_account_transactions_impl(
     }
 
     if (raw_rows.length === 0) {
+      if (allow_empty) {
+        return {
+          kind: "data",
+          account_ref,
+          account_code: resolved_code,
+          account_label,
+          account_kind: kind,
+          amount_scale,
+          source: "supabase",
+          rows: [],
+          total_in_sen: 0,
+          total_out_sen: 0,
+          closing_sen: 0,
+          total_in_micro: 0,
+          total_out_micro: 0,
+          closing_micro: 0,
+          row_count: 0,
+        };
+      }
       return {
         kind: "error",
         message:
@@ -181,4 +207,39 @@ async function load_account_transactions_impl(
   }
 }
 
-export const load_account_transactions = cache(load_account_transactions_impl);
+export function load_account_transactions(
+  account_ref: string,
+  account_label: string,
+  kind: TransactionAccountKind,
+  account_id: number | null,
+  account_code: string | null,
+  options?: LoadAccountTransactionsOptions,
+): Promise<AccountStatementResult> {
+  return cached_load_account_transactions(
+    account_ref,
+    account_label,
+    kind,
+    account_id,
+    account_code,
+    options ?? {},
+  );
+}
+
+const cached_load_account_transactions = cache(
+  (
+    account_ref: string,
+    account_label: string,
+    kind: TransactionAccountKind,
+    account_id: number | null,
+    account_code: string | null,
+    options: LoadAccountTransactionsOptions,
+  ) =>
+    load_account_transactions_impl(
+      account_ref,
+      account_label,
+      kind,
+      account_id,
+      account_code,
+      options,
+    ),
+);

@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app_shell";
-import { SupabaseTransactionPage } from "@/components/supabase_transaction_page";
+import { TransactionAccountPage } from "@/components/transaction_account_page";
 import { MBB_VISA_ACCOUNT } from "@/lib/transactions/account_config";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function MbbVisa1697Page() {
       description="Credit card statement · Supabase"
       footer_note="public.zyfn_transactions · account_id 8 · MYR"
     >
-      <SupabaseTransactionPage config={MBB_VISA_ACCOUNT} />
+      <TransactionAccountPage config={MBB_VISA_ACCOUNT} />
     </AppShell>
   );
 }

@@ -2,12 +2,12 @@
 
 import { DataTable } from "@/components/data_table/data_table";
 import {
-  transaction_db_columns,
+  transaction_columns,
   type TransactionTableRow,
-} from "@/components/data_table/transaction_db_columns";
+} from "@/components/data_table/transaction_columns";
 import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 
-type Props = {
+export type TransactionDataTableProps = {
   label: string;
   scope: string;
   rows: TransactionTableRow[];
@@ -15,18 +15,19 @@ type Props = {
   empty_period_message?: string;
 };
 
-export function TransactionDbDataTable({
+/** Single table implementation for all institution transaction pages. */
+export function TransactionDataTable({
   label,
   scope,
   rows,
   kind,
   empty_period_message,
-}: Props) {
+}: TransactionDataTableProps) {
   return (
     <DataTable<TransactionTableRow>
       label={label}
       scope={scope}
-      columns={transaction_db_columns(kind)}
+      columns={transaction_columns(kind)}
       rows={rows}
       date_key="date"
       empty_period_message={empty_period_message}

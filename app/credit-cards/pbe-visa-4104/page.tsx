@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app_shell";
-import { SupabaseTransactionPage } from "@/components/supabase_transaction_page";
+import { TransactionAccountPage } from "@/components/transaction_account_page";
 import { PBE_VISA_4104_ACCOUNT } from "@/lib/transactions/account_config";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function PbeVisa4104Page() {
       description="Credit card statement · Supabase"
       footer_note="public.zyfn_transactions · account_id 6 · MYR"
     >
-      <SupabaseTransactionPage config={PBE_VISA_4104_ACCOUNT} />
+      <TransactionAccountPage config={PBE_VISA_4104_ACCOUNT} />
     </AppShell>
   );
 }

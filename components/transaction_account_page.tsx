@@ -1,15 +1,18 @@
-import { TransactionStatementFromSupabase } from "@/components/transaction_statement_from_supabase";
+import { TransactionStatementView } from "@/components/transaction_statement_view";
 import { SupabaseStatusPanel } from "@/components/supabase_status_panel";
 import { load_account_transactions } from "@/lib/supabase/load_account_transactions";
 import { is_account_statement_data } from "@/lib/supabase/account_statement_guards";
 import { supabase_configured } from "@/lib/supabase/env";
 import type { TransactionAccountConfig } from "@/lib/transactions/account_config";
 
-export async function SupabaseTransactionPage({
-  config,
-}: {
+export type TransactionAccountPageProps = {
   config: TransactionAccountConfig;
-}) {
+};
+
+/** Server loader + shared statement layout for every Supabase account route. */
+export async function TransactionAccountPage({
+  config,
+}: TransactionAccountPageProps) {
   if (!supabase_configured()) {
     return (
       <SupabaseStatusPanel
@@ -34,5 +37,5 @@ export async function SupabaseTransactionPage({
     return <SupabaseStatusPanel result={statement} />;
   }
 
-  return <TransactionStatementFromSupabase data={statement} />;
+  return <TransactionStatementView data={statement} />;
 }

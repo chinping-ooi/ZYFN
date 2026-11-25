@@ -1,38 +1,23 @@
 import { AppShell } from "@/components/app_shell";
-import { DashboardFromWorkbook } from "@/components/dashboard_from_workbook";
-import { DataQualityNotice } from "@/components/data_quality_notice";
-import { WorkbookStatusPanel } from "@/components/workbook_status";
-import { build_dashboard_metrics } from "@/lib/workbook/dashboard_metrics";
-import { load_transaction_workbook } from "@/lib/workbook/load";
-import { is_workbook_data } from "@/lib/workbook/workbook_guards";
-import { load_tng_data } from "@/lib/tng/load";
-import { is_tng_data } from "@/lib/tng/tng_guards";
+import { DashboardView } from "@/components/dashboard_view";
+import { SupabaseStatusPanel } from "@/components/supabase_status_panel";
+import { load_dashboard } from "@/lib/dashboard/load_dashboard";
 
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  const workbook = load_transaction_workbook();
-  const tng = load_tng_data();
+export default async function DashboardPage() {
+  const result = await load_dashboard();
 
   return (
     <AppShell
       title="Dashboard"
       description="Personal financial overview"
-      footer_note="HLB + PBE + TNG sources · MYR"
+      footer_note="Supabase ledger · MYR"
     >
-      {!is_workbook_data(workbook) ? (
-        <WorkbookStatusPanel result={workbook} />
+      {result.kind === "data" ? (
+        <DashboardView metrics={result.metrics} />
       ) : (
-        <>
-          <DataQualityNotice sheets={[workbook.hlb, workbook.pbe]} />
-          <DashboardFromWorkbook
-            metrics={build_dashboard_metrics(
-              workbook.hlb,
-              workbook.pbe,
-              is_tng_data(tng) ? tng : null,
-            )}
-          />
-        </>
+        <SupabaseStatusPanel result={result} />
       )}
     </AppShell>
   );

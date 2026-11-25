@@ -22,7 +22,7 @@ export type FixedDepositTableRow = FixedDepositRecord & {
 };
 
 export type FixedDepositLoadResult = {
-  source: "mock" | "supabase";
+  source: "unconfigured" | "supabase";
   configured: boolean;
   rows: FixedDepositRecord[];
   bank_codes: string[];
