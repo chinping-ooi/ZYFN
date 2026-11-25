@@ -1,8 +1,6 @@
 /**
- * Capture dashboard layout screenshots at fixed viewports (Playwright).
- * Usage: SMOKE_BASE_URL=http://127.0.0.1:3001 node scripts/capture_dashboard_screenshots.mjs
- *
- * Starts `next dev` on port 3000 when no server responds (optional SKIP_DEV_START=1).
+ * Capture dashboard layout screenshots and verify key UI is visible or scrollable.
+ * Usage: SMOKE_BASE_URL=http://127.0.0.1:3001 SKIP_DEV_START=1 node scripts/capture_dashboard_screenshots.mjs
  */
 import { execSync, spawn } from "child_process";
 import { mkdirSync } from "fs";
@@ -19,9 +17,9 @@ const out_dir =
 const path = "/preview/dashboard";
 
 const viewports = [
-  { name: "1024x576", width: 1024, height: 576 },
-  { name: "1366x768", width: 1366, height: 768 },
-  { name: "1920x1080", width: 1920, height: 1080 },
+  { name: "1024x576", width: 1024, height: 576, allow_scroll: true },
+  { name: "1366x768", width: 1366, height: 768, allow_scroll: false },
+  { name: "1920x1080", width: 1920, height: 1080, allow_scroll: false },
 ];
 
 let dev = null;
@@ -43,10 +41,100 @@ async function waitForServer() {
   throw new Error("Dev server did not become ready");
 }
 
+async function verifyDashboard(page, vp) {
+  const main = page.locator("main.content");
+  const issues = [];
+
+  await main.evaluate((node) => {
+    node.scrollTop = 0;
+  });
+  await delay(100);
+
+  const metrics = await page.evaluate(() => {
+    const footer = document.querySelector("footer");
+    const layout = document.querySelector(".dashboard-layout");
+    const mainEl = document.querySelector("main.content");
+    const bal = [...document.querySelectorAll("section")].find(
+      (s) => s.querySelector("h3")?.textContent === "Account balances",
+    );
+    const fd = bal?.querySelector("div:last-child");
+    const spendTotal = [...document.querySelectorAll("section")]
+      .find((s) => s.querySelector("h3")?.textContent === "Spending breakdown")
+      ?.querySelector(".border-t.border-zyfn-line");
+    return {
+      footerTop: footer?.getBoundingClientRect().top ?? 0,
+      layoutBottom: layout?.getBoundingClientRect().bottom ?? 0,
+      fdBottom: fd?.getBoundingClientRect().bottom ?? 0,
+      spendTotalBottom: spendTotal?.getBoundingClientRect().bottom ?? 0,
+      mainOverflowHidden:
+        mainEl && getComputedStyle(mainEl).overflowY === "hidden",
+      chartHeadWrap: (() => {
+        const head = [...document.querySelectorAll(".dashboard-card-head")].find(
+          (h) => h.textContent?.includes("Monthly cash flow"),
+        );
+        const legend = head?.querySelector(".whitespace-nowrap");
+        if (!head || !legend) return false;
+        return legend.getBoundingClientRect().bottom > head.getBoundingClientRect().bottom + 2;
+      })(),
+    };
+  });
+
+  if (metrics.mainOverflowHidden) {
+    issues.push(`${vp.name}: main.content overflow-y is hidden`);
+  }
+
+  if (metrics.chartHeadWrap) {
+    issues.push(`${vp.name}: chart legend wrapped below title`);
+  }
+
+  const footer_margin = 1;
+  if (!vp.allow_scroll) {
+    if (metrics.layoutBottom > metrics.footerTop - footer_margin) {
+      issues.push(
+        `${vp.name}: dashboard extends past footer (${Math.round(metrics.layoutBottom)} > ${Math.round(metrics.footerTop)})`,
+      );
+    }
+    if (metrics.fdBottom > metrics.footerTop - footer_margin) {
+      issues.push(
+        `${vp.name}: fixed deposits row clipped (bottom ${Math.round(metrics.fdBottom)})`,
+      );
+    }
+  } else {
+    if (metrics.fdBottom > metrics.footerTop - footer_margin) {
+      await main.evaluate((node) => {
+        node.scrollTop = node.scrollHeight;
+      });
+      await delay(150);
+      const after = await page.evaluate(() => {
+        const footer = document.querySelector("footer");
+        const bal = [...document.querySelectorAll("section")].find(
+          (s) => s.querySelector("h3")?.textContent === "Account balances",
+        );
+        const fd = bal?.querySelector("div:last-child");
+        return { fdBottom: fd?.getBoundingClientRect().bottom ?? 0, footerTop: footer?.getBoundingClientRect().top ?? 0 };
+      });
+      if (after.fdBottom > after.footerTop) {
+        issues.push(`${vp.name}: fixed deposits row not reachable by scroll`);
+      }
+    }
+  }
+
+  const balance_rows = await page
+    .locator("section")
+    .filter({ has: page.locator("h3", { hasText: "Account balances" }) })
+    .locator("div.border-b, div.last\\:border-0");
+  const n = await balance_rows.count();
+  if (n < 5) {
+    issues.push(`${vp.name}: expected 5 balance rows, saw ${n}`);
+  }
+
+  return issues;
+}
+
 async function capture() {
   mkdirSync(out_dir, { recursive: true });
   const browser = await chromium.launch();
-  const issues = [];
+  const all_issues = [];
 
   for (const vp of viewports) {
     const page = await browser.newPage();
@@ -54,46 +142,30 @@ async function capture() {
     await page.goto(`${base}${path}`, { waitUntil: "networkidle" });
     await page.waitForSelector(".dashboard-layout");
 
-    const layout_box = await page.locator(".dashboard-layout").boundingBox();
-    const left_col = page.locator(".dashboard-layout > div").first();
-    const kpi = left_col.locator('[aria-label="Monthly financial summary"]');
-    const spending = left_col.locator("section").first();
-
-    const kpi_box = await kpi.boundingBox();
-    const spend_box = await spending.boundingBox();
-
-    if (kpi_box && spend_box) {
-      const gap = spend_box.y - (kpi_box.y + kpi_box.height);
-      if (gap > 48) {
-        issues.push(`${vp.name}: KPI→spending gap ${Math.round(gap)}px (>48)`);
-      }
-    }
-
-    const overflow_x = await page.evaluate(() => {
-      return document.documentElement.scrollWidth > document.documentElement.clientWidth + 2;
-    });
-    if (overflow_x) issues.push(`${vp.name}: horizontal overflow`);
-
-    const y_labels = await page.locator('[class*="cash-flow"] .y-label, .cash-flow-chart .tabular-nums').allTextContents();
-    for (const t of y_labels) {
-      if (t.includes("\n") || (t.length > 12 && t.includes(" "))) {
-        issues.push(`${vp.name}: possible wrapped y-label: ${t.slice(0, 30)}`);
-      }
-    }
+    const issues = await verifyDashboard(page, vp);
+    all_issues.push(...issues);
 
     await page.screenshot({
       path: join(out_dir, `dashboard-${vp.name}.png`),
       fullPage: false,
     });
 
-    if (layout_box) {
-      console.log(`${vp.name}: dashboard-layout ${Math.round(layout_box.width)}×${Math.round(layout_box.height)}`);
+    if (vp.allow_scroll) {
+      await page.locator("main.content").evaluate((node) => {
+        node.scrollTop = node.scrollHeight;
+      });
+      await delay(150);
+      await page.screenshot({
+        path: join(out_dir, `dashboard-${vp.name}-scrolled.png`),
+        fullPage: false,
+      });
     }
+
     await page.close();
   }
 
   await browser.close();
-  return issues;
+  return all_issues;
 }
 
 async function main() {

@@ -47,8 +47,12 @@ export function AppShell({
           </div>
         </header>
         <main
-          className={`content mx-auto flex w-full max-w-[1560px] flex-1 flex-col px-6 py-6 lg:px-8 ${
-            viewport_lock ? "min-h-0 overflow-hidden" : "min-h-0 overflow-y-auto"
+          className={`content mx-auto flex w-full max-w-[1560px] flex-1 flex-col px-6 lg:px-8 ${
+            viewport_lock ? "py-5 lg:py-6" : "py-6"
+          } ${
+            viewport_lock
+              ? "min-h-0 overflow-x-hidden overflow-y-auto"
+              : "min-h-0 overflow-y-auto"
           }`}
         >
           {children}

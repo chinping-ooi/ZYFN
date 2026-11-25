@@ -11,23 +11,24 @@ export function DashboardAccountBalancesCard({
 }) {
   return (
     <section
-      className={`card flex shrink-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`}
+      className={`card flex shrink-0 flex-col overflow-visible rounded-[3px] border border-zyfn-line bg-white ${className}`}
     >
       <CardHead
+        compact
         title="Account balances"
         subtitle="Savings, wallet, and active fixed deposits"
         align="center"
       />
-      <div className="px-5">
+      <div className="px-4 pb-2 md:px-5 md:pb-3">
         {rows.map((account) => (
           <div
             key={account.id}
-            className="flex items-center gap-2 border-b border-[#dce1e7] py-2 last:border-0"
+            className="flex items-center gap-2 border-b border-[#dce1e7] py-1 last:border-0 md:py-1.5"
           >
-            <div className="min-w-0 flex-1 text-sm font-semibold leading-tight">
+            <div className="min-w-0 flex-1 text-xs font-semibold leading-tight md:text-sm">
               {account.name}
             </div>
-            <div className="shrink-0 text-right text-sm font-semibold tabular-nums">
+            <div className="shrink-0 text-right text-xs font-semibold tabular-nums md:text-sm">
               {format_rm(account.balance_sen)}
             </div>
           </div>

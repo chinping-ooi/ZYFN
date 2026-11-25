@@ -33,25 +33,26 @@ export function SpendingBreakdownCard({
   ];
 
   if (column_fill && content_sized) {
-    shell_parts.push("min-h-0", "h-full", "max-h-[min(480px,100%)]");
+    shell_parts.push("min-h-0", "h-full");
   } else if (content_sized) {
-    shell_parts.push("h-fit", "max-h-[min(420px,55vh)]");
+    shell_parts.push("h-fit");
   } else {
     shell_parts.push("h-full", "min-h-0");
   }
 
-  const list_parts = ["accounts", "px-5", "overflow-y-auto", "min-h-0"];
+  const list_parts = ["accounts", "px-5"];
   if (column_fill && content_sized) {
-    list_parts.push("flex-1");
+    list_parts.push("min-h-0", "flex-1", "overflow-y-auto");
   } else if (content_sized) {
-    list_parts.push("max-h-[min(320px,42vh)]");
+    list_parts.push("overflow-visible");
   } else {
-    list_parts.push("flex-1");
+    list_parts.push("min-h-0", "flex-1", "overflow-y-auto");
   }
 
   return (
     <section className={`${shell_parts.join(" ")} ${className}`}>
       <CardHead
+        compact={content_sized}
         title="Spending breakdown"
         subtitle={`By account · ${month_label}`}
         align="center"
@@ -66,18 +67,28 @@ export function SpendingBreakdownCard({
             {rows.map((row) => (
               <div
                 key={row.id}
-                className="account border-b border-[#dce1e7] py-2 last:border-0"
+                className={`account border-b border-[#dce1e7] last:border-0 ${
+                  content_sized ? "py-1.5 md:py-2" : "py-2"
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="bank-name min-w-0 flex-1 text-sm font-semibold">
+                  <div
+                    className={`bank-name min-w-0 flex-1 font-semibold ${
+                      content_sized ? "text-xs md:text-sm" : "text-sm"
+                    }`}
+                  >
                     {row.label}
                   </div>
-                  <div className="account-value shrink-0 text-right text-sm font-semibold tabular-nums">
+                  <div
+                    className={`account-value shrink-0 text-right font-semibold tabular-nums ${
+                      content_sized ? "text-xs md:text-sm" : "text-sm"
+                    }`}
+                  >
                     {format_rm(row.amount_sen)}
                   </div>
                 </div>
                 <div
-                  className="mt-2 h-[3px] w-full overflow-hidden rounded-[2px] bg-[#e8ecf0]"
+                  className={`${content_sized ? "mt-1.5" : "mt-2"} h-[3px] w-full overflow-hidden rounded-[2px] bg-[#e8ecf0]`}
                   role="presentation"
                   aria-hidden
                 >
@@ -89,7 +100,11 @@ export function SpendingBreakdownCard({
               </div>
             ))}
           </div>
-          <div className="flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 py-2.5 text-sm">
+          <div
+            className={`flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 text-sm ${
+              content_sized ? "py-2" : "py-2.5"
+            }`}
+          >
             <span className="font-semibold text-zyfn-ink">Total</span>
             <span className="font-semibold tabular-nums text-zyfn-ink">
               {format_rm(total_sen)}

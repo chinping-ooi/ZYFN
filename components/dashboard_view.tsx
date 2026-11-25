@@ -161,18 +161,17 @@ export function DashboardView({
       />
 
       {metrics.monthly.length > 0 ? (
-        <div className="dashboard-layout mt-5 flex max-h-[min(760px,calc(100vh-11rem))] flex-col gap-5 md:flex-row md:items-stretch">
-          <div className="flex min-h-0 min-w-0 flex-col gap-5 md:flex-[3] md:min-h-0">
+        <div className="dashboard-layout mt-3 flex flex-col gap-4 md:flex-row md:items-start lg:mt-4 lg:gap-5">
+          <div className="flex min-w-0 flex-col gap-4 md:flex-[3] lg:gap-5">
             {kpi_pair}
             <SpendingBreakdownCard
-              column_fill
               content_sized
-              className="min-h-0 md:flex-1"
+              className="shrink-0"
               rows={spending_rows.length > 0 ? spending_rows : []}
               month_label={month_label}
             />
           </div>
-          <div className="flex min-h-0 min-w-0 flex-col gap-5 md:flex-[2] md:self-stretch">
+          <div className="flex min-w-0 flex-col gap-4 md:flex-[2] lg:gap-5">
             <CashFlowChart
               className="w-full shrink-0"
               fill_height
