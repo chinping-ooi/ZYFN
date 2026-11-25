@@ -1,8 +1,8 @@
+import { cash_flow_spending_sen } from "@/lib/dashboard/cash_flow_amounts";
 import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
 import type { MonthKey } from "@/lib/dashboard/metrics";
+import { kl_month_key } from "@/lib/datetime/kl_month_key";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
-import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
-import { micro_to_sen_display } from "@/lib/tng/money_micro";
 import type { MinorAmount } from "@/lib/money";
 import {
   spending_breakdown_account_bucket,
@@ -17,17 +17,6 @@ export type SpendingAccountRow = {
   count: number;
   pct: number;
 };
-
-function month_key(iso_date: string): MonthKey {
-  return iso_date.slice(0, 7);
-}
-
-function outflow_sen(row: TransactionDbRow, use_micro: boolean): number {
-  if (use_micro) {
-    return row.out_micro > 0 ? micro_to_sen_display(row.out_micro) : 0;
-  }
-  return row.out_sen;
-}
 
 function account_type_label(kind: TransactionAccountKind, bucket_id: string): string {
   if (bucket_id === "tng") return "Wallet";
@@ -51,9 +40,10 @@ export function spending_breakdown_for_month(
     const account_type = account_type_label(statement.account_kind, id);
 
     for (const row of statement.rows) {
-      if (month_key(row.date) !== month) continue;
-      if (is_cash_flow_excluded(row)) continue;
-      const spent = outflow_sen(row, use_micro);
+      if (kl_month_key(row.date) !== month) continue;
+      if (is_cash_flow_excluded(row, { account_kind: statement.account_kind }))
+        continue;
+      const spent = cash_flow_spending_sen(row, statement.account_kind, use_micro);
       if (spent <= 0) continue;
       const bucket = buckets.get(id) ?? {
         label,

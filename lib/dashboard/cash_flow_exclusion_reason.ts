@@ -1,4 +1,9 @@
 import type { CashFlowExclusionInput } from "@/lib/dashboard/cash_flow_exclusion";
+import type { TransactionAccountKind } from "@/lib/transactions/account_config";
+
+export type CashFlowExclusionContext = {
+  account_kind?: TransactionAccountKind;
+};
 
 function normalise_type(txn_type: string): string {
   return txn_type.trim().toLowerCase();
@@ -15,6 +20,7 @@ function has_fixed_deposit_link(fixed_deposit_id: number | null | undefined): bo
 /** When excluded, returns a short rule label for audits and scripts. */
 export function cash_flow_exclusion_reason(
   row: CashFlowExclusionInput,
+  context?: CashFlowExclusionContext,
 ): string | null {
   const type = normalise_type(row.txn_type);
 
@@ -29,6 +35,9 @@ export function cash_flow_exclusion_reason(
     type === "cc_payment" ||
     type === "credit_card_payment"
   ) {
+    if (context?.account_kind === "credit_card") {
+      return null;
+    }
     return "card_payment_from_savings";
   }
 

@@ -1,4 +1,5 @@
 import { cash_flow_exclusion_reason } from "@/lib/dashboard/cash_flow_exclusion_reason";
+import { kl_month_key } from "@/lib/datetime/kl_month_key";
 import type { MonthKey } from "@/lib/dashboard/metrics";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
@@ -15,9 +16,6 @@ export type MonthIncomeAuditRow = {
   pair_ref: string | null;
 };
 
-function month_key(iso_date: string): MonthKey {
-  return iso_date.slice(0, 7);
-}
 
 function inflow_sen(row: TransactionDbRow, use_micro: boolean): number {
   if (use_micro) {
@@ -35,10 +33,12 @@ export function audit_month_income(
   for (const statement of statements) {
     const use_micro = statement.amount_scale === "micro";
     for (const row of statement.rows) {
-      if (month_key(row.date) !== month) continue;
+      if (kl_month_key(row.date) !== month) continue;
       const in_sen = inflow_sen(row, use_micro);
       if (in_sen <= 0) continue;
-      const exclusion_reason = cash_flow_exclusion_reason(row);
+      const exclusion_reason = cash_flow_exclusion_reason(row, {
+        account_kind: statement.account_kind,
+      });
       lines.push({
         account: statement.account_label,
         date: row.date.slice(0, 10),

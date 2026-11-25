@@ -1,3 +1,4 @@
+import { kl_month_key } from "@/lib/datetime/kl_month_key";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import type { MinorAmount } from "@/lib/money";
 import type { MicroAmount } from "@/lib/tng/money_micro";
@@ -15,18 +16,6 @@ export type TransactionStatementSlice = {
   closing_micro: MicroAmount;
   rows: TransactionDbRow[];
 };
-
-function kl_month_key(iso: string): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: KL,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date(iso));
-  const year = parts.find((p) => p.type === "year")?.value ?? "";
-  const month = parts.find((p) => p.type === "month")?.value ?? "";
-  return `${year}-${month}`;
-}
 
 export function transaction_month_options(rows: TransactionDbRow[]) {
   const keys = [...new Set(rows.map((row) => kl_month_key(row.date)))].sort().reverse();

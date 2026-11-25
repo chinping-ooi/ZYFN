@@ -1,4 +1,7 @@
-import { cash_flow_exclusion_reason } from "@/lib/dashboard/cash_flow_exclusion_reason";
+import {
+  cash_flow_exclusion_reason,
+  type CashFlowExclusionContext,
+} from "@/lib/dashboard/cash_flow_exclusion_reason";
 
 /**
  * Rows excluded from dashboard income/spending/net/chart (balances unchanged).
@@ -20,6 +23,9 @@ export type CashFlowExclusionInput = {
  * - Card funding from savings: `txn_type` is `card_payment`, `cc_payment`, or
  *   `credit_card_payment` (avoids treating bill pay as merchant spending).
  */
-export function is_cash_flow_excluded(row: CashFlowExclusionInput): boolean {
-  return cash_flow_exclusion_reason(row) != null;
+export function is_cash_flow_excluded(
+  row: CashFlowExclusionInput,
+  context?: CashFlowExclusionContext,
+): boolean {
+  return cash_flow_exclusion_reason(row, context) != null;
 }

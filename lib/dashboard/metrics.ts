@@ -1,9 +1,14 @@
+import {
+  cash_flow_income_sen,
+  cash_flow_spending_sen,
+} from "@/lib/dashboard/cash_flow_amounts";
 import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
 import type { TransactionAccountKind } from "@/lib/transactions/account_config";
+import { kl_month_key } from "@/lib/datetime/kl_month_key";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
-import { micro_to_sen_display } from "@/lib/tng/money_micro";
 import type { MinorAmount } from "@/lib/money";
+import { micro_to_sen_display } from "@/lib/tng/money_micro";
 
 export type MonthKey = string;
 
@@ -31,37 +36,25 @@ export type DashboardLoadResult =
   | { kind: "missing"; message: string }
   | { kind: "error"; message: string; details?: string };
 
-function month_key(iso_date: string): MonthKey {
-  return iso_date.slice(0, 7);
-}
-
 function month_label(key: MonthKey): string {
   return new Intl.DateTimeFormat("en", {
     month: "long",
     year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${key}-01T00:00:00Z`));
+    timeZone: "Asia/Kuala_Lumpur",
+  }).format(new Date(`${key}-01T12:00:00+08:00`));
 }
 
 function accumulate_row(
   buckets: Map<MonthKey, { income_sen: number; spending_sen: number }>,
   row: TransactionDbRow,
+  account_kind: TransactionAccountKind,
   use_micro: boolean,
 ) {
-  if (is_cash_flow_excluded(row)) return;
-  const key = month_key(row.date);
+  if (is_cash_flow_excluded(row, { account_kind })) return;
+  const key = kl_month_key(row.date);
   const bucket = buckets.get(key) ?? { income_sen: 0, spending_sen: 0 };
-  if (use_micro) {
-    if (row.in_micro > 0) {
-      bucket.income_sen += micro_to_sen_display(row.in_micro);
-    }
-    if (row.out_micro > 0) {
-      bucket.spending_sen += micro_to_sen_display(row.out_micro);
-    }
-  } else {
-    bucket.income_sen += row.in_sen;
-    bucket.spending_sen += row.out_sen;
-  }
+  bucket.income_sen += cash_flow_income_sen(row, account_kind, use_micro);
+  bucket.spending_sen += cash_flow_spending_sen(row, account_kind, use_micro);
   buckets.set(key, bucket);
 }
 
@@ -76,7 +69,7 @@ export function build_dashboard_metrics(
   for (const statement of statements) {
     const use_micro = statement.amount_scale === "micro";
     for (const row of statement.rows) {
-      accumulate_row(buckets, row, use_micro);
+      accumulate_row(buckets, row, statement.account_kind, use_micro);
     }
   }
 
