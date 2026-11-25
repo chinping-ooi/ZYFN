@@ -44,6 +44,8 @@ type Props<T extends Record<string, unknown>> = {
   table_layout?: "fixed" | "auto";
   /** Statement pages: grow into parent and scroll tbody only. */
   fill_height?: boolean;
+  /** Slug source for Excel filename (defaults to `label`). */
+  export_account_label?: string;
 };
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -57,8 +59,15 @@ export function DataTable<T extends Record<string, unknown>>({
   inset = true,
   table_layout = "fixed",
   fill_height = false,
+  export_account_label,
 }: Props<T>) {
+  void scope;
   const safe_columns = columns ?? EMPTY_COLUMNS;
+  const labeled_columns = useMemo(
+    () => safe_columns.filter((col) => col.label.trim().length > 0),
+    [safe_columns],
+  );
+  const resolved_export_label = export_account_label ?? label;
   const safe_rows = useMemo(
     () => (Array.isArray(rows) ? rows : []),
     [rows],
@@ -76,19 +85,19 @@ export function DataTable<T extends Record<string, unknown>>({
   const filtered = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     let result = safe_rows.filter((row) =>
-      safe_columns.some((column) => {
+      labeled_columns.some((column) => {
         const raw = row[column.key];
         const display = display_cell(row, column);
         return `${raw ?? ""} ${display}`.toLocaleLowerCase().includes(query);
       }),
     );
-    const column = safe_columns.find((c) => c.key === sort_key);
+    const column = labeled_columns.find((c) => c.key === sort_key);
     if (column) {
       const dir = sort_direction === "ascending" ? 1 : -1;
       result = [...result].sort((a, b) => compare_rows(a, b, column, dir));
     }
     return result;
-  }, [safe_rows, safe_columns, search, sort_key, sort_direction]);
+  }, [safe_rows, labeled_columns, search, sort_key, sort_direction]);
 
   const page_count =
     page_size === "all"
@@ -138,7 +147,7 @@ export function DataTable<T extends Record<string, unknown>>({
     </div>
   );
 
-  if (safe_columns.length === 0) {
+  if (labeled_columns.length === 0) {
     return (
       <p className="text-sm text-zyfn-muted" role="alert">
         Table columns are not configured.
@@ -172,7 +181,7 @@ export function DataTable<T extends Record<string, unknown>>({
         >
           <thead>
             <tr>
-              {safe_columns.map((column) => {
+              {labeled_columns.map((column) => {
                 const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
                   column.type ?? "",
                 );
@@ -213,7 +222,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 key={index}
                 className="even:bg-[#fafbfc] hover:bg-[#f0f3f7] last:[&>td]:border-b-0"
               >
-                {safe_columns.map((column) => {
+                {labeled_columns.map((column) => {
                   const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
                     column.type ?? "",
                   );
@@ -242,7 +251,7 @@ export function DataTable<T extends Record<string, unknown>>({
             {visible.length === 0 ? (
               <tr>
                 <td
-                  colSpan={Math.max(safe_columns.length, 1)}
+                  colSpan={Math.max(labeled_columns.length, 1)}
                   className={`${LEDGER_CELL_DIVIDER} px-[13px] py-[30px] text-center text-zyfn-muted`}
                 >
                   {safe_rows.length
@@ -336,9 +345,8 @@ export function DataTable<T extends Record<string, unknown>>({
       <ExportDialog
         open={export_open}
         onClose={() => set_export_open(false)}
-        label={label}
-        scope={scope}
-        columns={safe_columns}
+        label={resolved_export_label}
+        columns={labeled_columns}
         rows={filtered}
         date_key={resolved_date_key}
       />

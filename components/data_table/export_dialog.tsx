@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { DataTableColumn } from "@/components/data_table/types";
 import { TableSelect } from "@/components/data_table/table_select";
+import { build_export_filename } from "@/lib/export_filename";
 import {
   build_and_download_xlsx,
   export_date_range,
@@ -12,7 +13,6 @@ type Props<T extends Record<string, unknown>> = {
   open: boolean;
   onClose: () => void;
   label: string;
-  scope: string;
   columns: DataTableColumn<T>[];
   rows: T[];
   date_key: keyof T & string;
@@ -22,7 +22,6 @@ export function ExportDialog<T extends Record<string, unknown>>({
   open,
   onClose,
   label,
-  scope,
   columns,
   rows,
   date_key,
@@ -92,7 +91,7 @@ export function ExportDialog<T extends Record<string, unknown>>({
         throw new Error("No matching records in this date range.");
       }
       await build_and_download_xlsx(
-        `zyfn-${scope}-${start}-to-${end}.xlsx`,
+        build_export_filename(label, start, end),
         label,
         columns,
         filtered,

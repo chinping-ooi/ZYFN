@@ -7,7 +7,7 @@ import type { FixedDepositLoadResult } from "@/lib/fixed_deposits/types";
 import { summarize_fixed_deposits } from "@/lib/fixed_deposits/summary";
 import { to_table_rows } from "@/lib/fixed_deposits/transform";
 import { PageToolbar } from "@/components/page_toolbar";
-import { CardHead } from "@/components/card_head";
+import { AccountTableCard } from "@/components/account_table_card";
 
 export function FixedDepositPageView({
   title,
@@ -51,20 +51,15 @@ export function FixedDepositPageView({
 
       <FixedDepositSummaryCards summary={summary} />
 
-      <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
-        <CardHead
-          title="Deposit register"
-          subtitle={`${table_rows.length} record${table_rows.length === 1 ? "" : "s"} · sorted by maturity date`}
+      <AccountTableCard title="Deposit register">
+        <FixedDepositDataTable
+          label={title}
+          scope={table_scope}
+          export_account_label={title}
+          rows={table_rows}
+          show_bank={show_bank_column}
         />
-        <div className="table-wrap px-5 pt-[18px] pb-4">
-          <FixedDepositDataTable
-            label={title}
-            scope={table_scope}
-            rows={table_rows}
-            show_bank={show_bank_column}
-          />
-        </div>
-      </section>
+      </AccountTableCard>
     </>
   );
 }

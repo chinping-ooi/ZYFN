@@ -11,6 +11,7 @@ type Props = {
   scope: string;
   rows: FixedDepositDataRow[];
   show_bank?: boolean;
+  export_account_label?: string;
 };
 
 export function FixedDepositDataTable({
@@ -18,6 +19,7 @@ export function FixedDepositDataTable({
   scope,
   rows,
   show_bank = false,
+  export_account_label,
 }: Props) {
   return (
     <DataTable<FixedDepositDataRow>
@@ -27,7 +29,8 @@ export function FixedDepositDataTable({
       rows={rows}
       date_key="maturity_date"
       empty_period_message="No fixed deposits in this view."
-      table_layout="auto"
+      inset={false}
+      export_account_label={export_account_label}
     />
   );
 }

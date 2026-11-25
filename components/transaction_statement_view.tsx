@@ -12,7 +12,7 @@ import { MonthSelect } from "@/components/month_select";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
 import { PageToolbar } from "@/components/page_toolbar";
-import { CardHead } from "@/components/card_head";
+import { AccountTableCard } from "@/components/account_table_card";
 
 export function TransactionStatementView({
   data,
@@ -98,21 +98,16 @@ export function TransactionStatementView({
         </section>
       </div>
 
-      <section className="statement-table card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
-        <CardHead
-          title="Transaction activity"
-          subtitle={`${table_rows.length} transaction${table_rows.length === 1 ? "" : "s"} in view · read-only from public.zyfn_transactions · newest first`}
+      <AccountTableCard title="Transaction activity" fill_height>
+        <TransactionDataTable
+          label={`${data.account_label} activity`}
+          scope={`${data.account_ref}-${month}`}
+          export_account_label={data.account_label}
+          rows={table_rows}
+          kind={data.account_kind}
+          fill_height
         />
-        <div className="flex min-h-0 flex-1 flex-col px-5 pb-4">
-          <TransactionDataTable
-            label={`${data.account_label} activity`}
-            scope={`${data.account_ref}-${month}`}
-            rows={table_rows}
-            kind={data.account_kind}
-            fill_height
-          />
-        </div>
-      </section>
+      </AccountTableCard>
     </div>
   );
 }
