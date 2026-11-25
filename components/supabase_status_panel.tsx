@@ -13,6 +13,11 @@ export function SupabaseStatusPanel({
           : "Could not load Supabase data"}
       </h2>
       <p className="mx-auto mt-3 max-w-xl text-sm text-zyfn-muted">{result.message}</p>
+      {result.kind === "error" && result.details ? (
+        <p className="mx-auto mt-3 max-w-xl font-mono text-xs text-zyfn-muted">
+          {result.details}
+        </p>
+      ) : null}
     </section>
   );
 }

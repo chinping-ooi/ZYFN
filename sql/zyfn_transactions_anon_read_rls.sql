@@ -1,3 +1,4 @@
+-- Superseded by sql/zyfn_transactions_publishable_select_rls.sql (anon + authenticated).
 -- Run in the Supabase SQL editor (or migration pipeline) so the app anon key can
 -- read account metadata and immutable ledger rows. Adjust if you use a dedicated
 -- DB role instead of anon.

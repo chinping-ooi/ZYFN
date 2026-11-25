@@ -9,6 +9,7 @@ export type SupabaseMissing = {
 export type SupabaseError = {
   kind: "error";
   message: string;
+  details?: string;
 };
 
 export type HlbStatementFromDb = {
