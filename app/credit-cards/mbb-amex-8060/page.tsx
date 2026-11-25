@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/app_shell";
+import { TransactionAppShell as AppShell } from "@/components/transaction_app_shell";
 import { TransactionAccountPage } from "@/components/transaction_account_page";
 import { MBB_AMEX_ACCOUNT } from "@/lib/transactions/account_config";
 

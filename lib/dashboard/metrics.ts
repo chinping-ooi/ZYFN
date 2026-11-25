@@ -21,7 +21,7 @@ export type DashboardMetrics = {
 };
 
 export type DashboardLoadResult =
-  | { kind: "data"; metrics: DashboardMetrics }
+  | { kind: "data"; metrics: DashboardMetrics; statements: AccountStatementFromDb[] }
   | { kind: "missing"; message: string }
   | { kind: "error"; message: string; details?: string };
 

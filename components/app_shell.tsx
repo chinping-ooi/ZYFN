@@ -8,21 +8,24 @@ export function AppShell({
   description,
   children,
   footer_note = "Illustrative figures · MYR",
+  viewport_lock = false,
 }: {
   title: string;
   description: string;
   children: React.ReactNode;
   footer_note?: string;
+  /** When true, main area does not scroll; children manage internal scroll (statement pages). */
+  viewport_lock?: boolean;
 }) {
   const [mobile_nav, set_mobile_nav] = useState(false);
 
   return (
-    <div className="shell flex min-h-screen min-w-[1100px]">
+    <div className="shell flex h-screen min-h-screen min-w-[1100px] overflow-hidden">
       <Sidebar
         mobile_open={mobile_nav}
         on_close={() => set_mobile_nav(false)}
       />
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+      <div className="workspace flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="topbar flex min-h-16 shrink-0 items-center justify-between border-b border-zyfn-line bg-white px-6 lg:px-8">
           <div className="flex items-start gap-3">
             <button
@@ -43,7 +46,11 @@ export function AppShell({
             Personal workspace
           </div>
         </header>
-        <main className="content mx-auto w-full max-w-[1560px] flex-1 px-6 py-6 lg:px-8">
+        <main
+          className={`content mx-auto flex w-full max-w-[1560px] flex-1 flex-col px-6 py-6 lg:px-8 ${
+            viewport_lock ? "min-h-0 overflow-hidden" : "min-h-0 overflow-y-auto"
+          }`}
+        >
           {children}
         </main>
         <footer className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-zyfn-line bg-white px-6 py-3 text-xs leading-5 text-zyfn-muted lg:px-8">

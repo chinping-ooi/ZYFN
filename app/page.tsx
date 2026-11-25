@@ -25,6 +25,7 @@ export default async function DashboardPage() {
           metrics={result.metrics}
           fd_summary={fd_summary}
           fd_rows={fd_load.rows}
+          statements={result.statements}
         />
       ) : (
         <SupabaseStatusPanel result={result} />

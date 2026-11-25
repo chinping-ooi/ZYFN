@@ -25,6 +25,8 @@ type Props<T extends Record<string, unknown>> = {
   /** When true (default), table sits inside an outer card without a second bordered panel. */
   inset?: boolean;
   table_layout?: "fixed" | "auto";
+  /** Statement pages: grow into parent and scroll tbody only. */
+  fill_height?: boolean;
 };
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -37,6 +39,7 @@ export function DataTable<T extends Record<string, unknown>>({
   empty_period_message = "No records in this period.",
   inset = true,
   table_layout = "fixed",
+  fill_height = false,
 }: Props<T>) {
   const safe_columns = columns ?? EMPTY_COLUMNS;
   const safe_rows = useMemo(
@@ -125,22 +128,28 @@ export function DataTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <div className="flex min-h-0 w-full flex-col gap-3">
-      {!toolbar_in_header ? toolbar : null}
+    <div
+      className={`flex w-full flex-col gap-3 ${
+        fill_height ? "min-h-0 flex-1" : "min-h-0"
+      }`}
+    >
+      {!toolbar_in_header ? (
+        <div className="shrink-0">{toolbar}</div>
+      ) : null}
       <div
-        className={`max-h-[min(70vh,560px)] min-h-0 overflow-auto overscroll-contain ${
-          inset
-            ? "-mx-5 border-y border-zyfn-line"
-            : "rounded-[3px] border border-zyfn-line"
-        }`}
+        className={`min-h-0 overflow-auto overscroll-contain ${
+          fill_height
+            ? "flex-1"
+            : "max-h-[min(70vh,560px)]"
+        } ${inset ? "" : ""}`}
       >
         <table
-          className={`w-full min-w-[520px] border-collapse sm:min-w-[720px] ${
+          className={`ledger-grid-table w-full min-w-[520px] border-collapse border border-zyfn-line sm:min-w-[720px] ${
             table_layout === "fixed" ? "table-fixed" : "table-auto"
           }`}
           aria-label={label}
         >
-          <thead className="sticky top-0 z-[1] bg-[#edf0f4] shadow-[inset_0_-1px_0_#cbd2dc]">
+          <thead className="sticky top-0 z-[1] bg-[#edf0f4]">
             <tr>
               {safe_columns.map((column) => {
                 const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
@@ -224,7 +233,7 @@ export function DataTable<T extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-zyfn-muted">
+      <div className="data-table-footer flex shrink-0 flex-wrap items-center justify-between gap-4 text-[13px] text-zyfn-muted">
         <span role="status">
           {filtered.length
             ? `${start + 1}–${start + visible.length} of ${filtered.length} records`

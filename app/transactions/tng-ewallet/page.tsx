@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/app_shell";
+import { TransactionAppShell as AppShell } from "@/components/transaction_app_shell";
 import { TransactionAccountPage } from "@/components/transaction_account_page";
 import { TNG_EWALLET_ACCOUNT } from "@/lib/transactions/account_config";
 

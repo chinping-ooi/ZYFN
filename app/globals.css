@@ -55,4 +55,17 @@
   .sort-indicator[data-direction="descending"] {
     @apply opacity-100;
   }
+
+  .ledger-grid-table {
+    border-collapse: collapse;
+  }
+
+  .ledger-grid-table th,
+  .ledger-grid-table td {
+    border: 1px solid var(--line);
+  }
+
+  .ledger-grid-table thead th {
+    border-bottom: 1px solid var(--line);
+  }
 }

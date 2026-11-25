@@ -3,17 +3,19 @@
 import { useMemo, useState } from "react";
 import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
 import { chart_window, snapshot_for_month } from "@/lib/dashboard/metrics";
+import { spending_breakdown_for_month } from "@/lib/dashboard/spending_breakdown";
 import { compute_spending_change } from "@/lib/spending_change";
 import { format_rm, major_to_minor } from "@/lib/money";
+import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { CashFlowChart } from "@/components/cash_flow_chart";
 import { PageToolbar } from "@/components/page_toolbar";
 import { CardHead } from "@/components/card_head";
-import { DashboardFixedDeposits } from "@/components/dashboard_fixed_deposits";
-import type { FixedDepositRecord } from "@/lib/fixed_deposits/types";
+import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
 import { count_maturing_within_days } from "@/lib/fixed_deposits/maturity";
+import type { FixedDepositRecord } from "@/lib/fixed_deposits/types";
 
 function account_type_label(name: string) {
   const lower = name.toLowerCase();
@@ -46,10 +48,12 @@ export function DashboardView({
   metrics,
   fd_summary,
   fd_rows,
+  statements,
 }: {
   metrics: DashboardMetrics;
   fd_summary: FixedDepositSummary;
   fd_rows: FixedDepositRecord[];
+  statements: AccountStatementFromDb[];
 }) {
   const [month, set_month] = useState<MonthKey>(metrics.default_month);
 
@@ -73,6 +77,11 @@ export function DashboardView({
     fd_summary.active_count > 0
       ? `${fd_summary.active_count} active placement${fd_summary.active_count === 1 ? "" : "s"} · ${maturing_soon} maturing within 30 days`
       : "No active fixed deposits";
+
+  const spending_breakdown = useMemo(
+    () => spending_breakdown_for_month(statements, month),
+    [statements, month],
+  );
 
   const chart = chart_window(metrics, month, 6);
   const chart_labels = chart.map((m) =>
@@ -134,43 +143,47 @@ export function DashboardView({
             monthly_income_sen={snapshot?.income_sen ?? 0}
             monthly_spending_sen={snapshot?.spending_sen ?? 0}
           />
-          <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
-            <CardHead
-              title="Account balances"
-              subtitle="Latest recorded balance in selected period"
+          <div className="flex min-w-0 flex-col gap-[18px]">
+            <section className="card overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
+              <CardHead
+                title="Account balances"
+                subtitle="Latest recorded balance in selected period"
+              />
+              <div className="accounts px-5">
+                {metrics.accounts.map((account) => (
+                  <div
+                    key={account.id}
+                    className="account flex items-center gap-3 border-b border-[#dce1e7] py-3.5 last:border-0"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="bank-name text-sm font-semibold">
+                        {account.name}
+                      </div>
+                      <div className="account-type text-xs text-zyfn-muted">
+                        {account_type_label(account.name)}
+                      </div>
+                    </div>
+                    <div className="account-value ml-auto text-right text-sm font-semibold tabular-nums">
+                      {format_rm(account.balance_sen)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="account-note px-5 pb-[15px] pt-2 text-xs text-zyfn-muted">
+                GO+ is shown separately from the TNG wallet.
+              </p>
+            </section>
+            <SpendingBreakdownCard
+              rows={spending_breakdown}
+              month_label={snapshot?.label ?? month}
             />
-            <div className="accounts px-5">
-              {metrics.accounts.map((account) => (
-                <div
-                  key={account.id}
-                  className="account flex items-center gap-3 border-b border-[#dce1e7] py-3.5 last:border-0"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="bank-name text-sm font-semibold">
-                      {account.name}
-                    </div>
-                    <div className="account-type text-xs text-zyfn-muted">
-                      {account_type_label(account.name)}
-                    </div>
-                  </div>
-                  <div className="account-value ml-auto text-right text-sm font-semibold tabular-nums">
-                    {format_rm(account.balance_sen)}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="account-note px-5 pb-[15px] pt-2 text-xs text-zyfn-muted">
-              GO+ is shown separately from the TNG wallet.
-            </p>
-          </section>
+          </div>
         </div>
       ) : (
         <p className="text-sm text-zyfn-muted">
           No transactions found in dashboard accounts to chart.
         </p>
       )}
-
-      <DashboardFixedDeposits rows={fd_rows} />
     </>
   );
 }

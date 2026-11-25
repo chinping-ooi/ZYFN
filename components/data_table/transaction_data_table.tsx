@@ -13,6 +13,7 @@ export type TransactionDataTableProps = {
   rows: TransactionTableRow[];
   kind: TransactionAccountKind;
   empty_period_message?: string;
+  fill_height?: boolean;
 };
 
 /** Single table implementation for all institution transaction pages. */
@@ -22,6 +23,7 @@ export function TransactionDataTable({
   rows,
   kind,
   empty_period_message,
+  fill_height = false,
 }: TransactionDataTableProps) {
   return (
     <DataTable<TransactionTableRow>
@@ -31,6 +33,8 @@ export function TransactionDataTable({
       rows={rows}
       date_key="date"
       empty_period_message={empty_period_message}
+      fill_height={fill_height}
+      inset={!fill_height}
     />
   );
 }

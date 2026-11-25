@@ -66,6 +66,7 @@ async function load_dashboard_impl(): Promise<DashboardLoadResult> {
   return {
     kind: "data",
     metrics: build_dashboard_metrics(statements),
+    statements,
   };
 }
 
