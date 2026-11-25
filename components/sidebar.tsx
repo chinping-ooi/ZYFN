@@ -8,12 +8,13 @@ import {
   Landmark,
   LayoutDashboard,
   PiggyBank,
+  Upload,
   Wallet,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { useNavGroups } from "@/components/nav_groups_provider";
-import { DASHBOARD_HREF } from "@/lib/navigation";
+import { DASHBOARD_HREF, IMPORT_HREF } from "@/lib/navigation";
 
 const MOBILE_DRAWER_ID = "mobile-sidebar";
 
@@ -107,6 +108,7 @@ function SidebarPanel({
   nav_groups: ReturnType<typeof useNavGroups>;
 }) {
   const dashboard_active = pathname === DASHBOARD_HREF;
+  const import_active = pathname === IMPORT_HREF;
 
   return (
     <>
@@ -135,6 +137,25 @@ function SidebarPanel({
             aria-hidden
           />
           <span>Dashboard</span>
+        </Link>
+        <Link
+          href={IMPORT_HREF}
+          onClick={on_navigate}
+          className={`${NAV_LINK_BASE} mt-1 gap-2.5 px-3.5 py-1.5 ${
+            import_active
+              ? "active bg-white/10 font-medium text-white"
+              : "text-slate-400 hover:bg-white/5 hover:text-white"
+          }`}
+          aria-current={import_active ? "page" : undefined}
+        >
+          {import_active ? (
+            <span
+              className="pointer-events-none absolute top-1 bottom-1 left-0 w-0.5 rounded-full bg-sky-400"
+              aria-hidden
+            />
+          ) : null}
+          <Upload className="size-4 shrink-0 text-slate-300" aria-hidden />
+          <span>Import</span>
         </Link>
         {nav_groups.map((group) => (
           <NavGroupSection

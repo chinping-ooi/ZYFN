@@ -65,5 +65,7 @@ export function merge_nav_groups(
 
 export const DASHBOARD_HREF = "/";
 
+export const IMPORT_HREF = "/import";
+
 /** Default sidebar groups (fixed-deposit banks filled at runtime when possible). */
 export const NAV_GROUPS: NavGroup[] = build_account_nav_groups();
