@@ -1,6 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Download,
+  Search,
+  X,
+} from "lucide-react";
 import type { DataTableColumn, SortDirection } from "@/components/data_table/types";
 import {
   column_cell_class,
@@ -13,6 +22,11 @@ import { StatusBadge } from "@/components/status_badge";
 const PAGE_SIZES = [25, 50, 100, 200] as const;
 
 const EMPTY_COLUMNS: DataTableColumn<Record<string, unknown>>[] = [];
+
+const TABLE_CONTROL_BORDER = "border-[#b8c2cf]";
+
+const pagination_icon_btn =
+  `inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] border ${TABLE_CONTROL_BORDER} bg-white text-zyfn-ink hover:bg-[#f8f9fb] disabled:cursor-default disabled:border-[#dce1e7] disabled:bg-[#f5f6f8] disabled:text-[#929baa]`;
 
 type Props<T extends Record<string, unknown>> = {
   label: string;
@@ -97,23 +111,43 @@ export function DataTable<T extends Record<string, unknown>>({
   }
 
   const toolbar = (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <input
-        type="search"
-        aria-label={`Search ${label}`}
-        placeholder="Search all columns"
-        className="h-9 w-full rounded-[3px] border border-[#b8c2cf] px-3 text-sm text-zyfn-ink sm:max-w-[min(100%,320px)] sm:flex-1"
-        value={search}
-        onChange={(e) => {
-          set_search(e.target.value);
-          set_page(1);
-        }}
-      />
+    <div className="flex w-full flex-col gap-2 sm:h-9 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative w-full sm:w-[280px] sm:shrink-0">
+        <Search
+          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-zyfn-muted"
+          aria-hidden
+        />
+        <input
+          type="search"
+          aria-label={`Search ${label}`}
+          placeholder="Search transactions…"
+          className={`h-9 w-full rounded-md border ${TABLE_CONTROL_BORDER} bg-white py-0 pr-9 pl-9 text-sm text-zyfn-ink`}
+          value={search}
+          onChange={(e) => {
+            set_search(e.target.value);
+            set_page(1);
+          }}
+        />
+        {search ? (
+          <button
+            type="button"
+            className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-zyfn-muted hover:text-zyfn-ink"
+            aria-label="Clear search"
+            onClick={() => {
+              set_search("");
+              set_page(1);
+            }}
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        ) : null}
+      </div>
       <button
         type="button"
-        className="page-btn w-full sm:w-auto sm:shrink-0"
+        className={`page-btn h-9 w-full gap-1.5 rounded-md border ${TABLE_CONTROL_BORDER} sm:ml-auto sm:w-auto`}
         onClick={() => set_export_open(true)}
       >
+        <Download className="size-4 shrink-0" aria-hidden />
         Export
       </button>
     </div>
@@ -233,76 +267,80 @@ export function DataTable<T extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      <div className="data-table-footer flex shrink-0 flex-wrap items-center justify-between gap-4 text-[13px] text-zyfn-muted">
-        <span role="status">
+      <div className="data-table-footer flex shrink-0 flex-wrap items-center justify-between gap-2 text-[13px] text-zyfn-muted">
+        <span role="status" className="leading-8">
           {filtered.length
             ? `${start + 1}–${start + visible.length} of ${filtered.length} records`
             : `0–0 of 0 records`}
         </span>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <label className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 whitespace-nowrap">
             Rows per page
-            <span className="relative inline-block">
-              <select
-                className="h-9 min-w-[80px] appearance-none rounded-[3px] border border-[#b8c2cf] bg-white pr-8 pl-2 text-sm"
-                value={String(page_size)}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  set_page_size(v === "all" ? "all" : Number(v));
-                  set_page(1);
-                }}
-              >
-                {PAGE_SIZES.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-                <option value="all">All</option>
-              </select>
-              <span className="pointer-events-none absolute top-2 right-2 text-zyfn-muted">
-                ⌄
-              </span>
-            </span>
+            <select
+              className={`h-8 min-w-[4.5rem] rounded-[3px] border ${TABLE_CONTROL_BORDER} bg-white px-2 text-sm text-zyfn-ink`}
+              value={String(page_size)}
+              onChange={(e) => {
+                const v = e.target.value;
+                set_page_size(v === "all" ? "all" : Number(v));
+                set_page(1);
+              }}
+            >
+              {PAGE_SIZES.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+              <option value="all">All</option>
+            </select>
           </label>
-          <button
-            type="button"
-            className="page-btn"
-            disabled={safe_page <= 1}
-            aria-label="First page"
-            onClick={() => set_page(1)}
-          >
-            First
-          </button>
-          <button
-            type="button"
-            className="page-btn"
-            disabled={safe_page <= 1}
-            aria-label="Previous page"
-            onClick={() => set_page((p) => Math.max(1, p - 1))}
-          >
-            Previous
-          </button>
-          <span className="min-w-[75px] text-center" aria-live="polite">
-            Page {safe_page} of {page_count}
-          </span>
-          <button
-            type="button"
-            className="page-btn"
-            disabled={safe_page >= page_count}
-            aria-label="Next page"
-            onClick={() => set_page((p) => Math.min(page_count, p + 1))}
-          >
-            Next
-          </button>
-          <button
-            type="button"
-            className="page-btn"
-            disabled={safe_page >= page_count}
-            aria-label="Last page"
-            onClick={() => set_page(page_count)}
-          >
-            Last
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page <= 1}
+              aria-label="First page"
+              title="First page"
+              onClick={() => set_page(1)}
+            >
+              <ChevronsLeft className="size-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page <= 1}
+              aria-label="Previous page"
+              title="Previous page"
+              onClick={() => set_page((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft className="size-4" aria-hidden />
+            </button>
+            <span
+              className="min-w-[6.5rem] text-center text-sm leading-8 text-zyfn-ink"
+              aria-live="polite"
+            >
+              Page {safe_page} of {page_count}
+            </span>
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page >= page_count}
+              aria-label="Next page"
+              title="Next page"
+              onClick={() => set_page((p) => Math.min(page_count, p + 1))}
+            >
+              <ChevronRight className="size-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page >= page_count}
+              aria-label="Last page"
+              title="Last page"
+              onClick={() => set_page(page_count)}
+            >
+              <ChevronsRight className="size-4" aria-hidden />
+            </button>
+          </div>
         </div>
       </div>
       <ExportDialog
