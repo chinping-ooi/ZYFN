@@ -26,7 +26,7 @@ export function AccountTableCard({
         fill_height ? "flex-1" : ""
       }`}
     >
-      <CardHead title={title} />
+      <CardHead title={title} table_shell align="center" />
       <div
         className={`flex min-h-0 flex-col ${fill_height ? "min-h-0 flex-1" : ""} px-5 pb-4`}
       >

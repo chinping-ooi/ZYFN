@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -34,22 +35,23 @@ const NAV_LINK_BASE =
 function NavGroupSection({
   title,
   items,
-  default_open,
   pathname,
   on_navigate,
 }: {
   title: string;
   items: { href: string; label: string }[];
-  default_open?: boolean;
   pathname: string;
   on_navigate: () => void;
 }) {
-  const contains_active = items.some((item) => item.href === pathname);
-  const initial_open = default_open ?? contains_active;
   const GroupIcon = GROUP_ICONS[title];
+  const [open, set_open] = useState(true);
 
   return (
-    <details className="nav-section group/nav mt-3" open={initial_open}>
+    <details
+      className="nav-section group/nav mt-3"
+      open={open}
+      onToggle={(e) => set_open(e.currentTarget.open)}
+    >
       <summary className={GROUP_SUMMARY_CLASS}>
         <span className="flex min-w-0 flex-1 items-center gap-2.5">
           {GroupIcon ? (
@@ -139,7 +141,6 @@ function SidebarPanel({
             key={group.title}
             title={group.title}
             items={group.items}
-            default_open={group.defaultOpen}
             pathname={pathname}
             on_navigate={on_navigate}
           />
