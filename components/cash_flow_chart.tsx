@@ -1,13 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
-  axis_labels,
-  axis_labels_compact,
-  chart_axis_max,
-} from "@/lib/chart_scale";
+  Chart as ChartJS,
+  BarElement,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+  type ChartData,
+  type ChartOptions,
+} from "chart.js";
+import { Chart } from "react-chartjs-2";
+import { chart_axis_max, format_axis_tick } from "@/lib/chart_scale";
 import { format_rm, type MinorAmount } from "@/lib/money";
 import { CardHead } from "@/components/card_head";
+
+ChartJS.register(
+  BarElement,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+);
+
+const COLOR_INCOME = "#a4b1c0";
+const COLOR_SPENDING = "#263d5b";
+const COLOR_NET = "#14b8a6";
 
 type Props = {
   labels: string[];
@@ -17,23 +40,39 @@ type Props = {
   monthly_income_sen: MinorAmount;
   monthly_spending_sen: MinorAmount;
   className?: string;
-  /** Dashboard plot sizing and ticks. */
   fill_height?: boolean;
-  /** Fill dashboard grid cell; plot grows between 140px and 360px. */
   cell_fill?: boolean;
 };
 
-const PLOT_MOBILE_CLASS = "h-[clamp(120px,18vh,200px)]";
+function y_axis_min_sen(net_series_sen: number[]): number {
+  const lowest = Math.min(0, ...net_series_sen);
+  if (lowest >= 0) return 0;
+  return -chart_axis_max([Math.abs(lowest)]);
+}
 
 const legend = (
-  <div className="flex shrink-0 items-center gap-2 whitespace-nowrap text-[9px] text-zyfn-muted lg:gap-3 lg:text-[10px]">
+  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 whitespace-nowrap text-[9px] text-zyfn-muted lg:gap-3 lg:text-[10px]">
     <span className="inline-flex items-center gap-1">
-      <i className="inline-block h-1.5 w-1.5 shrink-0 bg-zyfn-slate lg:h-2 lg:w-2" aria-hidden />
+      <i
+        className="inline-block h-1.5 w-1.5 shrink-0 bg-zyfn-slate lg:h-2 lg:w-2"
+        aria-hidden
+      />
       Income
     </span>
     <span className="inline-flex items-center gap-1">
-      <i className="inline-block h-1.5 w-1.5 shrink-0 bg-zyfn-navy lg:h-2 lg:w-2" aria-hidden />
+      <i
+        className="inline-block h-1.5 w-1.5 shrink-0 bg-zyfn-navy lg:h-2 lg:w-2"
+        aria-hidden
+      />
       Spending
+    </span>
+    <span className="inline-flex items-center gap-1">
+      <i
+        className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: COLOR_NET }}
+        aria-hidden
+      />
+      Net cash flow
     </span>
   </div>
 );
@@ -49,47 +88,6 @@ export function CashFlowChart({
   fill_height = false,
   cell_fill = false,
 }: Props) {
-  const plot_ref = useRef<HTMLDivElement | null>(null);
-  const [plot_el, set_plot_el] = useState<HTMLDivElement | null>(null);
-  const [plot_height_px, set_plot_height_px] = useState(140);
-
-  const bind_plot_ref = useCallback((node: HTMLDivElement | null) => {
-    plot_ref.current = node;
-    set_plot_el(node);
-    if (!node) return;
-    const sync = () => {
-      const h = node.clientHeight;
-      if (h > 0) set_plot_height_px((prev) => (prev === h ? prev : h));
-    };
-    sync();
-    requestAnimationFrame(sync);
-    requestAnimationFrame(() => requestAnimationFrame(sync));
-  }, []);
-
-  useEffect(() => {
-    if (!cell_fill || !fill_height || !plot_el) return;
-    const measure = () => {
-      const h = plot_el.clientHeight;
-      if (h > 0) {
-        set_plot_height_px((prev) => (prev === h ? prev : h));
-      }
-    };
-    measure();
-    const raf = requestAnimationFrame(measure);
-    const ro = new ResizeObserver(measure);
-    ro.observe(plot_el);
-    const wrapper = plot_el.parentElement;
-    if (wrapper) ro.observe(wrapper);
-    const poll = window.setInterval(measure, 150);
-    const stop_poll = window.setTimeout(() => window.clearInterval(poll), 3000);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.clearInterval(poll);
-      window.clearTimeout(stop_poll);
-      ro.disconnect();
-    };
-  }, [cell_fill, fill_height, plot_el, labels.length]);
-
   const net_sen = monthly_income_sen - monthly_spending_sen;
   const net_label =
     net_sen === 0
@@ -97,34 +95,111 @@ export function CashFlowChart({
       : net_sen > 0
         ? `+${format_rm(net_sen)}`
         : `−${format_rm(Math.abs(net_sen))}`;
-  const all_values = [...income_sen, ...spending_sen];
-  const max_sen = chart_axis_max(all_values);
 
-  const live_plot_h = plot_el?.clientHeight ?? 0;
-  const plot_h = live_plot_h > 0 ? live_plot_h : plot_height_px;
+  const net_series_sen = useMemo(
+    () => income_sen.map((inc, i) => inc - spending_sen[i]),
+    [income_sen, spending_sen],
+  );
 
-  const y_labels = useMemo(() => {
-    if (!fill_height) return axis_labels(max_sen);
-    if (cell_fill && plot_h >= 200) return axis_labels(max_sen, 4);
-    if (fill_height) return axis_labels_compact(max_sen);
-    return axis_labels(max_sen);
-  }, [fill_height, cell_fill, plot_h, max_sen]);
+  const y_max_sen = chart_axis_max([...income_sen, ...spending_sen]);
+  const y_min_sen = y_axis_min_sen(net_series_sen);
+  const y_max_major = y_max_sen / 100;
+  const y_min_major = y_min_sen / 100;
 
-  const grid_steps = Math.max(1, y_labels.length - 1);
-  const grid_bg = `repeating-linear-gradient(to_top,transparent_0,transparent_calc(${100 / grid_steps}%-1px),#e5e8ed_calc(${100 / grid_steps}%-1px),#e5e8ed_${100 / grid_steps}%)`;
+  const chart_data: ChartData<"bar" | "line"> = useMemo(
+    () => ({
+      labels,
+      datasets: [
+        {
+          type: "bar" as const,
+          label: "Income",
+          data: income_sen.map((v) => v / 100),
+          backgroundColor: COLOR_INCOME,
+          borderRadius: 4,
+          maxBarThickness: 18,
+          order: 2,
+        },
+        {
+          type: "bar" as const,
+          label: "Spending",
+          data: spending_sen.map((v) => v / 100),
+          backgroundColor: COLOR_SPENDING,
+          borderRadius: 4,
+          maxBarThickness: 18,
+          order: 3,
+        },
+        {
+          type: "line" as const,
+          label: "Net cash flow",
+          data: net_series_sen.map((v) => v / 100),
+          borderColor: COLOR_NET,
+          backgroundColor: COLOR_NET,
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          pointBackgroundColor: COLOR_NET,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1,
+          order: 1,
+        },
+      ],
+    }),
+    [labels, income_sen, spending_sen, net_series_sen],
+  );
 
-  const aria_label = labels
-    .map(
-      (label, i) =>
-        `${label}: income RM ${(income_sen[i] / 100).toFixed(2)}, spending RM ${(spending_sen[i] / 100).toFixed(2)}`,
-    )
-    .join(". ");
-
-  const plot_class = cell_fill
-    ? "plot flex min-h-0 flex-1 gap-1 pb-6 min-h-[140px] max-h-[360px] lg:gap-1.5 lg:pb-7"
-    : fill_height
-      ? `plot flex shrink-0 gap-1 pb-6 lg:gap-1.5 lg:pb-7 ${PLOT_MOBILE_CLASS}`
-      : "plot flex h-[190px] gap-2 pb-7 md:gap-3";
+  const options: ChartOptions<"bar" | "line"> = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1e3a5f",
+          titleFont: { size: 11, weight: "bold" },
+          bodyFont: { size: 11 },
+          padding: 8,
+          callbacks: {
+            label(context) {
+              const major = Number(context.parsed.y);
+              const sen = Math.round(major * 100);
+              return `${context.dataset.label}: ${format_rm(sen)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: "#7a8796",
+            font: { size: 10 },
+          },
+          grid: { display: false },
+          border: { color: "#dce1e7" },
+        },
+        y: {
+          min: y_min_major,
+          max: y_max_major,
+          ticks: {
+            maxTicksLimit: 5,
+            color: "#7a8796",
+            font: { size: 9 },
+            callback(tick_value) {
+              const major = Number(tick_value);
+              return format_axis_tick(Math.round(major * 100));
+            },
+          },
+          grid: {
+            color: "#e5e8ed",
+            drawTicks: false,
+          },
+          border: { display: false },
+        },
+      },
+    }),
+    [y_min_major, y_max_major],
+  );
 
   const shell_class = fill_height
     ? `card flex w-full min-w-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${
@@ -133,6 +208,12 @@ export function CashFlowChart({
           : "h-fit shrink-0 overflow-visible"
       } ${className}`
     : `card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
+
+  const plot_wrap_class = cell_fill
+    ? "plot relative min-h-0 min-h-[140px] max-h-[360px] flex-1"
+    : fill_height
+      ? "plot relative h-[clamp(120px,18vh,200px)] w-full shrink-0"
+      : "plot relative h-[190px] w-full";
 
   const footer = (
     <div
@@ -155,46 +236,9 @@ export function CashFlowChart({
   );
 
   const plot_body = (
-    <div ref={bind_plot_ref} className={plot_class} role="img" aria-label={aria_label}>
-      <div
-        className="flex w-[2.25rem] shrink-0 flex-col justify-between pb-[18px] text-[8px] leading-none text-zyfn-muted lg:w-[2.5rem] lg:pb-[20px] lg:text-[9px]"
-        aria-hidden
-      >
-        {y_labels.map((label, idx) => (
-          <span key={`${label}-${idx}`} className="whitespace-nowrap">
-            {label}
-          </span>
-        ))}
-      </div>
-      <div
-        className="relative flex h-full min-h-0 min-w-0 flex-1 gap-0.5 border-b border-zyfn-line lg:gap-1"
-        style={{ background: grid_bg }}
-      >
-        {labels.map((label, i) => {
-          const income_pct = (income_sen[i] / max_sen) * 100;
-          const spend_pct = (spending_sen[i] / max_sen) * 100;
-          const is_current = i === labels.length - 1;
-          return (
-            <div
-              key={`${label}-${i}`}
-              className={`relative flex h-full min-h-0 flex-1 items-end justify-center gap-0.5 pb-5 lg:gap-1 lg:pb-6 ${
-                is_current ? "font-semibold" : ""
-              }`}
-            >
-              <div
-                className="w-[20%] max-w-4 bg-zyfn-slate lg:max-w-5"
-                style={{ height: `${income_pct}%` }}
-              />
-              <div
-                className="w-[20%] max-w-4 bg-zyfn-navy lg:max-w-5"
-                style={{ height: `${spend_pct}%` }}
-              />
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[9px] whitespace-nowrap text-zyfn-muted lg:text-[10px]">
-                {label}
-              </span>
-            </div>
-          );
-        })}
+    <div className={plot_wrap_class}>
+      <div className="absolute inset-0 pb-1">
+        <Chart type="bar" data={chart_data} options={options} />
       </div>
     </div>
   );

@@ -31,7 +31,7 @@ export function axis_labels_compact(max_sen: number): string[] {
   return axis_labels(max_sen, 2);
 }
 
-function format_axis_tick(sen: number): string {
+export function format_axis_tick(sen: number): string {
   const major = sen / 100;
   const unit = (value: string) => `RM\u00a0${value}`;
   if (major >= 1000) {
