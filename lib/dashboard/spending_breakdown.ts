@@ -6,12 +6,16 @@ import { micro_to_sen_display } from "@/lib/tng/money_micro";
 import type { MinorAmount } from "@/lib/money";
 import { spending_breakdown_account_bucket } from "@/lib/transactions/account_config";
 
-export type SpendingCategoryRow = {
+const KL = "Asia/Kuala_Lumpur";
+
+export type SpendingTransactionRow = {
   id: string;
+  sort_at: string;
+  sort_id: number;
+  date_label: string;
   label: string;
+  account: string;
   amount_sen: MinorAmount;
-  count: number;
-  pct: number;
 };
 
 function month_key(iso_date: string): MonthKey {
@@ -25,39 +29,59 @@ function outflow_sen(row: TransactionDbRow, use_micro: boolean): number {
   return row.out_sen;
 }
 
-export function spending_breakdown_for_month(
+function row_label(row: TransactionDbRow): string {
+  const desc = row.description.trim();
+  const detail = row.detail.trim();
+  if (desc && detail && detail !== desc) {
+    return `${desc} · ${detail}`;
+  }
+  return desc || detail || "—";
+}
+
+function format_txn_date(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: KL,
+  }).format(new Date(iso));
+}
+
+export function spending_transactions_for_month(
   statements: AccountStatementFromDb[],
   month: MonthKey,
-): SpendingCategoryRow[] {
-  const buckets = new Map<
-    string,
-    { label: string; amount_sen: number; count: number }
-  >();
+): SpendingTransactionRow[] {
+  const items: SpendingTransactionRow[] = [];
 
   for (const statement of statements) {
-    const { id, label } = spending_breakdown_account_bucket(statement);
+    const { label: account } = spending_breakdown_account_bucket(statement);
     const use_micro = statement.amount_scale === "micro";
     for (const row of statement.rows) {
       if (month_key(row.date) !== month) continue;
       if (is_cash_flow_excluded(row)) continue;
       const spent = outflow_sen(row, use_micro);
       if (spent <= 0) continue;
-      const bucket = buckets.get(id) ?? { label, amount_sen: 0, count: 0 };
-      bucket.amount_sen += spent;
-      bucket.count += 1;
-      buckets.set(id, bucket);
+      items.push({
+        id: `${statement.account_ref}-${row.sort_id}`,
+        sort_at: row.date,
+        sort_id: row.sort_id,
+        date_label: format_txn_date(row.date),
+        label: row_label(row),
+        account,
+        amount_sen: spent,
+      });
     }
   }
 
-  const total = [...buckets.values()].reduce((s, b) => s + b.amount_sen, 0);
+  items.sort((a, b) => {
+    const at = b.sort_at.localeCompare(a.sort_at);
+    if (at !== 0) return at;
+    return b.sort_id - a.sort_id;
+  });
 
-  return [...buckets.entries()]
-    .map(([id, bucket]) => ({
-      id,
-      label: bucket.label,
-      amount_sen: bucket.amount_sen,
-      count: bucket.count,
-      pct: total > 0 ? (bucket.amount_sen / total) * 100 : 0,
-    }))
-    .sort((a, b) => b.amount_sen - a.amount_sen);
+  return items;
+}
+
+export function spending_total_sen(rows: SpendingTransactionRow[]): number {
+  return rows.reduce((sum, row) => sum + row.amount_sen, 0);
 }
