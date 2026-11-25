@@ -42,9 +42,17 @@ const BASE_NAV_GROUPS: NavGroup[] = [
     title: "Transactions",
     defaultOpen: true,
     items: [
-      { href: "/transactions/maybank", label: "Maybank" },
+      { href: "/transactions/maybank", label: "Maybank Savings" },
       { href: "/transactions/public-bank", label: "Public Bank" },
       { href: "/transactions/hong-leong-bank", label: "Hong Leong Bank" },
+    ],
+  },
+  {
+    title: "Credit cards",
+    defaultOpen: true,
+    items: [
+      { href: "/credit-cards/mbb-visa-1697", label: "MBB Visa 1697" },
+      { href: "/credit-cards/mbb-amex-8060", label: "MBB Amex 8060" },
     ],
   },
   {

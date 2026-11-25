@@ -144,9 +144,14 @@ export function parse_account_sheet(
     }
   }
 
+  transactions.sort((a, b) => {
+    const by_date = b.date.localeCompare(a.date);
+    return by_date !== 0 ? by_date : 0;
+  });
+
   const closing_balance_sen =
     transactions.length > 0
-      ? transactions[transactions.length - 1].balance_sen
+      ? transactions[0].balance_sen
       : opening_balance_sen;
 
   return {

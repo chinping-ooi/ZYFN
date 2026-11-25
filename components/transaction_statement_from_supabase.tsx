@@ -1,28 +1,41 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { HlbStatementFromDb } from "@/lib/supabase/types";
+import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import {
-  build_hlb_statement,
-  hlb_month_options,
-} from "@/lib/supabase/hlb_statement";
+  build_transaction_statement,
+  transaction_month_options,
+} from "@/lib/supabase/transaction_statement";
+import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
-import { HlbDbDataTable } from "@/components/data_table/hlb_db_data_table";
-import type { HlbTableRow } from "@/components/data_table/hlb_db_columns";
+import { TransactionDbDataTable } from "@/components/data_table/transaction_db_data_table";
+import type { TransactionTableRow } from "@/components/data_table/transaction_db_columns";
 
-export function HlbStatementFromSupabase({ data }: { data: HlbStatementFromDb }) {
-  const month_options = useMemo(() => hlb_month_options(data.rows), [data.rows]);
+export function TransactionStatementFromSupabase({
+  data,
+}: {
+  data: AccountStatementFromDb;
+}) {
+  const labels = statement_kpi_labels(data.account_kind);
+  const month_options = useMemo(
+    () => transaction_month_options(data.rows),
+    [data.rows],
+  );
   const [month, set_month] = useState<string | "all">(
     month_options[0]?.value ?? "all",
   );
 
   const statement = useMemo(
-    () => build_hlb_statement(data.rows, month, data.closing_sen),
+    () => build_transaction_statement(data.rows, month, data.closing_sen),
     [data.rows, month, data.closing_sen],
   );
 
-  const table_rows = statement.rows as HlbTableRow[];
+  const table_rows = statement.rows as TransactionTableRow[];
+  const row_count_in_view =
+    month === "all" ? data.row_count : table_rows.length;
+
+  const subtitle_ref = data.account_code ?? data.account_ref;
 
   return (
     <>
@@ -30,7 +43,7 @@ export function HlbStatementFromSupabase({ data }: { data: HlbStatementFromDb })
         <div>
           <h2 className="m-0 text-[17px] font-semibold">Account statement</h2>
           <p className="m-0 mt-0.5 text-[13px] text-zyfn-muted">
-            Supabase · {data.account_code} · {statement.period_label}
+            Supabase · {subtitle_ref} · {statement.period_label}
           </p>
         </div>
         <MonthSelect
@@ -45,14 +58,14 @@ export function HlbStatementFromSupabase({ data }: { data: HlbStatementFromDb })
         className="mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Statement summary"
       >
-        <KpiCard label="Total in" amount_sen={statement.total_in_sen} />
-        <KpiCard label="Total out" amount_sen={statement.total_out_sen} />
+        <KpiCard label={labels.total_in} amount_sen={statement.total_in_sen} />
+        <KpiCard label={labels.total_out} amount_sen={statement.total_out_sen} />
         <KpiCard
           label="Transactions"
           hide_amount
-          meta={`${month === "all" ? data.row_count : table_rows.length} row${(month === "all" ? data.row_count : table_rows.length) === 1 ? "" : "s"} in view`}
+          meta={`${row_count_in_view} row${row_count_in_view === 1 ? "" : "s"} in view`}
         />
-        <KpiCard label="Current balance" amount_sen={statement.closing_sen} />
+        <KpiCard label={labels.closing} amount_sen={statement.closing_sen} />
       </section>
 
       <section className="overflow-hidden rounded-[3px] border border-zyfn-line bg-white">
@@ -60,14 +73,15 @@ export function HlbStatementFromSupabase({ data }: { data: HlbStatementFromDb })
           <h3 className="m-0 text-[15px] font-semibold">Transaction activity</h3>
           <p className="m-0 mt-0.5 text-xs text-zyfn-muted">
             {table_rows.length} transaction{table_rows.length === 1 ? "" : "s"} in
-            view · read-only from public.zyfn_transactions
+            view · read-only from public.zyfn_transactions · newest first
           </p>
         </div>
         <div className="border-t border-zyfn-line px-5 py-4">
-          <HlbDbDataTable
+          <TransactionDbDataTable
             label={`${data.account_label} activity`}
-            scope={`hlb-db-${month}`}
+            scope={`${data.account_ref}-db-${month}`}
             rows={table_rows}
+            kind={data.account_kind}
           />
         </div>
       </section>

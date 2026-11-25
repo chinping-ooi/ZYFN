@@ -1,15 +1,15 @@
-import type { HlbDbRow } from "@/lib/supabase/hlb_rows";
+import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import type { MinorAmount } from "@/lib/money";
 
 const KL = "Asia/Kuala_Lumpur";
 
-export type HlbStatementSlice = {
+export type TransactionStatementSlice = {
   month: string | "all";
   period_label: string;
   total_in_sen: MinorAmount;
   total_out_sen: MinorAmount;
   closing_sen: MinorAmount;
-  rows: HlbDbRow[];
+  rows: TransactionDbRow[];
 };
 
 function kl_month_key(iso: string): string {
@@ -24,7 +24,7 @@ function kl_month_key(iso: string): string {
   return `${year}-${month}`;
 }
 
-export function hlb_month_options(rows: HlbDbRow[]) {
+export function transaction_month_options(rows: TransactionDbRow[]) {
   const keys = [...new Set(rows.map((row) => kl_month_key(row.date)))].sort().reverse();
   return [
     { value: "all", label: "All months" },
@@ -48,11 +48,12 @@ function kl_date_label(iso: string): string {
   }).format(new Date(iso));
 }
 
-export function build_hlb_statement(
-  all_rows: HlbDbRow[],
+/** Rows are newest-first (txn_at desc, id desc). */
+export function build_transaction_statement(
+  all_rows: TransactionDbRow[],
   month: string | "all",
   closing_sen_full: MinorAmount,
-): HlbStatementSlice {
+): TransactionStatementSlice {
   const rows =
     month === "all"
       ? all_rows
@@ -63,12 +64,12 @@ export function build_hlb_statement(
   const closing_sen =
     month === "all"
       ? closing_sen_full
-      : (rows.at(-1)?.balance_sen ?? closing_sen_full);
+      : (rows[0]?.balance_sen ?? closing_sen_full);
 
   const period_label =
     rows.length === 0
       ? "No transactions in this period"
-      : `${kl_date_label(rows[0].date)} – ${kl_date_label(rows.at(-1)!.date)}`;
+      : `${kl_date_label(rows.at(-1)!.date)} – ${kl_date_label(rows[0].date)}`;
 
   return {
     month,

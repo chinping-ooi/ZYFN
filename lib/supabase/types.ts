@@ -1,5 +1,6 @@
+import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 import type { MinorAmount } from "@/lib/money";
-import type { HlbDbRow } from "@/lib/supabase/hlb_rows";
+import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 
 export type SupabaseMissing = {
   kind: "missing";
@@ -12,20 +13,38 @@ export type SupabaseError = {
   details?: string;
 };
 
-export type HlbStatementFromDb = {
+export type AccountStatementFromDb = {
   kind: "data";
-  account_code: "HLB";
+  account_ref: string;
+  account_code?: string;
   account_label: string;
+  account_kind: TransactionAccountKind;
   source: "supabase";
-  rows: HlbDbRow[];
+  rows: TransactionDbRow[];
   total_in_sen: MinorAmount;
   total_out_sen: MinorAmount;
   closing_sen: MinorAmount;
   row_count: number;
 };
 
-export type HlbLoadResult = HlbStatementFromDb | SupabaseMissing | SupabaseError;
+export type AccountStatementResult =
+  | AccountStatementFromDb
+  | SupabaseMissing
+  | SupabaseError;
 
-export function is_hlb_db_data(result: HlbLoadResult): result is HlbStatementFromDb {
+export function is_account_statement_data(
+  result: AccountStatementResult,
+): result is AccountStatementFromDb {
   return result.kind === "data";
 }
+
+/** @deprecated Use AccountStatementFromDb */
+export type HlbStatementFromDb = AccountStatementFromDb & {
+  account_code?: string;
+};
+
+/** @deprecated Use AccountStatementResult */
+export type HlbLoadResult = AccountStatementResult;
+
+/** @deprecated Use is_account_statement_data */
+export const is_hlb_db_data = is_account_statement_data;

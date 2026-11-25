@@ -18,6 +18,8 @@ const routes = [
   "/transactions/hong-leong-bank",
   "/transactions/public-bank",
   "/transactions/maybank",
+  "/credit-cards/mbb-visa-1697",
+  "/credit-cards/mbb-amex-8060",
   "/wallets/tng",
   "/fixed-deposits",
   "/fixed-deposits/maybank",

@@ -51,16 +51,17 @@ export function build_statement(
     opening_sen = sheet.opening_balance_sen;
     closing_sen = sheet.opening_balance_sen;
   } else {
-    const first = rows[0];
+    const oldest = rows.at(-1)!;
+    const newest = rows[0];
     opening_sen =
-      first.balance_sen + first.debit_sen - first.credit_sen;
-    closing_sen = rows.at(-1)!.balance_sen;
+      oldest.balance_sen + oldest.debit_sen - oldest.credit_sen;
+    closing_sen = newest.balance_sen;
   }
 
   const period_label =
     rows.length === 0
       ? "No transactions in this period"
-      : `${rows[0].date} – ${rows.at(-1)!.date}`;
+      : `${rows.at(-1)!.date} – ${rows[0].date}`;
 
   return {
     month,

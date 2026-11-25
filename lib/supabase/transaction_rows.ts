@@ -1,7 +1,7 @@
 import { decimal_myr_to_sen } from "@/lib/supabase/decimal_to_sen";
 import type { MinorAmount } from "@/lib/money";
 
-export type HlbDbRow = {
+export type TransactionDbRow = {
   /** UTC instant from `txn_at` — formatted in Asia/Kuala_Lumpur in the table. */
   date: string;
   detail: string;
@@ -9,7 +9,6 @@ export type HlbDbRow = {
   in_sen: MinorAmount;
   out_sen: MinorAmount;
   balance_sen: MinorAmount;
-  /** Stable tie-break when sorting by date in the UI. */
   sort_id: number;
 };
 
@@ -24,7 +23,7 @@ export type ZyfnTransactionRow = {
   detail: string | null;
 };
 
-export function map_transaction_to_hlb_row(row: ZyfnTransactionRow): HlbDbRow {
+export function map_transaction_row(row: ZyfnTransactionRow): TransactionDbRow {
   const amount_sen = decimal_myr_to_sen(row.amount);
   return {
     date: row.txn_at,
