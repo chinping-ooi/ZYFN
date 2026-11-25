@@ -107,6 +107,11 @@
     grid-template-columns: 1fr;
     gap: var(--dash-gap);
     flex-shrink: 0;
+    min-width: 0;
+  }
+
+  .statement-summary.kpis {
+    min-width: min(100%, 36rem);
   }
 
   @media (min-width: 480px) {

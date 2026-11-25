@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -9,10 +9,13 @@ import {
   LayoutDashboard,
   PiggyBank,
   Wallet,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useNavGroups } from "@/components/nav_groups_provider";
 import { DASHBOARD_HREF } from "@/lib/navigation";
+
+const MOBILE_DRAWER_ID = "mobile-sidebar";
 
 type SidebarProps = {
   mobile_open: boolean;
@@ -107,11 +110,8 @@ function SidebarPanel({
 
   return (
     <>
-      <header className="brand flex min-h-16 items-center border-b border-[#38465a] px-6 text-[22px] font-semibold tracking-[2px]">
-        ZYFN
-      </header>
       <nav
-        className="nav flex-1 overflow-y-auto p-3 pt-3"
+        className="nav min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pt-3"
         aria-label="Workspace pages"
       >
         <Link
@@ -150,39 +150,97 @@ function SidebarPanel({
   );
 }
 
+function SidebarBrand({ on_close }: { on_close?: () => void }) {
+  return (
+    <header className="brand flex h-16 shrink-0 items-center justify-between border-b border-[#38465a] px-5">
+      <span className="text-[22px] font-semibold tracking-[2px]">ZYFN</span>
+      {on_close ? (
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[3px] text-slate-300 hover:bg-zyfn-sidebar-hover hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60"
+          aria-label="Close navigation"
+          onClick={on_close}
+        >
+          <X className="size-5" aria-hidden />
+        </button>
+      ) : null}
+    </header>
+  );
+}
+
 export function Sidebar({ mobile_open, on_close }: SidebarProps) {
   const pathname = usePathname();
   const nav_groups = useNavGroups();
 
+  useEffect(() => {
+    on_close();
+  }, [pathname, on_close]);
+
+  useEffect(() => {
+    if (!mobile_open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobile_open]);
+
+  useEffect(() => {
+    if (!mobile_open) return;
+    function on_key(e: KeyboardEvent) {
+      if (e.key === "Escape") on_close();
+    }
+    document.addEventListener("keydown", on_key);
+    return () => document.removeEventListener("keydown", on_key);
+  }, [mobile_open, on_close]);
+
   return (
     <>
       <aside
-        className="sidebar sticky top-0 hidden h-screen w-[224px] shrink-0 flex flex-col border-r border-[#152235] bg-zyfn-sidebar text-white lg:flex"
+        className="sidebar sticky top-0 hidden h-screen w-[224px] shrink-0 flex-col border-r border-[#152235] bg-zyfn-sidebar text-white lg:flex lg:flex-col"
         aria-label="Main navigation"
       >
+        <SidebarBrand />
         <SidebarPanel
           pathname={pathname}
           on_navigate={on_close}
           nav_groups={nav_groups}
         />
       </aside>
-      {mobile_open ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-[#132238]/60"
-            aria-label="Close navigation"
-            onClick={on_close}
+
+      <div
+        className={`fixed inset-0 z-50 lg:hidden ${
+          mobile_open ? "" : "pointer-events-none"
+        }`}
+        aria-hidden={!mobile_open}
+      >
+        <button
+          type="button"
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+            mobile_open ? "opacity-100" : "opacity-0"
+          }`}
+          aria-label="Close navigation"
+          tabIndex={mobile_open ? 0 : -1}
+          onClick={on_close}
+        />
+        <aside
+          id={MOBILE_DRAWER_ID}
+          className={`relative flex h-full w-[260px] max-w-[85vw] flex-col bg-zyfn-sidebar text-white shadow-xl transition-transform duration-200 ease-out motion-reduce:transition-none ${
+            mobile_open ? "translate-x-0" : "-translate-x-full"
+          }`}
+          aria-label="Main navigation"
+          aria-hidden={!mobile_open}
+        >
+          <SidebarBrand on_close={on_close} />
+          <SidebarPanel
+            pathname={pathname}
+            on_navigate={on_close}
+            nav_groups={nav_groups}
           />
-          <aside className="relative flex h-full w-[min(280px,85vw)] flex-col bg-zyfn-sidebar text-white shadow-xl">
-            <SidebarPanel
-              pathname={pathname}
-              on_navigate={on_close}
-              nav_groups={nav_groups}
-            />
-          </aside>
-        </div>
-      ) : null}
+        </aside>
+      </div>
     </>
   );
 }
+
+export { MOBILE_DRAWER_ID };
