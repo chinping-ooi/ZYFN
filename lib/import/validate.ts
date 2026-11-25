@@ -5,18 +5,27 @@ function major_number(major: string): number {
   return decimal_myr_to_sen(major) / 100;
 }
 
-export function validate_running_balance(rows: NormalizedImportRow[]): void {
+export function validate_running_balance(
+  rows: NormalizedImportRow[],
+  mode: "asset" | "liability" = "asset",
+): void {
   const chronological = [...rows].sort((a, b) =>
     a.txn_at.localeCompare(b.txn_at),
   );
   let prev_balance: number | null = null;
   for (const row of chronological) {
-    const amount = row.direction === "in"
-      ? major_number(row.amount_major)
-      : -major_number(row.amount_major);
+    const amount = major_number(row.amount_major);
+    const signed =
+      mode === "liability"
+        ? row.direction === "out"
+          ? amount
+          : -amount
+        : row.direction === "in"
+          ? amount
+          : -amount;
     const balance = major_number(row.balance_after_major);
     if (prev_balance !== null) {
-      const expected = Math.round((prev_balance + amount) * 100) / 100;
+      const expected = Math.round((prev_balance + signed) * 100) / 100;
       const delta = Math.abs(expected - balance);
       if (delta > 0.02) {
         if (!row.review_reasons.includes("Balance mismatch")) {

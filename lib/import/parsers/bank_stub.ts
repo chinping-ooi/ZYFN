@@ -29,8 +29,3 @@ export const mbb_card_parser = keyword_parser("mbb_card", [
   "VISA",
   "AMEX",
 ]);
-export const pbe_card_parser = keyword_parser("pbe_card", [
-  "PUBLIC BANK",
-  "VISA",
-  "MASTERCARD",
-]);

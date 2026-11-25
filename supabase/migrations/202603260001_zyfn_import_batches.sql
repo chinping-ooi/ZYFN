@@ -14,11 +14,6 @@ create table if not exists public.zyfn_import_batches (
 alter table public.zyfn_import_batches enable row level security;
 
 drop policy if exists zyfn_import_batches_publishable_insert on public.zyfn_import_batches;
-create policy zyfn_import_batches_publishable_insert
-  on public.zyfn_import_batches
-  for insert
-  to anon, authenticated
-  with check (true);
 
 drop policy if exists zyfn_import_batches_publishable_select on public.zyfn_import_batches;
 create policy zyfn_import_batches_publishable_select
@@ -27,14 +22,7 @@ create policy zyfn_import_batches_publishable_select
   to anon, authenticated
   using (true);
 
-grant select, insert on public.zyfn_import_batches to anon, authenticated;
+grant select on public.zyfn_import_batches to anon, authenticated;
 
--- Ledger inserts from the import UI (publishable key). Review before enabling in production.
+-- Transaction inserts use SUPABASE_SERVICE_ROLE_KEY in the import API (bypasses RLS).
 drop policy if exists zyfn_transactions_publishable_insert on public.zyfn_transactions;
-create policy zyfn_transactions_publishable_insert
-  on public.zyfn_transactions
-  for insert
-  to anon, authenticated
-  with check (true);
-
-grant insert on public.zyfn_transactions to anon, authenticated;

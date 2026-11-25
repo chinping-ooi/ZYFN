@@ -1,5 +1,11 @@
+import { account_config_by_ref } from "@/lib/accounts/registry";
+import type { TransactionAccountKind } from "@/lib/accounts/types";
 import { create_supabase_data_client } from "@/lib/supabase/data_client";
 import { supabase_configured } from "@/lib/supabase/env";
+import {
+  create_supabase_service_client,
+  supabase_service_configured,
+} from "@/lib/supabase/service_client";
 import { format_postgrest_error } from "@/lib/supabase/postgrest_error";
 import { row_money_from_direction } from "@/lib/import/amount";
 import {
@@ -17,9 +23,16 @@ import type {
 const TXN_SELECT =
   "txn_at, amount, description, balance_after";
 
+function balance_validation_mode(
+  kind: TransactionAccountKind | undefined,
+): "asset" | "liability" {
+  return kind === "credit_card" ? "liability" : "asset";
+}
+
 export async function dedupe_import_rows(
   account_id: number,
   rows: NormalizedImportRow[],
+  account_kind?: TransactionAccountKind,
 ): Promise<NormalizedImportRow[]> {
   if (!supabase_configured()) {
     throw new Error("Supabase is not configured");
@@ -47,7 +60,7 @@ export async function dedupe_import_rows(
   const keys = existing_dedupe_keys(account_id, data ?? []);
   const working = rows.map((r) => ({ ...r, review_reasons: [...r.review_reasons] }));
   mark_duplicates(account_id, working, keys);
-  validate_running_balance(working);
+  validate_running_balance(working, balance_validation_mode(account_kind));
   return working;
 }
 
@@ -66,8 +79,17 @@ export async function confirm_import_rows(input: {
       error: "Supabase is not configured",
     };
   }
+  if (!supabase_service_configured()) {
+    return {
+      inserted: 0,
+      skipped_duplicates: 0,
+      batch_id: null,
+      error:
+        "Import insert requires SUPABASE_SERVICE_ROLE_KEY on the server (.env.local).",
+    };
+  }
 
-  const supabase = create_supabase_data_client();
+  const account_kind = account_config_by_ref(input.account_ref)?.kind;
   const preview_like: NormalizedImportRow[] = input.rows.map((row, i) => {
     const money = row_money_from_direction(
       row.direction,
@@ -82,7 +104,11 @@ export async function confirm_import_rows(input: {
       review_reasons: [] as string[],
     };
   });
-  const deduped = await dedupe_import_rows(input.account_id, preview_like);
+  const deduped = await dedupe_import_rows(
+    input.account_id,
+    preview_like,
+    account_kind,
+  );
   const insert_rows = deduped.filter((r) => r.status === "new");
   const skipped = deduped.length - insert_rows.length;
 
@@ -105,7 +131,8 @@ export async function confirm_import_rows(input: {
     detail: row.detail || null,
   }));
 
-  const { data: inserted, error: insert_error } = await supabase
+  const service = create_supabase_service_client();
+  const { data: inserted, error: insert_error } = await service
     .from("zyfn_transactions")
     .insert(payload)
     .select("id");
@@ -117,12 +144,11 @@ export async function confirm_import_rows(input: {
       skipped_duplicates: skipped,
       batch_id: null,
       error:
-        `Insert blocked (${formatted.message}). Ensure INSERT RLS on zyfn_transactions ` +
-        "and run supabase/migrations/202603260001_zyfn_import_batches.sql.",
+        `Insert failed (${formatted.message}). Check SUPABASE_SERVICE_ROLE_KEY and database permissions.`,
     };
   }
 
-  const { data: batch, error: batch_error } = await supabase
+  const { data: batch, error: batch_error } = await service
     .from("zyfn_import_batches")
     .insert({
       account_id: input.account_id,

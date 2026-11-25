@@ -5,6 +5,7 @@ import { Upload } from "lucide-react";
 import { ACCOUNTS } from "@/lib/accounts/registry";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
 import { parse_statement_text } from "@/lib/import/parsers";
+import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
 import {
   load_column_mapping,
   save_column_mapping,
@@ -92,6 +93,7 @@ export function ImportWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           account_id,
+          account_ref,
           rows: parsed,
         }),
       });
@@ -103,7 +105,7 @@ export function ImportWizard() {
       set_rows(body.rows ?? []);
       set_step("preview");
     },
-    [account_id],
+    [account_id, account_ref],
   );
 
   const parse_file = useCallback(async () => {
@@ -146,6 +148,12 @@ export function ImportWizard() {
           account_ref,
         );
         set_parser_id(pid);
+        if (pid === "pbe_card") {
+          const meta = extract_pbe_card_meta(text);
+          if (meta.suggested_account_ref) {
+            set_account_ref(meta.suggested_account_ref);
+          }
+        }
         const kind: ImportSourceKind =
           account.kind.startsWith("tng") && pid === "tng_text"
             ? "tng_text"

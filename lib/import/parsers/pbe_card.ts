@@ -1,0 +1,323 @@
+import { parse_amount_cell, row_money_from_direction } from "@/lib/import/amount";
+import type { NormalizedImportRow } from "@/lib/import/types";
+import type { StatementParser } from "@/lib/import/parsers/types";
+
+const MONTH_TO_NUM: Record<string, number> = {
+  JAN: 1,
+  FEB: 2,
+  MAR: 3,
+  APR: 4,
+  MAY: 5,
+  JUN: 6,
+  JUL: 7,
+  AUG: 8,
+  SEP: 9,
+  OCT: 10,
+  NOV: 11,
+  DEC: 12,
+};
+
+const LAST4_TO_ACCOUNT_REF: Record<string, string> = {
+  "4104": "PBE_VISA_4104",
+  "6357": "PBE_MASTERCARD_6357",
+};
+
+export type PbeCardStatementMeta = {
+  statement_date_iso: string | null;
+  statement_month: number | null;
+  statement_year: number | null;
+  card_last4: string | null;
+  suggested_account_ref: string | null;
+  opening_balance_major: string | null;
+  month_total_credit_major: string | null;
+  month_total_debit_major: string | null;
+  grand_total_major: string | null;
+};
+
+function collapse_spaces(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function parse_dmy_with_year(
+  day_month: string,
+  statement_month: number,
+  statement_year: number,
+): string | null {
+  const match = day_month.trim().match(/^(\d{1,2})\s+([A-Z]{3})$/i);
+  if (!match) return null;
+  const day = match[1].padStart(2, "0");
+  const month_key = match[2].toUpperCase();
+  const txn_month = MONTH_TO_NUM[month_key];
+  if (!txn_month) return null;
+  const txn_year =
+    txn_month > statement_month ? statement_year - 1 : statement_year;
+  const month = String(txn_month).padStart(2, "0");
+  return `${txn_year}-${month}-${day}`;
+}
+
+export function parse_pbe_statement_header_date(text: string): {
+  iso: string | null;
+  month: number | null;
+  year: number | null;
+} {
+  const match = text.match(
+    /Statement Date[^\d]*(\d{1,2})\s+([A-Z]{3})\s+(\d{4})/i,
+  );
+  if (!match) return { iso: null, month: null, year: null };
+  const day = match[1].padStart(2, "0");
+  const month_key = match[2].toUpperCase();
+  const year = Number.parseInt(match[3], 10);
+  const month = MONTH_TO_NUM[month_key];
+  if (!month || !Number.isFinite(year)) return { iso: null, month: null, year: null };
+  const iso = `${year}-${String(month).padStart(2, "0")}-${day}`;
+  return { iso, month, year };
+}
+
+export function parse_pbe_card_last4(text: string): string | null {
+  const card_line = text.match(
+    /(?:MASTERCARD|VISA)[^\n]*?\b(\d{4})\s+\d{4}\s+\d{4}\s+(\d{4})\b/i,
+  );
+  if (card_line) return card_line[2];
+  const tail = text.match(
+    /(?:MASTERCARD|VISA)[^\n]*?\b(\d{4})\s*(?:CARDHOLDER|$)/im,
+  );
+  return tail?.[1] ?? null;
+}
+
+export function pbe_card_account_ref_from_last4(last4: string): string | null {
+  return LAST4_TO_ACCOUNT_REF[last4] ?? null;
+}
+
+export function extract_pbe_card_meta(text: string): PbeCardStatementMeta {
+  const { iso, month, year } = parse_pbe_statement_header_date(text);
+  const last4 = parse_pbe_card_last4(text);
+  return {
+    statement_date_iso: iso,
+    statement_month: month,
+    statement_year: year,
+    card_last4: last4,
+    suggested_account_ref: last4
+      ? pbe_card_account_ref_from_last4(last4)
+      : null,
+    opening_balance_major: null,
+    month_total_credit_major: null,
+    month_total_debit_major: null,
+    grand_total_major: null,
+  };
+}
+
+function is_noise_line(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return true;
+  if (/^PAGE\s+\d+\s+OF\s+\d+$/i.test(trimmed)) return true;
+  if (/^TARIKH PENYATA\b/i.test(trimmed) && !/STATEMENT DATE/i.test(trimmed)) {
+    return true;
+  }
+  if (/^\d{6}\s+SN\d+/i.test(trimmed)) return true;
+  if (/^PUBLIC BANK BERHAD$/i.test(trimmed)) return true;
+  if (/^PENYATA KAD/i.test(trimmed)) return true;
+  if (/pbebank\.com/i.test(trimmed)) return true;
+  if (/^CARDHOLDER NAME$/i.test(trimmed)) return true;
+  if (/^Post(?:ing)? Date\b/i.test(trimmed)) return true;
+  return false;
+}
+
+function parse_footer_amounts(text: string): Partial<PbeCardStatementMeta> {
+  const credit = text.match(/This month total credit\s+([\d,]+\.\d{2})/i)?.[1];
+  const debit = text.match(/This month total debit\s+([\d,]+\.\d{2})/i)?.[1];
+  const grand = text.match(
+    /Grand total for this account\s+([\d,]+\.\d{2})/i,
+  )?.[1];
+  return {
+    month_total_credit_major: credit ? parse_amount_cell(credit) : null,
+    month_total_debit_major: debit ? parse_amount_cell(debit) : null,
+    grand_total_major: grand ? parse_amount_cell(grand) : null,
+  };
+}
+
+type ParsedLine =
+  | { kind: "opening"; posting: string; amount_major: string }
+  | {
+      kind: "txn";
+      posting: string;
+      txn_date: string;
+      description: string;
+      amount_major: string;
+      is_credit: boolean;
+    };
+
+function parse_transaction_line(line: string): ParsedLine | null {
+  const amount_match = line.match(/([\d,]+\.\d{2})(CR)?\s*$/i);
+  if (!amount_match) return null;
+  const is_credit = Boolean(amount_match[2]);
+  const amount_major = parse_amount_cell(amount_match[1]);
+  const left = line.slice(0, amount_match.index).trim();
+  if (/previous balance/i.test(left)) {
+    const post = left.match(/^(\d{1,2}\s+\w{3})/i)?.[1];
+    if (!post) return null;
+    return { kind: "opening", posting: post, amount_major };
+  }
+  const dates = left.match(/^(\d{1,2}\s+\w{3})\s+(\d{1,2}\s+\w{3})\s+(.+)$/i);
+  if (!dates) return null;
+  return {
+    kind: "txn",
+    posting: dates[1],
+    txn_date: dates[2],
+    description: collapse_spaces(dates[3]),
+    amount_major,
+    is_credit,
+  };
+}
+
+function txn_type_for_credit(description: string): string {
+  if (/PAYMENT\s*-\s*THANK YOU/i.test(description)) return "cc_payment";
+  return "refund";
+}
+
+function mark_review(rows: NormalizedImportRow[], reason: string): void {
+  for (const row of rows) {
+    if (!row.review_reasons.includes(reason)) row.review_reasons.push(reason);
+    if (row.status === "new") row.status = "needs_review";
+  }
+}
+
+export function parse_pbe_card_statement(text: string): {
+  rows: NormalizedImportRow[];
+  meta: PbeCardStatementMeta;
+} {
+  const header = parse_pbe_statement_header_date(text);
+  const footer = parse_footer_amounts(text);
+  const meta: PbeCardStatementMeta = {
+    ...extract_pbe_card_meta(text),
+    ...footer,
+    opening_balance_major: null,
+  };
+
+  if (header.month == null || header.year == null) {
+    return { rows: [], meta };
+  }
+
+  const lines = text.split(/\r?\n/);
+  let in_section = false;
+  const parsed: ParsedLine[] = [];
+
+  for (const raw of lines) {
+    const line = raw.replace(/\t/g, " ");
+    const upper = line.toUpperCase();
+    if (/MAKLUMAT TRANSAKSI/i.test(upper) || /TRANSACTION DETAILS/i.test(upper)) {
+      in_section = true;
+      continue;
+    }
+    if (!in_section) continue;
+    if (/Grand total for this account/i.test(line)) break;
+    if (is_noise_line(line)) continue;
+    const parsed_line = parse_transaction_line(line.trim());
+    if (!parsed_line) continue;
+    if (parsed_line.kind === "opening") {
+      meta.opening_balance_major = parsed_line.amount_major;
+      continue;
+    }
+    parsed.push(parsed_line);
+  }
+
+  let owed = Number(meta.opening_balance_major ?? "0");
+  const rows: NormalizedImportRow[] = [];
+  let debit_sum = 0;
+  let credit_sum = 0;
+  let index = 0;
+
+  for (const item of parsed) {
+    if (item.kind !== "txn") continue;
+    const iso = parse_dmy_with_year(
+      item.txn_date,
+      header.month,
+      header.year,
+    );
+    if (!iso) continue;
+    const direction: "in" | "out" = item.is_credit ? "in" : "out";
+    const amt = Number(item.amount_major);
+    if (item.is_credit) {
+      credit_sum += amt;
+      owed -= amt;
+    } else {
+      debit_sum += amt;
+      owed += amt;
+    }
+    const balance_major = owed.toFixed(2);
+    const txn_type = item.is_credit
+      ? txn_type_for_credit(item.description)
+      : "";
+    const money = row_money_from_direction(
+      direction,
+      item.amount_major,
+      balance_major,
+    );
+    rows.push({
+      temp_id: `pbe-cc-${index++}`,
+      txn_at: `${iso}T00:00:00Z`,
+      description: item.description,
+      detail: `Posting ${item.posting.trim()}`,
+      txn_type,
+      direction,
+      amount_major: item.amount_major,
+      balance_after_major: balance_major,
+      ...money,
+      status: "new",
+      review_reasons: [],
+    });
+  }
+
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  if (meta.month_total_credit_major != null) {
+    const target = Number(meta.month_total_credit_major);
+    if (Math.abs(round2(credit_sum) - target) > 0.02) {
+      mark_review(rows, "Statement credit total mismatch");
+    }
+  }
+  if (meta.month_total_debit_major != null) {
+    const target = Number(meta.month_total_debit_major);
+    if (Math.abs(round2(debit_sum) - target) > 0.02) {
+      mark_review(rows, "Statement debit total mismatch");
+    }
+  }
+  if (meta.grand_total_major != null && rows.length > 0) {
+    const target = Number(meta.grand_total_major);
+    const closing = Number(rows.at(-1)?.balance_after_major ?? "0");
+    if (Math.abs(closing - target) > 0.02) {
+      mark_review(rows, "Grand total mismatch");
+    }
+  }
+
+  return { rows, meta };
+}
+
+function detect_score(text: string): number {
+  const upper = text.toUpperCase();
+  let score = 0;
+  if (
+    upper.includes("PENYATA KAD") ||
+    upper.includes("CARD STATEMENT")
+  ) {
+    score += 0.45;
+  }
+  if (upper.includes("PUBLIC BANK BERHAD")) score += 0.35;
+  if (text.toLowerCase().includes("pbebank.com")) score += 0.15;
+  if (
+    upper.includes("TRANSACTION DETAILS") ||
+    upper.includes("MAKLUMAT TRANSAKSI")
+  ) {
+    score += 0.1;
+  }
+  if (/(?:MASTERCARD|VISA)\s+(?:QUANTUM\s+)?\d{4}/i.test(text)) score += 0.1;
+  return Math.min(score, 0.99);
+}
+
+export const pbe_card_parser: StatementParser = {
+  id: "pbe_card",
+  detect(text: string) {
+    return { id: "pbe_card", score: detect_score(text) };
+  },
+  parse(text: string) {
+    return parse_pbe_card_statement(text).rows;
+  },
+};
