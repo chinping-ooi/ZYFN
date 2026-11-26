@@ -7,7 +7,6 @@ import {
   Tooltip,
   type ChartOptions,
   type Chart as ChartInstance,
-  type Plugin,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { format_rm } from "@/lib/money";
@@ -31,7 +30,6 @@ const SEGMENT_COLORS = [
 ];
 
 const DONUT_PX = 220;
-const MIN_CALLOUT_PCT = 3;
 
 function format_breakdown_total(
   scale: AmountScale,
@@ -54,45 +52,6 @@ function format_breakdown_amount(
     return `RM ${format_micro_money(row.amount_micro, money_dp)}`;
   }
   return format_rm(row.amount_sen);
-}
-
-function slice_callout_plugin(
-  rows: TxnTypeBreakdownRow[],
-): Plugin<"doughnut"> {
-  return {
-    id: "statement-slice-callouts",
-    afterDatasetDraw(chart) {
-      const { ctx } = chart;
-      const meta = chart.getDatasetMeta(0);
-      if (!meta?.data?.length) return;
-      ctx.save();
-      ctx.font = "600 10px system-ui, sans-serif";
-      ctx.fillStyle = "#334155";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      meta.data.forEach((arc, index) => {
-        const row = rows[index];
-        if (!row || row.pct < MIN_CALLOUT_PCT) return;
-        const { x, y, startAngle, endAngle, outerRadius, innerRadius } =
-          arc as unknown as {
-            x: number;
-            y: number;
-            startAngle: number;
-            endAngle: number;
-            outerRadius: number;
-            innerRadius: number;
-          };
-        const angle = (startAngle + endAngle) / 2;
-        const r = (outerRadius + innerRadius) / 2 + 10;
-        const label_x = x + Math.cos(angle) * r;
-        const label_y = y + Math.sin(angle) * r;
-        const text =
-          row.label.length > 14 ? `${row.label.slice(0, 12)}…` : row.label;
-        ctx.fillText(text, label_x, label_y);
-      });
-      ctx.restore();
-    },
-  };
 }
 
 export function StatementTypeDonutCard({
@@ -126,8 +85,6 @@ export function StatementTypeDonutCard({
     [rows, scale],
   );
 
-  const callout_plugin = useMemo(() => slice_callout_plugin(rows), [rows]);
-
   const chart_data = useMemo(
     () => ({
       labels: rows.map((r) => r.label),
@@ -153,7 +110,7 @@ export function StatementTypeDonutCard({
       responsive: true,
       maintainAspectRatio: true,
       aspectRatio: 1,
-      layout: { padding: 12 },
+      layout: { padding: 4 },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -204,12 +161,7 @@ export function StatementTypeDonutCard({
             style={{ height: DONUT_PX, width: DONUT_PX }}
             aria-label={`${title} donut chart, total ${total_label}`}
           >
-            <Doughnut
-              ref={chart_ref}
-              data={chart_data}
-              options={options}
-              plugins={[callout_plugin]}
-            />
+            <Doughnut ref={chart_ref} data={chart_data} options={options} />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <div className="flex max-w-[62%] flex-col items-center text-center leading-tight">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-zyfn-muted">

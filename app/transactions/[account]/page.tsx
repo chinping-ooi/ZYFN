@@ -32,6 +32,8 @@ export default async function TransactionAccountPage({ params }: Props) {
     <TransactionAccountRoute
       title={entry.title}
       config={to_transaction_config(entry)}
+      account_slug={slug}
+      route_prefix="transactions"
     />
   );
 }

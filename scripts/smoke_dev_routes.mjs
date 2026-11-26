@@ -19,6 +19,7 @@ const routes = [
   "/credit-cards/pbe-visa-4104",
   "/credit-cards/pbe-mastercard-6357",
   "/transactions/touch-n-go",
+  "/transactions/touch-n-go/summary",
   "/fixed-deposits",
   "/fixed-deposits/maybank",
   "/fixed-deposits/public-bank",

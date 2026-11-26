@@ -7,15 +7,20 @@ import { load_tng_combined_transactions } from "@/lib/supabase/load_tng_combined
 import { is_account_statement_data } from "@/lib/supabase/account_statement_guards";
 import { supabase_configured } from "@/lib/supabase/env";
 import { latest_transaction_date } from "@/lib/last_updated";
+import type { AccountRoutePrefix } from "@/lib/accounts/types";
 import type { TransactionAccountConfig } from "@/lib/transactions/account_config";
 
 /** Full account route: shell, footer last-updated, and statement body. */
 export async function TransactionAccountRoute({
   title,
   config,
+  account_slug,
+  route_prefix,
 }: {
   title: string;
   config: TransactionAccountConfig;
+  account_slug: string;
+  route_prefix: AccountRoutePrefix;
 }) {
   if (!supabase_configured()) {
     return (
@@ -50,9 +55,16 @@ export async function TransactionAccountRoute({
     <TransactionAppShell title={title} last_updated={last_updated}>
       {is_account_statement_data(statement) ? (
         config.kind === "tng_combined" ? (
-          <TngCombinedStatementView data={statement} />
+          <TngCombinedStatementView
+            data={statement}
+            account_slug={account_slug}
+          />
         ) : (
-          <TransactionStatementView data={statement} />
+          <TransactionStatementView
+            data={statement}
+            route_prefix={route_prefix}
+            account_slug={account_slug}
+          />
         )
       ) : (
         <SupabaseStatusPanel result={statement} />

@@ -9,18 +9,20 @@ import {
 import { filter_tng_rows_for_go_plus_visibility } from "@/lib/tng/combined_statement";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { useShowGoPlus } from "@/lib/hooks/use_show_go_plus";
-import { StatementSummarySection } from "@/components/statement_summary_section";
+import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
-import { PageToolbar } from "@/components/page_toolbar";
+import { AccountPageHeader } from "@/components/account_page_header";
 import { AccountTableCard } from "@/components/account_table_card";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
 
 export function TngCombinedStatementView({
   data,
+  account_slug,
 }: {
   data: AccountStatementFromDb;
+  account_slug: string;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const { show_go_plus, set_show_go_plus } = useShowGoPlus();
@@ -56,9 +58,12 @@ export function TngCombinedStatementView({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="shrink-0">
-        <PageToolbar
+        <AccountPageHeader
           title="Account statement"
           subtitle={`Supabase · TNG · ${statement.period_label}`}
+          route_prefix="transactions"
+          account_slug={account_slug}
+          active_view="statement"
           controls={
             <div className="flex flex-wrap items-center justify-end gap-3">
               <ShowGoPlusCheckbox
@@ -75,15 +80,33 @@ export function TngCombinedStatementView({
           }
         />
 
-        <StatementSummarySection
-          statement={statement}
-          total_in_label={labels.total_in}
-          total_out_label={labels.total_out}
-          closing_label={labels.closing}
-          amount_scale={data.amount_scale}
-          money_dp={4}
-          row_count_in_view={row_count_in_view}
-        />
+        <section
+          className="statement-summary kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
+          aria-label="Statement summary"
+        >
+          <KpiCard
+            compact_amount
+            label={labels.total_in}
+            amount_micro={statement.total_in_micro}
+            money_dp={4}
+          />
+          <KpiCard
+            compact_amount
+            label={labels.total_out}
+            amount_micro={statement.total_out_micro}
+            money_dp={4}
+          />
+          <KpiCard
+            compact_amount
+            label="Transactions"
+            meta={`${row_count_in_view} row${row_count_in_view === 1 ? "" : "s"} in view`}
+          />
+          <KpiCard
+            compact_amount
+            label={labels.closing}
+            amount_sen={statement.closing_sen}
+          />
+        </section>
       </div>
 
       <AccountTableCard title="Transaction activity" fill_height>
