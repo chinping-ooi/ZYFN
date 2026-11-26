@@ -32,7 +32,6 @@ export default async function Mbb2GoldCardStatementPage({ params }: Props) {
       account_slug={entry.slug}
       route_prefix="credit-cards"
       view_base_path={mbb_2_gold_card_href(card)}
-      show_mbb_2_gold_link
     />
   );
 }
