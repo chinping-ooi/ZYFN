@@ -135,7 +135,7 @@ export function ExportDialog<T extends Record<string, unknown>>({
           <h3 className="m-0 text-lg font-semibold">Export records</h3>
           <p className="m-0 text-[13px] text-zyfn-muted">
             {export_all_rows
-              ? `Excel file includes all ${rows.length} parsed row${rows.length === 1 ? "" : "s"} (every page, ignoring table search).`
+              ? `Excel file includes all ${rows.length} parsed row${rows.length === 1 ? "" : "s"}.`
               : `Excel file includes matching records loaded in this table across all pages. Date field: ${date_column?.label ?? "unavailable"}. Weeks run Monday through Sunday.`}
           </p>
           {export_all_rows ? null : (
