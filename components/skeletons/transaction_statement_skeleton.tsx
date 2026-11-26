@@ -11,7 +11,7 @@ export function TransactionStatementSkeleton({
   header_slot?: ReactNode;
 }) {
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden">
+    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-col lg:h-full lg:overflow-hidden">
       <div className="shrink-0">
         {header_slot ? (
           header_slot
