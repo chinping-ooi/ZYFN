@@ -718,14 +718,14 @@ export function ImportWizard() {
   const file_input_id = "import-statement-file";
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-col gap-3 lg:h-full lg:overflow-hidden">
+    <div className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden gap-3">
       <ImportStepper
         current={step}
         include_mapping_step={include_mapping_step}
       />
 
       {step === "preview" ? (
-        <div className="flex flex-col gap-3 max-lg:h-auto lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
           <section className={`${CARD_SHELL} shrink-0 py-4`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">

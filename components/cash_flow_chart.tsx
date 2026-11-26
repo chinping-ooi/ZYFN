@@ -125,7 +125,7 @@ export function CashFlowChart({
     .join(". ");
 
   const plot_class = cell_fill
-    ? "plot flex gap-1 pb-6 h-[200px] shrink-0 lg:min-h-0 lg:h-auto lg:max-h-[360px] lg:min-h-[140px] lg:flex-1 lg:gap-1.5 lg:pb-7"
+    ? "plot flex min-h-0 flex-1 gap-1 pb-6 min-h-[140px] max-h-[360px] lg:gap-1.5 lg:pb-7"
     : fill_height
       ? `plot flex shrink-0 gap-1 pb-6 lg:gap-1.5 lg:pb-7 ${PLOT_MOBILE_CLASS}`
       : "plot flex h-[190px] gap-2 pb-7 md:gap-3";
@@ -133,7 +133,7 @@ export function CashFlowChart({
   const shell_class = fill_height
     ? `card flex w-full min-w-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${
         cell_fill
-          ? "h-fit shrink-0 lg:h-full lg:min-h-0 lg:flex-1"
+          ? "h-full min-h-0 flex-1"
           : "h-fit shrink-0 overflow-visible"
       } ${className}`
     : `card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
@@ -204,7 +204,7 @@ export function CashFlowChart({
           className="shrink-0 flex-nowrap gap-1.5 !py-2 lg:gap-2 lg:!py-2.5"
           aside={legend}
         />
-        <div className="flex shrink-0 flex-col px-2 pt-1.5 lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:px-3 lg:pt-2">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pt-1.5 lg:px-3 lg:pt-2">
           {plot_body}
         </div>
         {footer}

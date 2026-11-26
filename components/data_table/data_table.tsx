@@ -203,7 +203,7 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <div
       className={`flex w-full min-w-0 max-w-full flex-col ${
-        fill_height ? "max-lg:h-auto lg:min-h-0 lg:flex-1" : "min-h-0"
+        fill_height ? "min-h-0 flex-1" : "min-h-0"
       }`}
     >
       {!toolbar_in_header ? (
@@ -212,10 +212,10 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
       ) : null}
       <div
-        className={`max-w-full overflow-x-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
+        className={`min-h-0 max-w-full overflow-x-auto overflow-y-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
           fill_height
-            ? "max-lg:max-h-[min(70vh,560px)] max-lg:overflow-y-auto lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
-            : "min-h-0 max-h-[min(70vh,560px)] overflow-y-auto"
+            ? "flex-1"
+            : "max-h-[min(70vh,560px)]"
         }`}
       >
         <table

@@ -142,16 +142,16 @@ export function DashboardView({
               <SpendingBreakdownCard
                 content_sized
                 column_fill
-                className="lg:min-h-0"
+                className="min-h-0"
                 rows={spending_rows.length > 0 ? spending_rows : []}
                 month_label={month_label}
               />
             </div>
             <div className="dashboard-column dashboard-column-right">
-              <CashFlowChart className="lg:min-h-0 lg:flex-1" {...chart_props} />
+              <CashFlowChart className="min-h-0 flex-1" {...chart_props} />
               <DashboardAccountBalancesCard
                 column_fill
-                className="lg:min-h-0 lg:flex-1"
+                className="min-h-0 flex-1"
                 rows={balance_rows}
               />
             </div>
