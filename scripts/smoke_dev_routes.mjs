@@ -16,6 +16,7 @@ const routes = [
   "/transactions/maybank",
   "/credit-cards/mbb-visa-1697",
   "/credit-cards/mbb-amex-8060",
+  "/credit-cards/mbb-2-gold/summary",
   "/credit-cards/pbe-visa-4104",
   "/credit-cards/pbe-mastercard-6357",
   "/transactions/touch-n-go",

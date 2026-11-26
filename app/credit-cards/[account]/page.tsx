@@ -13,7 +13,9 @@ type Props = {
 };
 
 export function generateStaticParams() {
-  return accounts_for_route_prefix("credit-cards").map((entry) => ({
+  return accounts_for_route_prefix("credit-cards", {
+    include_summary_only: false,
+  }).map((entry) => ({
     account: entry.slug,
   }));
 }
@@ -21,7 +23,7 @@ export function generateStaticParams() {
 export default async function CreditCardAccountPage({ params }: Props) {
   const { account: slug } = await params;
   const entry = account_by_prefix_and_slug("credit-cards", slug);
-  if (!entry) notFound();
+  if (!entry || entry.summary_only) notFound();
 
   return (
     <TransactionAccountRoute

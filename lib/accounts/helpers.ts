@@ -23,7 +23,7 @@ export function statement_kpi_labels(kind: TransactionAccountKind) {
       closing: "Combined balance",
     };
   }
-  if (kind === "credit_card") {
+  if (kind === "credit_card" || kind === "mbb_2_gold_combined") {
     return {
       total_in: "Total credits",
       total_out: "Total debits",

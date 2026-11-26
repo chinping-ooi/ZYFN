@@ -57,6 +57,16 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     kind: "credit_card",
   },
   {
+    slug: "mbb-2-gold",
+    route_prefix: "credit-cards",
+    nav_group: "Credit cards",
+    title: "MBB 2 Gold",
+    account_ref: "MBB_2_GOLD",
+    account_label: "MBB 2 Gold",
+    kind: "mbb_2_gold_combined",
+    summary_only: true,
+  },
+  {
     slug: "pbe-visa-4104",
     route_prefix: "credit-cards",
     nav_group: "Credit cards",
@@ -111,6 +121,9 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
 ];
 
 export function account_path(entry: AccountRegistryEntry): string {
+  if (entry.summary_only) {
+    return `/${entry.route_prefix}/${entry.slug}/summary`;
+  }
   return `/${entry.route_prefix}/${entry.slug}`;
 }
 
@@ -147,8 +160,14 @@ export const DASHBOARD_ACCOUNTS: TransactionAccountConfig[] =
 
 export function accounts_for_route_prefix(
   prefix: AccountRoutePrefix,
+  options?: { include_summary_only?: boolean },
 ): AccountRegistryEntry[] {
-  return ACCOUNTS.filter((entry) => entry.route_prefix === prefix);
+  const include_summary_only = options?.include_summary_only ?? true;
+  return ACCOUNTS.filter(
+    (entry) =>
+      entry.route_prefix === prefix &&
+      (include_summary_only || !entry.summary_only),
+  );
 }
 
 export function account_by_prefix_and_slug(

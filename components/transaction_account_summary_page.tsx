@@ -5,6 +5,7 @@ import { TransactionAppShell } from "@/components/transaction_app_shell";
 import { SupabaseStatusPanel } from "@/components/supabase_status_panel";
 import { load_account_transactions } from "@/lib/supabase/load_account_transactions";
 import { load_tng_combined_transactions } from "@/lib/supabase/load_tng_combined_transactions";
+import { load_mbb_2_gold_combined_transactions } from "@/lib/supabase/load_mbb_2_gold_combined_transactions";
 import { is_account_statement_data } from "@/lib/supabase/account_statement_guards";
 import { supabase_configured } from "@/lib/supabase/env";
 import { latest_transaction_date } from "@/lib/last_updated";
@@ -40,7 +41,9 @@ export async function TransactionAccountSummaryRoute({
   const statement =
     config.kind === "tng_combined"
       ? await load_tng_combined_transactions()
-      : await load_account_transactions(
+      : config.kind === "mbb_2_gold_combined"
+        ? await load_mbb_2_gold_combined_transactions()
+        : await load_account_transactions(
           config.account_ref,
           config.account_label,
           config.kind,

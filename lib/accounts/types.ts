@@ -3,7 +3,8 @@ export type TransactionAccountKind =
   | "credit_card"
   | "tng_wallet"
   | "tng_go_plus"
-  | "tng_combined";
+  | "tng_combined"
+  | "mbb_2_gold_combined";
 
 export type NavGroupKey = "Transactions" | "Credit cards" | "Wallets";
 
@@ -29,4 +30,6 @@ export type AccountRegistryEntry = {
   account_code?: string;
   /** When false, hidden from sidebar (import/data still use the entry). */
   show_in_nav?: boolean;
+  /** Summary-only virtual account (no statement route). */
+  summary_only?: boolean;
 };

@@ -15,4 +15,11 @@ describe("account navigation", () => {
     expect(tng_labels).toHaveLength(1);
     expect(tng_labels[0].label).toBe("Touch 'n Go");
   });
+
+  it("links MBB 2 Gold combined summary in Credit cards", () => {
+    const cards = NAV_GROUPS.find((g) => g.title === "Credit cards");
+    expect(cards).toBeDefined();
+    const gold = cards!.items.find((i) => i.label === "MBB 2 Gold");
+    expect(gold?.href).toBe("/credit-cards/mbb-2-gold/summary");
+  });
 });
