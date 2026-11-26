@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { FileSpreadsheet, Upload, X } from "lucide-react";
-import { ACCOUNTS } from "@/lib/accounts/registry";
+import { ACCOUNTS, account_path } from "@/lib/accounts/registry";
+import {
+  parser_display_name,
+} from "@/lib/import/import_labels";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
 import { parse_statement_text } from "@/lib/import/parsers";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
@@ -89,6 +93,7 @@ export function ImportWizard() {
   const [detecting, set_detecting] = useState(false);
   const [error, set_error] = useState<string | null>(null);
   const [result, set_result] = useState<ImportConfirmResult | null>(null);
+  const [confirm_open, set_confirm_open] = useState(false);
 
   const account = useMemo(
     () => IMPORTABLE.find((a) => a.account_ref === account_ref),
@@ -318,6 +323,7 @@ export function ImportWizard() {
     set_parse_warning(null);
     set_mapping_skipped(false);
     set_error(null);
+    set_confirm_open(false);
   };
 
   const clear_file = useCallback(() => {
@@ -344,7 +350,7 @@ export function ImportWizard() {
       {step === "start" ? (
         <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
-            1. Account &amp; statement
+            Upload statement
           </h2>
           <p className="mt-1 text-[13px] text-zyfn-muted">
             Insert-only import; PDFs may auto-detect PBE card accounts.
@@ -379,7 +385,7 @@ export function ImportWizard() {
                   id="import-file-label"
                   className="text-[13px] font-medium text-slate-700"
                 >
-                  Statement file
+                  Statement file (PDF, Excel or CSV)
                 </span>
                 <input
                   id={file_input_id}
@@ -451,7 +457,7 @@ export function ImportWizard() {
                   disabled={!can_parse || busy || detecting}
                   onClick={() => void parse_file()}
                 >
-                  {busy ? "Parsing…" : "Parse & preview"}
+                  {busy ? "Reading…" : "Read statement"}
                 </button>
               </div>
             </div>
@@ -499,14 +505,17 @@ export function ImportWizard() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-zyfn-navy">
-                  3. Import preview
+                  Review transactions
                 </h2>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <StatChip label="New" value={counts.new_count} />
-                  <StatChip label="Duplicate" value={counts.dup} />
-                  <StatChip label="Needs review" value={counts.review} />
+                  <StatChip label="To be added" value={counts.new_count} />
+                  <StatChip label="Already saved" value={counts.dup} />
+                  <StatChip label="Please check" value={counts.review} />
                   {parser_id ? (
-                    <StatChip label="Parser" value={parser_id} />
+                    <StatChip
+                      label="Format"
+                      value={parser_display_name(parser_id)}
+                    />
                   ) : null}
                   {ocr_pages > 0 ? (
                     <StatChip label="OCR pages" value={ocr_pages} />
@@ -519,15 +528,19 @@ export function ImportWizard() {
                   className="rounded-[3px] border border-zyfn-line px-3 py-1.5 text-[13px] hover:bg-slate-50"
                   onClick={reset_wizard}
                 >
-                  Start over
+                  Upload another file
                 </button>
                 <button
                   type="button"
                   className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-3 py-1.5 text-[13px] font-medium text-white disabled:opacity-50"
                   disabled={busy || counts.new_count === 0}
-                  onClick={() => void confirm_import()}
+                  onClick={() => set_confirm_open(true)}
                 >
-                  {busy ? "Importing…" : `Confirm (${counts.new_count})`}
+                  {busy
+                    ? "Saving…"
+                    : counts.new_count === 0
+                      ? "Nothing to save"
+                      : `Save ${counts.new_count} transactions`}
                 </button>
               </div>
             </div>
@@ -559,27 +572,87 @@ export function ImportWizard() {
         </>
       ) : null}
 
-      {step === "done" && result ? (
+      {step === "done" && result && account ? (
         <section className={CARD_SHELL}>
-          <h2 className="text-sm font-semibold text-zyfn-navy">4. Import complete</h2>
-          <p className="mt-2 text-[13px] text-slate-700">
-            Inserted {result.inserted} row(s). Skipped {result.skipped_duplicates}{" "}
-            duplicate(s).
-            {result.batch_id ? ` Batch #${result.batch_id}.` : ""}
+          <p className="text-[15px] font-medium text-zyfn-navy">
+            Saved {result.inserted} transaction
+            {result.inserted === 1 ? "" : "s"} to {account.account_label}
           </p>
+          {result.skipped_duplicates > 0 ? (
+            <p className="mt-1 text-[13px] text-zyfn-muted">
+              {result.skipped_duplicates} row
+              {result.skipped_duplicates === 1 ? "" : "s"} were already saved
+              and left unchanged.
+            </p>
+          ) : null}
           {result.error ? (
             <p className="mt-2 text-[13px] text-amber-800">{result.error}</p>
           ) : null}
-          <div className="mt-5 flex justify-end border-t border-zyfn-line pt-4">
+          <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-zyfn-line pt-4">
+            <Link
+              href={account_path(account)}
+              className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white"
+            >
+              View account
+            </Link>
             <button
               type="button"
-              className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white"
+              className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
               onClick={reset_wizard}
             >
-              Start another import
+              Upload another file
             </button>
           </div>
         </section>
+      ) : null}
+
+      {confirm_open && account ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[#132238]/44 p-4"
+          role="presentation"
+          onClick={() => !busy && set_confirm_open(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-confirm-title"
+            className="w-full max-w-md rounded-[3px] border border-zyfn-line bg-white p-5 shadow-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="import-confirm-title"
+              className="text-sm font-semibold text-zyfn-navy"
+            >
+              Save transactions?
+            </h2>
+            <p className="mt-2 text-[13px] text-slate-700">
+              Add {counts.new_count} transaction
+              {counts.new_count === 1 ? "" : "s"} to {account.account_label}?
+              Existing records will not be changed.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
+                disabled={busy}
+                onClick={() => set_confirm_open(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
+                disabled={busy}
+                onClick={() => {
+                  set_confirm_open(false);
+                  void confirm_import();
+                }}
+              >
+                {busy ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {error ? (

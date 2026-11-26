@@ -1,11 +1,6 @@
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
+import { import_row_status_label } from "@/lib/import/import_labels";
 import type { NormalizedImportRow } from "@/lib/import/types";
-
-function status_label(status: NormalizedImportRow["status"]): string {
-  if (status === "duplicate") return "Duplicate";
-  if (status === "needs_review") return "Needs review";
-  return "New";
-}
 
 /** Map parsed import lines to the same row shape used on statement pages. */
 export function map_import_rows_to_statement_rows(
@@ -23,7 +18,7 @@ export function map_import_rows_to_statement_rows(
     out_micro: 0,
     balance_micro: 0,
     sort_id: index,
-    import_status: status_label(row.status),
+    import_status: import_row_status_label(row.status),
     status_hint: row.review_reasons.join("; "),
   }));
 }

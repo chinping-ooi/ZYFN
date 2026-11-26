@@ -5,6 +5,9 @@ const styles: Record<string, string> = {
   new: "bg-[#f1f7f4] text-[#35634f] border-[#bfd2c7]",
   duplicate: "bg-[#f2f3f5] text-[#626c7a] border-[#cbd0d8]",
   "needs review": "bg-[#faf6ec] text-[#805e23] border-[#decea9]",
+  "to be added": "bg-[#f1f7f4] text-[#35634f] border-[#bfd2c7]",
+  "already saved": "bg-[#f2f3f5] text-[#626c7a] border-[#cbd0d8]",
+  "please check": "bg-[#faf6ec] text-[#805e23] border-[#decea9]",
 };
 
 export function StatusBadge({ status }: { status: string }) {

@@ -11,10 +11,10 @@ type StepDef = {
 };
 
 const STEPS: StepDef[] = [
-  { key: "start", number: 1, label: "Account & statement" },
-  { key: "map", number: 2, label: "Column mapping" },
-  { key: "preview", number: 3, label: "Preview" },
-  { key: "done", number: 4, label: "Complete" },
+  { key: "start", number: 1, label: "Upload" },
+  { key: "map", number: 2, label: "Match columns" },
+  { key: "preview", number: 3, label: "Review" },
+  { key: "done", number: 4, label: "Done" },
 ];
 
 const ORDER: Array<ImportWizardStep | "map"> = [
