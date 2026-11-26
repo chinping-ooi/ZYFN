@@ -24,12 +24,17 @@ import {
   IMPORT_PREVIEW_COLUMNS,
   type ImportPreviewTableRow,
 } from "@/components/import/import_preview_columns";
-
-type Step = "start" | "map" | "preview" | "done";
+import {
+  ImportStepper,
+  type ImportWizardStep,
+} from "@/components/import/import_stepper";
 
 const IMPORTABLE = ACCOUNTS.filter(
   (a): a is typeof a & { account_id: number } => a.account_id != null,
 );
+
+const CARD_SHELL =
+  "rounded-[3px] border border-zyfn-line bg-white px-5 py-5";
 
 function kind_from_filename(name: string): ImportSourceKind | null {
   const lower = name.toLowerCase();
@@ -74,8 +79,17 @@ function suggest_account_from_pdf_text(
   return null;
 }
 
+function StatChip({ label, value }: { label: string; value: string | number }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-[3px] border border-[#dce1e7] bg-[#f8f9fb] px-2.5 py-1 text-xs text-slate-700">
+      <span className="text-slate-500">{label}</span>
+      <span className="font-semibold text-zyfn-navy">{value}</span>
+    </span>
+  );
+}
+
 export function ImportWizard() {
-  const [step, set_step] = useState<Step>("start");
+  const [step, set_step] = useState<ImportWizardStep>("start");
   const [account_ref, set_account_ref] = useState("");
   const [file, set_file] = useState<File | null>(null);
   const [source_kind, set_source_kind] = useState<ImportSourceKind | null>(null);
@@ -84,7 +98,9 @@ export function ImportWizard() {
   const [mapping, set_mapping] = useState<SpreadsheetColumnMapping | null>(null);
   const [rows, set_rows] = useState<NormalizedImportRow[]>([]);
   const [parser_id, set_parser_id] = useState<string | null>(null);
+  const [parse_warning, set_parse_warning] = useState<string | null>(null);
   const [ocr_pages, set_ocr_pages] = useState(0);
+  const [mapping_skipped, set_mapping_skipped] = useState(false);
   const [busy, set_busy] = useState(false);
   const [detecting, set_detecting] = useState(false);
   const [error, set_error] = useState<string | null>(null);
@@ -114,6 +130,7 @@ export function ImportWizard() {
       set_file(f);
       set_source_kind(kind);
       set_pdf_text_cache(null);
+      set_parse_warning(null);
       set_error(null);
       if (kind === "pdf") {
         set_detecting(true);
@@ -161,6 +178,7 @@ export function ImportWizard() {
     if (!file || !account || !source_kind || account_id == null) return;
     set_busy(true);
     set_error(null);
+    set_parse_warning(null);
     try {
       const buffer = await file.arrayBuffer();
       if (source_kind === "excel" || source_kind === "csv") {
@@ -171,9 +189,11 @@ export function ImportWizard() {
           set_mapping(out.mapping);
           if (!saved && out.headers.length > 0) {
             set_rows(out.rows);
+            set_mapping_skipped(false);
             set_step("map");
             return;
           }
+          set_mapping_skipped(true);
           save_column_mapping(account_ref, out.mapping);
           await run_dedupe(out.rows);
         } else {
@@ -183,9 +203,11 @@ export function ImportWizard() {
           set_mapping(out.mapping);
           if (!saved && out.headers.length > 0) {
             set_rows(out.rows);
+            set_mapping_skipped(false);
             set_step("map");
             return;
           }
+          set_mapping_skipped(true);
           save_column_mapping(account_ref, out.mapping);
           await run_dedupe(out.rows);
         }
@@ -199,16 +221,19 @@ export function ImportWizard() {
           set_pdf_text_cache(text);
         }
         set_ocr_pages(ocr);
-        const { parser_id: pid, rows: parsed } = parse_statement_text(
-          text,
-          account_ref,
-        );
+        const {
+          parser_id: pid,
+          rows: parsed,
+          parse_warning: warn,
+        } = parse_statement_text(text, account_ref);
         set_parser_id(pid);
+        set_parse_warning(warn);
         const kind: ImportSourceKind =
           account.kind.startsWith("tng") && pid === "tng_text"
             ? "tng_text"
             : "pdf";
         set_source_kind(kind);
+        set_mapping_skipped(true);
         await run_dedupe(parsed);
       }
     } catch (err) {
@@ -239,12 +264,14 @@ export function ImportWizard() {
         const out = await parse_excel_buffer(buffer, mapping);
         set_headers(out.headers);
         set_mapping(out.mapping);
+        set_mapping_skipped(false);
         await run_dedupe(out.rows);
       } else {
         const text = new TextDecoder().decode(buffer);
         const out = parse_csv_text(text, mapping);
         set_headers(out.headers);
         set_mapping(out.mapping);
+        set_mapping_skipped(false);
         await run_dedupe(out.rows);
       }
     } catch (err) {
@@ -291,6 +318,20 @@ export function ImportWizard() {
     }
   }, [account, file, source_kind, rows, account_ref]);
 
+  const reset_wizard = () => {
+    set_step("start");
+    set_file(null);
+    set_pdf_text_cache(null);
+    set_account_ref("");
+    set_rows([]);
+    set_result(null);
+    set_source_kind(null);
+    set_parser_id(null);
+    set_parse_warning(null);
+    set_mapping_skipped(false);
+    set_error(null);
+  };
+
   const on_drop = (e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files[0];
@@ -302,17 +343,19 @@ export function ImportWizard() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5">
+      <ImportStepper current={step} mapping_skipped={mapping_skipped} />
+
       {step === "start" ? (
-        <section className="rounded-[3px] border border-zyfn-line bg-white p-5">
+        <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
             1. Account &amp; statement
           </h2>
-          <p className="mt-1 text-[13px] text-slate-600">
-            Imports are insert-only. Existing rows are never updated or deleted.
-            Upload a PDF to auto-detect PBE card accounts from the last four digits.
+          <p className="mt-1 text-[13px] text-zyfn-muted">
+            Insert-only import. PDF uploads can auto-detect PBE cards by last
+            four digits.
           </p>
-          <div className="mt-4 grid gap-5 md:grid-cols-2 md:items-start">
-            <div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2 md:items-stretch">
+            <div className="flex min-h-[168px] flex-col">
               <label
                 htmlFor="import-account"
                 className="text-[13px] font-medium text-slate-700"
@@ -332,21 +375,24 @@ export function ImportWizard() {
                   </option>
                 ))}
               </select>
+              <p className="mt-auto pt-3 text-xs text-zyfn-muted">
+                Choose the account that should receive new rows.
+              </p>
             </div>
-            <div>
+            <div className="flex min-h-[168px] flex-col">
               <span className="text-[13px] font-medium text-slate-700">File</span>
               <div
-                className="mt-2 flex min-h-[140px] flex-col items-center justify-center rounded-[3px] border border-dashed border-[#b8c2cf] bg-[#f8f9fb] px-4 py-8 text-center"
+                className="mt-2 flex min-h-0 flex-1 flex-col items-center justify-center rounded-[3px] border border-dashed border-[#b8c2cf] bg-[#f8f9fb] px-4 py-6 text-center"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={on_drop}
               >
                 <Upload className="mb-2 size-8 text-slate-400" aria-hidden />
                 <p className="text-[13px] text-slate-600">
-                  Drag and drop .xlsx, .xls, .csv, or .pdf
+                  .xlsx, .xls, .csv, or .pdf
                 </p>
                 <label
                   htmlFor={file_input_id}
-                  className="mt-3 cursor-pointer text-[13px] font-medium text-sky-700 hover:underline"
+                  className="mt-2 cursor-pointer text-[13px] font-medium text-sky-700 hover:underline"
                 >
                   Browse files
                 </label>
@@ -361,15 +407,17 @@ export function ImportWizard() {
                   }}
                 />
                 {file ? (
-                  <p className="mt-2 text-xs text-slate-500">{file.name}</p>
+                  <p className="mt-2 truncate px-2 text-xs text-slate-500">
+                    {file.name}
+                  </p>
                 ) : null}
                 {detecting ? (
-                  <p className="mt-2 text-xs text-slate-500">Detecting account…</p>
+                  <p className="mt-1 text-xs text-slate-500">Detecting account…</p>
                 ) : null}
               </div>
             </div>
           </div>
-          <div className="mt-5">
+          <div className="mt-5 flex justify-end border-t border-zyfn-line pt-4">
             <button
               type="button"
               className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
@@ -383,12 +431,12 @@ export function ImportWizard() {
       ) : null}
 
       {step === "map" && mapping && headers.length > 0 ? (
-        <section className="rounded-[3px] border border-zyfn-line bg-white p-5">
+        <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
             2. Column mapping
           </h2>
-          <p className="mt-1 text-[13px] text-slate-600">
-            Adjust headers if needed. Mapping is saved per account in this browser.
+          <p className="mt-1 text-[13px] text-zyfn-muted">
+            Match spreadsheet headers to ledger fields.
           </p>
           <div className="mt-4">
             <ColumnMappingForm
@@ -397,7 +445,7 @@ export function ImportWizard() {
               on_change={set_mapping}
             />
           </div>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-5 flex justify-end gap-2 border-t border-zyfn-line pt-4">
             <button
               type="button"
               className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
@@ -418,54 +466,74 @@ export function ImportWizard() {
       ) : null}
 
       {step === "preview" ? (
-        <>
-          <section className="rounded-[3px] border border-zyfn-line bg-white p-5">
-            <h2 className="text-sm font-semibold text-zyfn-navy">
-              3. Import preview
-            </h2>
-            <p className="mt-1 text-[13px] text-slate-600">
-              {counts.new_count} new · {counts.dup} duplicate · {counts.review}{" "}
-              needs review
-              {parser_id ? ` · parser: ${parser_id}` : ""}
-              {ocr_pages > 0 ? ` · OCR pages: ${ocr_pages}` : ""}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
-                onClick={() => {
-                  set_step("start");
-                  set_rows([]);
-                }}
-              >
-                Start over
-              </button>
-              <button
-                type="button"
-                className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
-                disabled={busy || counts.new_count === 0}
-                onClick={() => void confirm_import()}
-              >
-                {busy ? "Importing…" : `Confirm import (${counts.new_count} new)`}
-              </button>
+        <div className="flex min-h-0 flex-1 flex-col gap-5">
+          <section className={CARD_SHELL}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-zyfn-navy">
+                  3. Import preview
+                </h2>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <StatChip label="New" value={counts.new_count} />
+                  <StatChip label="Duplicate" value={counts.dup} />
+                  <StatChip label="Needs review" value={counts.review} />
+                  {parser_id ? (
+                    <StatChip label="Parser" value={parser_id} />
+                  ) : null}
+                  {ocr_pages > 0 ? (
+                    <StatChip label="OCR pages" value={ocr_pages} />
+                  ) : null}
+                </div>
+                {parse_warning ? (
+                  <p
+                    className="mt-3 text-[13px] text-amber-800"
+                    role="alert"
+                  >
+                    {parse_warning}
+                  </p>
+                ) : null}
+                {rows.length === 0 && !parse_warning ? (
+                  <p className="mt-3 text-[13px] text-zyfn-muted">
+                    No rows to import. Go back and try another file or account.
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
+                  onClick={reset_wizard}
+                >
+                  Start over
+                </button>
+                <button
+                  type="button"
+                  className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
+                  disabled={busy || counts.new_count === 0}
+                  onClick={() => void confirm_import()}
+                >
+                  {busy ? "Importing…" : `Confirm import (${counts.new_count} new)`}
+                </button>
+              </div>
             </div>
           </section>
-          <AccountTableCard title="Parsed rows" fill_height>
+          <AccountTableCard title="Parsed rows" fill_height={rows.length > 0}>
             <DataTable
               label="Import preview"
               scope={`import-${account_ref}`}
               columns={IMPORT_PREVIEW_COLUMNS}
               rows={to_preview_rows(rows)}
               date_key="date"
-              fill_height
+              fill_height={rows.length > 0}
               export_account_label={account?.account_label ?? "import"}
+              empty_period_message="No parsed rows to display."
             />
           </AccountTableCard>
-        </>
+        </div>
       ) : null}
 
       {step === "done" && result ? (
-        <section className="rounded-[3px] border border-zyfn-line bg-white p-5">
+        <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">4. Import complete</h2>
           <p className="mt-2 text-[13px] text-slate-700">
             Inserted {result.inserted} row(s). Skipped {result.skipped_duplicates}{" "}
@@ -475,21 +543,15 @@ export function ImportWizard() {
           {result.error ? (
             <p className="mt-2 text-[13px] text-amber-800">{result.error}</p>
           ) : null}
-          <button
-            type="button"
-            className="mt-4 rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white"
-            onClick={() => {
-              set_step("start");
-              set_file(null);
-              set_pdf_text_cache(null);
-              set_account_ref("");
-              set_rows([]);
-              set_result(null);
-              set_source_kind(null);
-            }}
-          >
-            Start another import
-          </button>
+          <div className="mt-5 flex justify-end border-t border-zyfn-line pt-4">
+            <button
+              type="button"
+              className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white"
+              onClick={reset_wizard}
+            >
+              Start another import
+            </button>
+          </div>
         </section>
       ) : null}
 

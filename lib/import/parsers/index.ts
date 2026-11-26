@@ -4,7 +4,10 @@ import {
   mbb_card_parser,
   pbe_parser,
 } from "@/lib/import/parsers/bank_stub";
-import { pbe_card_parser } from "@/lib/import/parsers/pbe_card";
+import {
+  parse_pbe_card_statement,
+  pbe_card_parser,
+} from "@/lib/import/parsers/pbe_card";
 import { generic_statement_parser } from "@/lib/import/parsers/generic";
 import { tng_text_parser } from "@/lib/import/parsers/tng";
 import type { StatementParser } from "@/lib/import/parsers/types";
@@ -47,7 +50,23 @@ export function select_statement_parser(
 export function parse_statement_text(
   text: string,
   account_ref: string,
-): { parser_id: string; rows: ReturnType<StatementParser["parse"]> } {
+): {
+  parser_id: string;
+  rows: ReturnType<StatementParser["parse"]>;
+  parse_warning: string | null;
+} {
   const parser = select_statement_parser(text, account_ref);
-  return { parser_id: parser.id, rows: parser.parse(text) };
+  if (parser.id === "pbe_card") {
+    const result = parse_pbe_card_statement(text);
+    return {
+      parser_id: parser.id,
+      rows: result.rows,
+      parse_warning: result.parse_warning,
+    };
+  }
+  return {
+    parser_id: parser.id,
+    rows: parser.parse(text),
+    parse_warning: null,
+  };
 }

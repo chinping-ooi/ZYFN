@@ -61,7 +61,7 @@ export function parse_pbe_statement_header_date(text: string): {
   year: number | null;
 } {
   const match = text.match(
-    /Statement Date[^\d]*(\d{1,2})\s+([A-Z]{3})\s+(\d{4})/i,
+    /Statement Date[\s\S]{0,120}?(\d{1,2})\s+([A-Z]{3})\s+(\d{4})/i,
   );
   if (!match) return { iso: null, month: null, year: null };
   const day = match[1].padStart(2, "0");
@@ -75,9 +75,9 @@ export function parse_pbe_statement_header_date(text: string): {
 
 export function parse_pbe_card_last4(text: string): string | null {
   const card_line = text.match(
-    /(?:MASTERCARD|VISA)[^\n]*?\b(\d{4})\s+\d{4}\s+\d{4}\s+(\d{4})\b/i,
+    /(?:MASTERCARD|VISA)[\s\S]{0,200}?\b\d{4}\s+\d{4}\s+\d{4}\s+(\d{4})\b/i,
   );
-  if (card_line) return card_line[2];
+  if (card_line) return card_line[1];
   const tail = text.match(
     /(?:MASTERCARD|VISA)[^\n]*?\b(\d{4})\s*(?:CARDHOLDER|$)/im,
   );
@@ -146,27 +146,53 @@ type ParsedLine =
       is_credit: boolean;
     };
 
+function normalize_line_for_amount(line: string): string {
+  return line
+    .replace(/\s+CR\s*$/i, " CR")
+    .replace(/([\d,]+\.\d{2})\s+(CR)\s*$/i, "$1$2")
+    .trim();
+}
+
 function parse_transaction_line(line: string): ParsedLine | null {
-  const amount_match = line.match(/([\d,]+\.\d{2})(CR)?\s*$/i);
+  const normalized = normalize_line_for_amount(line);
+  const amount_match = normalized.match(/([\d,]+\.\d{2})\s*(CR)?\s*$/i);
   if (!amount_match) return null;
   const is_credit = Boolean(amount_match[2]);
   const amount_major = parse_amount_cell(amount_match[1]);
-  const left = line.slice(0, amount_match.index).trim();
-  if (/previous balance/i.test(left)) {
-    const post = left.match(/^(\d{1,2}\s+\w{3})/i)?.[1];
+  const left = normalized.slice(0, amount_match.index).trim();
+  if (/previous\s+balance/i.test(left)) {
+    const post = left.match(/^(\d{1,2}\s+[A-Za-z]{3})/i)?.[1];
     if (!post) return null;
     return { kind: "opening", posting: post, amount_major };
   }
-  const dates = left.match(/^(\d{1,2}\s+\w{3})\s+(\d{1,2}\s+\w{3})\s+(.+)$/i);
-  if (!dates) return null;
+  const head = left.match(
+    /^(\d{1,2}\s+[A-Za-z]{3})(?:\s+(\d{1,2}\s+[A-Za-z]{3}))?\s+(.+)$/i,
+  );
+  if (!head) return null;
+  const posting = head[1];
+  const txn_date = head[2] ?? head[1];
+  const description = collapse_spaces(head[3]);
+  if (!description) return null;
   return {
     kind: "txn",
-    posting: dates[1],
-    txn_date: dates[2],
-    description: collapse_spaces(dates[3]),
+    posting,
+    txn_date,
+    description,
     amount_major,
     is_credit,
   };
+}
+
+function is_grand_total_line(line: string): boolean {
+  return /grand\s+total/i.test(line) && /(account|akaun)/i.test(line);
+}
+
+function is_section_marker_line(line: string): boolean {
+  const upper = line.toUpperCase();
+  return (
+    /MAKLUMAT\s+TRANSAKSI/i.test(upper) ||
+    /TRANSACTION\s+DETAILS/i.test(upper)
+  );
 }
 
 function txn_type_for_credit(description: string): string {
@@ -184,6 +210,8 @@ function mark_review(rows: NormalizedImportRow[], reason: string): void {
 export function parse_pbe_card_statement(text: string): {
   rows: NormalizedImportRow[];
   meta: PbeCardStatementMeta;
+  section_found: boolean;
+  parse_warning: string | null;
 } {
   const header = parse_pbe_statement_header_date(text);
   const footer = parse_footer_amounts(text);
@@ -194,22 +222,28 @@ export function parse_pbe_card_statement(text: string): {
   };
 
   if (header.month == null || header.year == null) {
-    return { rows: [], meta };
+    return {
+      rows: [],
+      meta,
+      section_found: false,
+      parse_warning: null,
+    };
   }
 
   const lines = text.split(/\r?\n/);
   let in_section = false;
+  let section_found = false;
   const parsed: ParsedLine[] = [];
 
   for (const raw of lines) {
     const line = raw.replace(/\t/g, " ");
-    const upper = line.toUpperCase();
-    if (/MAKLUMAT TRANSAKSI/i.test(upper) || /TRANSACTION DETAILS/i.test(upper)) {
+    if (is_section_marker_line(line)) {
       in_section = true;
+      section_found = true;
       continue;
     }
     if (!in_section) continue;
-    if (/Grand total for this account/i.test(line)) break;
+    if (is_grand_total_line(line)) break;
     if (is_noise_line(line)) continue;
     const parsed_line = parse_transaction_line(line.trim());
     if (!parsed_line) continue;
@@ -288,7 +322,14 @@ export function parse_pbe_card_statement(text: string): {
     }
   }
 
-  return { rows, meta };
+  const txn_count = parsed.filter((p) => p.kind === "txn").length;
+  let parse_warning: string | null = null;
+  if (section_found && txn_count === 0) {
+    parse_warning =
+      "Transaction section was found but no rows could be parsed. The PDF text layout may not match the expected columns — try re-uploading or report this statement format.";
+  }
+
+  return { rows, meta, section_found, parse_warning };
 }
 
 function detect_score(text: string): number {

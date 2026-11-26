@@ -27,7 +27,8 @@ describe("pbe_card_parser", () => {
   });
 
   it("parses transactions, CR payments, and Dec/Jan year rollover", () => {
-    const { rows, meta } = parse_pbe_card_statement(load_fixture());
+    const { rows, meta, parse_warning } = parse_pbe_card_statement(load_fixture());
+    expect(parse_warning).toBeNull();
     expect(meta.card_last4).toBe("6357");
     expect(meta.suggested_account_ref).toBe("PBE_MASTERCARD_6357");
     expect(meta.statement_date_iso).toBe("2027-01-16");
