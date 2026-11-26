@@ -547,13 +547,14 @@ export function ImportWizard() {
             ) : null}
           </section>
           {account ? (
-            <AccountTableCard title="Parsed rows">
+            <AccountTableCard title="Parsed rows" fill_height>
               <TransactionDataTable
                 label="Import preview"
                 scope={`import-${account_ref}`}
                 rows={preview_rows}
                 kind={account.kind}
                 show_import_status
+                fill_height
                 export_account_label={account.account_label}
                 empty_period_message="No parsed rows to display."
               />
