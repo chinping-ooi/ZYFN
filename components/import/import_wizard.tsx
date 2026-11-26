@@ -8,6 +8,7 @@ import {
   IMPORT_STATUS_CHIP_LABELS,
   parser_display_name,
 } from "@/lib/import/import_labels";
+import { IMPORT_STATUS_SURFACE } from "@/lib/import/import_status_surface";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
 import { parse_statement_text } from "@/lib/import/parsers";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
@@ -68,7 +69,25 @@ function format_file_size(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function StatChip({ label, value }: { label: string; value: string | number }) {
+function StatChip({
+  label,
+  value,
+  status_key,
+}: {
+  label: string;
+  value: string | number;
+  status_key?: NormalizedImportRow["status"];
+}) {
+  if (status_key) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 rounded-[2px] px-2 py-0.5 text-[11px] font-medium ${IMPORT_STATUS_SURFACE[status_key]}`}
+      >
+        <span>{label}</span>
+        <span className="font-semibold">{value}</span>
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 rounded-[3px] border border-[#dce1e7] bg-white px-2 py-0.5 text-[11px] text-slate-700">
       <span className="text-slate-500">{label}</span>
@@ -512,14 +531,17 @@ export function ImportWizard() {
                   <StatChip
                     label={IMPORT_STATUS_CHIP_LABELS.new}
                     value={counts.new_count}
+                    status_key="new"
                   />
                   <StatChip
                     label={IMPORT_STATUS_CHIP_LABELS.duplicate}
                     value={counts.dup}
+                    status_key="duplicate"
                   />
                   <StatChip
                     label={IMPORT_STATUS_CHIP_LABELS.needs_review}
                     value={counts.review}
+                    status_key="needs_review"
                   />
                   {parser_id ? (
                     <StatChip
