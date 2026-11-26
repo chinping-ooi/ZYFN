@@ -14,7 +14,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useNavGroups } from "@/components/nav_groups_provider";
-import { DASHBOARD_HREF, IMPORT_HREF, type NavItem } from "@/lib/navigation";
+import {
+  DASHBOARD_HREF,
+  IMPORT_HREF,
+  type NavItem,
+} from "@/lib/navigation";
+import { nav_item_is_active, nav_item_is_marked } from "@/lib/accounts/nav";
 
 const MOBILE_DRAWER_ID = "mobile-sidebar";
 
@@ -36,6 +41,90 @@ const GROUP_SUMMARY_CLASS =
 const NAV_LINK_BASE =
   "nav-item relative flex min-h-8 max-h-[34px] items-center rounded-[3px] text-[13px] no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60";
 
+function SidebarNavLink({
+  item,
+  pathname,
+  on_navigate,
+  className = "",
+  aria_current = true,
+}: {
+  item: NavItem;
+  pathname: string;
+  on_navigate: () => void;
+  className?: string;
+  aria_current?: boolean;
+}) {
+  const active = nav_item_is_active(pathname, item);
+  const marked = nav_item_is_marked(pathname, item);
+  return (
+    <Link
+      href={item.href}
+      onClick={on_navigate}
+      className={`${NAV_LINK_BASE} mb-px py-1.5 pr-3 pl-3 last:mb-0 ${className} ${
+        marked
+          ? "active bg-white/10 font-medium text-white"
+          : "font-normal text-slate-400 hover:bg-white/5 hover:text-white"
+      }`}
+      aria-current={aria_current && active ? "page" : undefined}
+    >
+      {marked ? (
+        <span
+          className="pointer-events-none absolute top-1 bottom-1 -left-px w-0.5 bg-sky-400"
+          aria-hidden
+        />
+      ) : null}
+      <span className="truncate">{item.label}</span>
+    </Link>
+  );
+}
+
+function SidebarNavBranch({
+  item,
+  pathname,
+  on_navigate,
+}: {
+  item: NavItem;
+  pathname: string;
+  on_navigate: () => void;
+}) {
+  const has_children = (item.children?.length ?? 0) > 0;
+
+  if (!has_children) {
+    return (
+      <SidebarNavLink
+        item={item}
+        pathname={pathname}
+        on_navigate={on_navigate}
+      />
+    );
+  }
+
+  return (
+    <div className="mb-px">
+      <SidebarNavLink
+        item={item}
+        pathname={pathname}
+        on_navigate={on_navigate}
+        aria_current
+      />
+      <div
+        className="mb-0.5 ml-3 border-l border-slate-700/80 pb-0.5 pl-2 pt-0.5"
+        aria-label="MBB 2 Gold cards"
+      >
+        {item.children!.map((child) => (
+          <SidebarNavLink
+            key={child.href}
+            item={child}
+            pathname={pathname}
+            on_navigate={on_navigate}
+            className="pl-2 text-[12px]"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function NavGroupSection({
   title,
   items,
@@ -48,13 +137,17 @@ function NavGroupSection({
   on_navigate: () => void;
 }) {
   const GroupIcon = GROUP_ICONS[title];
-  const [open, set_open] = useState(true);
+  const group_has_active = items.some((item) =>
+    nav_item_is_marked(pathname, item),
+  );
+  const [collapsed, set_collapsed] = useState(false);
+  const open = group_has_active || !collapsed;
 
   return (
     <details
       className="nav-section group/nav mt-3"
       open={open}
-      onToggle={(e) => set_open(e.currentTarget.open)}
+      onToggle={(e) => set_collapsed(!e.currentTarget.open)}
     >
       <summary className={GROUP_SUMMARY_CLASS}>
         <span className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -69,34 +162,14 @@ function NavGroupSection({
         />
       </summary>
       <div className="nav-children ml-[22px] border-l border-slate-700 pb-0.5 pt-0.5">
-        {items.map((item) => {
-          const active =
-            item.active_match === "prefix"
-              ? pathname === item.href ||
-                pathname.startsWith(`${item.href}/`)
-              : pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={on_navigate}
-              className={`${NAV_LINK_BASE} mb-px py-1.5 pr-3 pl-3 last:mb-0 ${
-                active
-                  ? "active bg-white/10 font-medium text-white"
-                  : "font-normal text-slate-400 hover:bg-white/5 hover:text-white"
-              }`}
-              aria-current={active ? "page" : undefined}
-            >
-              {active ? (
-                <span
-                  className="pointer-events-none absolute top-1 bottom-1 -left-px w-0.5 bg-sky-400"
-                  aria-hidden
-                />
-              ) : null}
-              <span className="truncate">{item.label}</span>
-            </Link>
-          );
-        })}
+        {items.map((item) => (
+          <SidebarNavBranch
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            on_navigate={on_navigate}
+          />
+        ))}
       </div>
     </details>
   );

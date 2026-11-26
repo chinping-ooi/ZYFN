@@ -17,23 +17,59 @@ export type NavItem = {
   label: string;
   /** `prefix` marks active for href and nested paths (default `exact`). */
   active_match?: "exact" | "prefix";
+  /** Third-level links nested under this item (e.g. MBB 2 Gold cards). */
+  children?: NavItem[];
 };
+
+export function nav_item_is_active(pathname: string, item: NavItem): boolean {
+  if (item.active_match === "prefix") {
+    return (
+      pathname === item.href || pathname.startsWith(`${item.href}/`)
+    );
+  }
+  return pathname === item.href;
+}
+
+export function nav_item_has_active_descendant(
+  pathname: string,
+  item: NavItem,
+): boolean {
+  if (!item.children?.length) return false;
+  return item.children.some((child) => nav_item_is_active(pathname, child));
+}
+
+/** Parent row: active on own page or when a nested child route is open. */
+export function nav_item_is_marked(pathname: string, item: NavItem): boolean {
+  return (
+    nav_item_is_active(pathname, item) ||
+    nav_item_has_active_descendant(pathname, item)
+  );
+}
+
+export function flatten_nav_hrefs(items: NavItem[]): string[] {
+  const hrefs: string[] = [];
+  for (const item of items) {
+    hrefs.push(item.href);
+    if (item.children?.length) {
+      hrefs.push(...flatten_nav_hrefs(item.children));
+    }
+  }
+  return hrefs;
+}
 
 const MBB_2_GOLD_MEMBER_REFS = new Set(["MBB_VISA_1697", "MBB_AMEX_8060"]);
 
 function build_credit_cards_nav_items(): NavItem[] {
-  const mbb_2_gold_block: NavItem[] = [
-    {
-      href: mbb_2_gold_combined_href(),
-      label: "MBB 2 Gold",
-      active_match: "exact",
-    },
-    ...MBB_2_GOLD_CARD_SEGMENTS.map((segment) => ({
+  const mbb_2_gold: NavItem = {
+    href: mbb_2_gold_combined_href(),
+    label: "MBB 2 Gold",
+    active_match: "exact",
+    children: MBB_2_GOLD_CARD_SEGMENTS.map((segment) => ({
       href: mbb_2_gold_card_href(segment),
       label: mbb_2_gold_card_nav_label(segment),
       active_match: "prefix" as const,
     })),
-  ];
+  };
   const other = ACCOUNTS.filter(
     (entry) =>
       entry.nav_group === "Credit cards" &&
@@ -44,7 +80,7 @@ function build_credit_cards_nav_items(): NavItem[] {
     href: account_path(entry),
     label: entry.account_label,
   }));
-  return [...mbb_2_gold_block, ...other];
+  return [mbb_2_gold, ...other];
 }
 
 export type NavGroup = {
