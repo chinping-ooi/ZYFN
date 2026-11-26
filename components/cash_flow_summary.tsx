@@ -63,15 +63,16 @@ function format_net(
 const TYPE_CARD_SHELL_BODY = "!px-6 md:!px-6";
 
 const TYPE_CARD_BODY =
-  "grid min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-5 md:items-center md:gap-x-6 md:gap-y-4";
+  "grid min-h-0 w-full grid-cols-1 gap-4 md:grid-cols-5 md:items-start md:gap-x-6 md:gap-y-4";
 
 const TYPE_CARD_DONUT_CELL =
-  "col-span-1 flex w-full min-w-0 items-center justify-center md:col-span-2";
+  "col-span-1 flex w-full min-w-0 items-start justify-center md:col-span-2";
 
 const TYPE_CARD_LEGEND_CELL =
-  "col-span-1 flex min-w-0 items-center justify-start md:col-span-3";
+  "col-span-1 flex min-w-0 items-start justify-start md:col-span-3";
 
-const TYPE_CARD_LEGEND_INNER = "w-full min-w-0 max-w-md";
+const TYPE_CARD_LEGEND_INNER =
+  "flex w-full min-w-0 max-w-md min-h-[220px] items-center";
 
 const OVERVIEW_DONUT_PX = 275;
 const DONUT_CENTER_CAPTION = "Total";
@@ -199,7 +200,7 @@ export function CashFlowSummary({
         <SummaryCardShell
           title="Overview"
           className="h-full min-h-0 flex-1"
-          bodyClassName="justify-center"
+          bodyClassName="!pt-5"
         >
         {flow_has_data ? (
           <div className="flex w-full flex-col gap-5">
@@ -253,7 +254,7 @@ export function CashFlowSummary({
         <SummaryCardShell
           title="Income"
           className="min-h-[280px] flex-1"
-          bodyClassName={TYPE_CARD_SHELL_BODY}
+          bodyClassName={`${TYPE_CARD_SHELL_BODY} !pt-5`}
         >
           {in_has_data ? (
             <div className={TYPE_CARD_BODY}>
@@ -303,7 +304,7 @@ export function CashFlowSummary({
         <SummaryCardShell
           title="Spending"
           className="min-h-[280px] flex-1"
-          bodyClassName={TYPE_CARD_SHELL_BODY}
+          bodyClassName={`${TYPE_CARD_SHELL_BODY} !pt-5`}
         >
           {out_has_data ? (
             <div className={TYPE_CARD_BODY}>
