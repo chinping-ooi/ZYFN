@@ -55,7 +55,7 @@ function to_preview_rows(rows: NormalizedImportRow[]): ImportPreviewTableRow[] {
     date: row.txn_at.slice(0, 10),
     txn_type: row.txn_type,
     detail: row.detail,
-    merchant: row.description,
+    description: row.description,
     in_sen: row.in_sen,
     out_sen: row.out_sen,
     balance_sen: row.balance_sen,
@@ -356,12 +356,16 @@ export function ImportWizard() {
 
   const file_input_id = "import-statement-file";
 
+  const narrow = "mx-auto w-full max-w-3xl";
+
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-      <ImportStepper current={step} mapping_skipped={mapping_skipped} />
+    <div className="flex w-full flex-col gap-4">
+      <div className={narrow}>
+        <ImportStepper current={step} mapping_skipped={mapping_skipped} />
+      </div>
 
       {step === "start" ? (
-        <section className={CARD_SHELL}>
+        <section className={`${CARD_SHELL} ${narrow}`}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
             1. Account &amp; statement
           </h2>
@@ -473,7 +477,7 @@ export function ImportWizard() {
       ) : null}
 
       {step === "map" && mapping && headers.length > 0 ? (
-        <section className={CARD_SHELL}>
+        <section className={`${CARD_SHELL} ${narrow}`}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
             2. Column mapping
           </h2>
@@ -509,7 +513,7 @@ export function ImportWizard() {
 
       {step === "preview" ? (
         <>
-          <section className={CARD_SHELL}>
+          <section className={`${CARD_SHELL} ${narrow}`}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-zyfn-navy">
@@ -575,7 +579,7 @@ export function ImportWizard() {
       ) : null}
 
       {step === "done" && result ? (
-        <section className={CARD_SHELL}>
+        <section className={`${CARD_SHELL} ${narrow}`}>
           <h2 className="text-sm font-semibold text-zyfn-navy">4. Import complete</h2>
           <p className="mt-2 text-[13px] text-slate-700">
             Inserted {result.inserted} row(s). Skipped {result.skipped_duplicates}{" "}

@@ -6,7 +6,7 @@ export type ImportPreviewTableRow = {
   date: string;
   txn_type: string;
   detail: string;
-  merchant: string;
+  description: string;
   in_sen: number;
   out_sen: number;
   balance_sen: number;
@@ -19,9 +19,9 @@ export const IMPORT_PREVIEW_COLUMNS: DataTableColumn<ImportPreviewTableRow>[] = 
   { key: "txn_type", label: "Type" },
   { key: "detail", label: "Detail" },
   {
-    key: "merchant",
+    key: "description",
     label: "Description",
-    className: "whitespace-normal break-words align-top",
+    single_line: true,
   },
   { key: "in_sen", label: "In", type: "money", zero_as_blank: true },
   { key: "out_sen", label: "Out", type: "money", zero_as_blank: true },
