@@ -1,8 +1,6 @@
-import {
-  cash_flow_spending_sen,
-} from "@/lib/dashboard/cash_flow_amounts";
-import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
 import { kl_month_key } from "@/lib/datetime/kl_month_key";
+import { micro_to_sen_display } from "@/lib/tng/money_micro";
+import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import type { MonthKey } from "@/lib/dashboard/metrics";
 import type { MinorAmount } from "@/lib/money";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
@@ -31,8 +29,19 @@ function kl_day_of_month(iso: string): number {
   return Number(parts.find((p) => p.type === "day")?.value ?? "1");
 }
 
+/** Ledger out column for one row (all accounts; no cash-flow exclusions). */
+export function ledger_money_out_sen(
+  row: TransactionDbRow,
+  use_micro: boolean,
+): number {
+  if (use_micro) {
+    return row.out_micro > 0 ? micro_to_sen_display(row.out_micro) : 0;
+  }
+  return row.out_sen > 0 ? row.out_sen : 0;
+}
+
 /**
- * Daily cash-out totals for one dashboard month (same rules as monthly spending KPI).
+ * Daily totals of every money-out row for one dashboard month (includes FD and transfers).
  */
 export function daily_spending_for_month(
   statements: AccountStatementFromDb[],
@@ -45,14 +54,7 @@ export function daily_spending_for_month(
     const use_micro = statement.amount_scale === "micro";
     for (const row of statement.rows) {
       if (kl_month_key(row.date) !== month) continue;
-      if (is_cash_flow_excluded(row, { account_kind: statement.account_kind })) {
-        continue;
-      }
-      const spent = cash_flow_spending_sen(
-        row,
-        statement.account_kind,
-        use_micro,
-      );
+      const spent = ledger_money_out_sen(row, use_micro);
       if (spent <= 0) continue;
       const day_index = kl_day_of_month(row.date) - 1;
       if (day_index < 0 || day_index >= days_in_month) continue;

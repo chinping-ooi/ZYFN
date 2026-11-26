@@ -68,12 +68,22 @@ describe("daily_spending_for_month", () => {
     expect(data.month_total_sen).toBe(17_500);
   });
 
-  it("excludes FD rows like monthly spending", () => {
+  it("includes FD placements and other outflows excluded from the cash-flow KPI", () => {
     const month = "2026-11";
     const fd_row = row("2026-11-03T04:00:00.000Z", 50_000, 1, "fd_placement");
     const data = daily_spending_for_month([statement([fd_row])], month);
-    expect(data.month_total_sen).toBe(0);
-    expect(data.spending_sen[2]).toBe(0);
+    expect(data.month_total_sen).toBe(50_000);
+    expect(data.spending_sen[2]).toBe(50_000);
+  });
+
+  it("counts paired own-account transfers when they have an out amount", () => {
+    const month = "2026-11";
+    const transfer = {
+      ...row("2026-11-08T04:00:00.000Z", 3_000, 1, "transfer"),
+      pair_ref: "pair-abc",
+    };
+    const data = daily_spending_for_month([statement([transfer])], month);
+    expect(data.spending_sen[7]).toBe(3_000);
   });
 
   it("ignores transactions outside the selected month", () => {

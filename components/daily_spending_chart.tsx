@@ -136,7 +136,7 @@ export function DailySpendingChart({
       <CardHead
         compact
         title="Daily spending"
-        subtitle={month_label}
+        subtitle={`${month_label} · includes all money out`}
         align="center"
         className="shrink-0 flex-nowrap gap-1.5 !py-2 lg:gap-2 lg:!py-2.5"
       />
