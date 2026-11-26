@@ -35,8 +35,8 @@ type SidebarProps = {
 };
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
-  "Bank savings": Landmark,
-  "Credit cards": CreditCard,
+  "Bank Savings": Landmark,
+  "Credit Cards": CreditCard,
   Wallets: Wallet,
 };
 
@@ -270,7 +270,7 @@ function SidebarPanel({
             />
           ) : null}
           <PiggyBank className="size-4 shrink-0 text-slate-300" aria-hidden />
-          <span>Fixed deposits</span>
+          <span>Fixed Deposits</span>
         </Link>
         <Link
           href={WALLET_HREF}

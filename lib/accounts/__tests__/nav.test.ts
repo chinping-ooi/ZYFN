@@ -15,8 +15,8 @@ describe("account navigation", () => {
     expect(NAV_GROUPS.find((g) => g.title === "Wallets")).toBeUndefined();
   });
 
-  it("nests Visa and Amex under MBB 2 Gold in Credit cards", () => {
-    const cards = NAV_GROUPS.find((g) => g.title === "Credit cards");
+  it("nests Visa and Amex under MBB 2 Gold in Credit Cards", () => {
+    const cards = NAV_GROUPS.find((g) => g.title === "Credit Cards");
     expect(cards).toBeDefined();
     const gold = cards!.items.find((i) => i.label === "MBB 2 Gold");
     expect(gold?.href).toBe("/credit-cards/mbb-2-gold");
@@ -36,7 +36,7 @@ describe("account navigation", () => {
   });
 
   it("distinguishes full active on MBB 2 Gold vs ancestor when a nested card is open", () => {
-    const cards = NAV_GROUPS.find((g) => g.title === "Credit cards");
+    const cards = NAV_GROUPS.find((g) => g.title === "Credit Cards");
     const gold = cards!.items.find((i) => i.label === "MBB 2 Gold")!;
     const amex = gold.children!.find((c) => c.href.includes("8060"))!;
 

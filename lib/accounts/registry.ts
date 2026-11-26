@@ -8,7 +8,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "pbe",
     route_prefix: "transactions",
-    nav_group: "Bank savings",
+    nav_group: "Bank Savings",
     title: "Public Bank",
     account_ref: "PBE_SAVINGS",
     account_label: "Public Bank",
@@ -18,7 +18,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "maybank",
     route_prefix: "transactions",
-    nav_group: "Bank savings",
+    nav_group: "Bank Savings",
     title: "Maybank",
     account_ref: "MBB_SAVINGS",
     account_label: "Maybank",
@@ -28,7 +28,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "hong-leong-bank",
     route_prefix: "transactions",
-    nav_group: "Bank savings",
+    nav_group: "Bank Savings",
     title: "Hong Leong Bank",
     account_ref: "HLB",
     account_label: "Hong Leong Bank",
@@ -39,7 +39,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "mbb-visa-1697",
     route_prefix: "credit-cards",
-    nav_group: "Credit cards",
+    nav_group: "Credit Cards",
     title: "MBB Visa 1697",
     account_ref: "MBB_VISA_1697",
     account_label: "MBB Visa 1697",
@@ -50,7 +50,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "mbb-amex-8060",
     route_prefix: "credit-cards",
-    nav_group: "Credit cards",
+    nav_group: "Credit Cards",
     title: "MBB Amex 8060",
     account_ref: "MBB_AMEX_8060",
     account_label: "MBB Amex 8060",
@@ -61,7 +61,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "mbb-2-gold",
     route_prefix: "credit-cards",
-    nav_group: "Credit cards",
+    nav_group: "Credit Cards",
     title: "MBB 2 Gold",
     account_ref: "MBB_2_GOLD",
     account_label: "MBB 2 Gold",
@@ -71,7 +71,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "pbe-visa-4104",
     route_prefix: "credit-cards",
-    nav_group: "Credit cards",
+    nav_group: "Credit Cards",
     title: "Public Bank Visa Gold 4104",
     account_ref: "PBE_VISA_4104",
     account_label: "Public Bank Visa Gold 4104",
@@ -81,7 +81,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
   {
     slug: "pbe-mastercard-6357",
     route_prefix: "credit-cards",
-    nav_group: "Credit cards",
+    nav_group: "Credit Cards",
     title: "Public Bank Quantum MasterCard 6357",
     account_ref: "PBE_MASTERCARD_6357",
     account_label: "Public Bank Quantum MasterCard 6357",

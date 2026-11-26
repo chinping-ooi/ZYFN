@@ -84,7 +84,7 @@ function build_credit_cards_nav_items(): NavItem[] {
   };
   const other = ACCOUNTS.filter(
     (entry) =>
-      entry.nav_group === "Credit cards" &&
+      entry.nav_group === "Credit Cards" &&
       entry.show_in_nav !== false &&
       entry.account_ref !== "MBB_2_GOLD" &&
       !MBB_2_GOLD_MEMBER_REFS.has(entry.account_ref),
@@ -102,14 +102,14 @@ export type NavGroup = {
   defaultOpen?: boolean;
 };
 
-const NAV_GROUP_ORDER: NavGroupKey[] = ["Bank savings", "Credit cards"];
+const NAV_GROUP_ORDER: NavGroupKey[] = ["Bank Savings", "Credit Cards"];
 
 function build_account_nav_groups(): NavGroup[] {
   const groups: NavGroup[] = NAV_GROUP_ORDER.map((title) => ({
     title,
     defaultOpen: true,
     items:
-      title === "Credit cards"
+      title === "Credit Cards"
         ? build_credit_cards_nav_items()
         : ACCOUNTS.filter(
             (entry) => entry.nav_group === title && entry.show_in_nav !== false,
