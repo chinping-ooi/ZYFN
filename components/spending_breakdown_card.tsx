@@ -270,7 +270,7 @@ function SpendingDonutPanel({
 
 export function SpendingBreakdownCard({
   rows,
-  month_label: _month_label,
+  month_label,
   className = "",
   content_sized = false,
   column_fill = false,

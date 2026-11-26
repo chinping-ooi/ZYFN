@@ -1,5 +1,6 @@
 import { cash_flow_spending_sen } from "@/lib/dashboard/cash_flow_amounts";
 import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
+import { is_spending_breakdown_go_plus_row } from "@/lib/dashboard/spending_go_plus_exclusion";
 import {
   is_fd_category_text,
   is_fixed_deposit_daily_chart_row,
@@ -28,7 +29,9 @@ function category_bucket_id(label: string): string {
  * Rows skipped when excluded:
  * - FD: is_fixed_deposit_daily_chart_row
  * - Own-account transfers: is_cash_flow_excluded → pair_ref (matched leg) or
- *   card/cc payment from savings (credit-card account purchases still count)
+ *   card/cc payment on savings and credit-card sides (purchases still count).
+ * - TNG GO+: is_spending_breakdown_go_plus_row (GO+ account, GO+ Cash In/Out,
+ *   GO+ Daily Earnings, wallet GO+ cash-out markers).
  */
 export function spending_breakdown_for_month(
   statements: AccountStatementFromDb[],
@@ -45,6 +48,11 @@ export function spending_breakdown_for_month(
     for (const row of statement.rows) {
       if (kl_month_key(row.date) !== month) continue;
       if (is_fixed_deposit_daily_chart_row(row)) continue;
+      if (
+        is_spending_breakdown_go_plus_row(row, statement.account_kind)
+      ) {
+        continue;
+      }
       if (is_cash_flow_excluded(row, { account_kind: statement.account_kind }))
         continue;
       const spent = cash_flow_spending_sen(row, statement.account_kind, use_micro);

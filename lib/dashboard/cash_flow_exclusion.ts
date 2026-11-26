@@ -20,8 +20,8 @@ export type CashFlowExclusionInput = {
  *   or `fixed_deposit_id` is set.
  * - Own-account movement: `pair_ref` is set (paired leg). Unpaired `transfer` rows
  *   still count (e.g. incoming salary mis-tagged as transfer).
- * - Card funding from savings: `txn_type` is `card_payment`, `cc_payment`, or
- *   `credit_card_payment` (avoids treating bill pay as merchant spending).
+ * - Card bill pay: `txn_type` is `card_payment`, `cc_payment`, or
+ *   `credit_card_payment` on savings or credit-card accounts (purchases still count).
  */
 export function is_cash_flow_excluded(
   row: CashFlowExclusionInput,

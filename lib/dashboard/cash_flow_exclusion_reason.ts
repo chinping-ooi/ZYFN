@@ -35,10 +35,9 @@ export function cash_flow_exclusion_reason(
     type === "cc_payment" ||
     type === "credit_card_payment"
   ) {
-    if (context?.account_kind === "credit_card") {
-      return null;
-    }
-    return "card_payment_from_savings";
+    return context?.account_kind === "credit_card"
+      ? "card_payment_on_card"
+      : "card_payment_from_savings";
   }
 
   return null;
