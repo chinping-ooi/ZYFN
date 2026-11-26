@@ -236,7 +236,7 @@ export function CashFlowSummary({
                 colors={breakdown_out.rows.map(
                   (_, i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length],
                 )}
-                center_top="Money out"
+                center_top=""
                 center_bottom={money_out_total}
                 aria_label={`Money out donut, total ${money_out_total}`}
                 tooltip_callback={(index) => {
