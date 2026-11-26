@@ -4,28 +4,37 @@ import { Check } from "lucide-react";
 
 export type ImportWizardStep = "start" | "map" | "preview" | "done";
 
-type StepDef = {
-  key: ImportWizardStep | "map";
-  number: number;
+export type ImportStepperStep = {
+  key: ImportWizardStep;
   label: string;
 };
 
-const STEPS: StepDef[] = [
-  { key: "start", number: 1, label: "Upload" },
-  { key: "map", number: 2, label: "Match columns" },
-  { key: "preview", number: 3, label: "Review" },
-  { key: "done", number: 4, label: "Done" },
-];
+/** Upload → Review → Done when mapping is skipped or not yet known. */
+export function import_stepper_steps(
+  include_mapping_step: boolean,
+): ImportStepperStep[] {
+  if (include_mapping_step) {
+    return [
+      { key: "start", label: "Upload" },
+      { key: "map", label: "Match columns" },
+      { key: "preview", label: "Review" },
+      { key: "done", label: "Done" },
+    ];
+  }
+  return [
+    { key: "start", label: "Upload" },
+    { key: "preview", label: "Review" },
+    { key: "done", label: "Done" },
+  ];
+}
 
-const ORDER: Array<ImportWizardStep | "map"> = [
-  "start",
-  "map",
-  "preview",
-  "done",
-];
-
-function step_index(step: ImportWizardStep): number {
-  return ORDER.indexOf(step);
+export function import_stepper_active_index(
+  current: ImportWizardStep,
+  include_mapping_step: boolean,
+): number {
+  const steps = import_stepper_steps(include_mapping_step);
+  const index = steps.findIndex((step) => step.key === current);
+  return index >= 0 ? index : 0;
 }
 
 const CIRCLE_REACHED = "border-zyfn-navy bg-zyfn-navy text-white";
@@ -33,12 +42,14 @@ const CIRCLE_PENDING = "border-[#b8c2cf] bg-white text-slate-400";
 
 export function ImportStepper({
   current,
-  mapping_skipped,
+  include_mapping_step,
 }: {
   current: ImportWizardStep;
-  mapping_skipped: boolean;
+  include_mapping_step: boolean;
 }) {
-  const active_index = step_index(current);
+  const steps = import_stepper_steps(include_mapping_step);
+  const active_index = import_stepper_active_index(current, include_mapping_step);
+  const active_step = steps[active_index];
 
   return (
     <nav
@@ -46,27 +57,23 @@ export function ImportStepper({
       className="w-full shrink-0 rounded-[3px] border border-zyfn-line bg-white px-4 py-4"
     >
       <ol className="flex items-start justify-between gap-1 sm:gap-2">
-        {STEPS.map((step, index) => {
-          const idx = ORDER.indexOf(step.key);
-          const is_map = step.key === "map";
-          const behind = active_index > idx;
-          const skipped_map = is_map && mapping_skipped && behind;
+        {steps.map((step, index) => {
+          const behind = active_index > index;
           const active = current === step.key;
           const reached = behind || active;
-
           const circle_class = reached ? CIRCLE_REACHED : CIRCLE_PENDING;
-          const connector_filled = active_index > index;
+          const display_number = index + 1;
 
           return (
             <li
-              key={step.key}
+              key={`${step.key}-${include_mapping_step}`}
               className="flex min-w-0 flex-1 flex-col items-center"
             >
               <div className="flex w-full items-center">
                 {index > 0 ? (
                   <span
                     className={`hidden h-px flex-1 sm:block ${
-                      connector_filled ? "bg-zyfn-navy/40" : "bg-[#d5dbe3]"
+                      active_index > index ? "bg-zyfn-navy/40" : "bg-[#d5dbe3]"
                     }`}
                     aria-hidden
                   />
@@ -79,13 +86,13 @@ export function ImportStepper({
                   {behind ? (
                     <Check className="size-4" aria-hidden />
                   ) : (
-                    step.number
+                    display_number
                   )}
                 </span>
-                {index < STEPS.length - 1 ? (
+                {index < steps.length - 1 ? (
                   <span
                     className={`hidden h-px flex-1 sm:block ${
-                      active_index > idx ? "bg-zyfn-navy/40" : "bg-[#d5dbe3]"
+                      active_index > index ? "bg-zyfn-navy/40" : "bg-[#d5dbe3]"
                     }`}
                     aria-hidden
                   />
@@ -102,17 +109,14 @@ export function ImportStepper({
                       : "text-slate-400"
                 }`}
               >
-                {skipped_map ? "Skipped" : step.label}
+                {step.label}
               </span>
             </li>
           );
         })}
       </ol>
       <p className="mt-2 text-center text-xs text-slate-600 sm:hidden">
-        Step {STEPS.find((s) => s.key === current)?.number ?? 1}:{" "}
-        {current === "preview" && mapping_skipped
-          ? "Column mapping skipped"
-          : (STEPS.find((s) => s.key === current)?.label ?? "")}
+        Step {active_index + 1}: {active_step?.label ?? ""}
       </p>
     </nav>
   );

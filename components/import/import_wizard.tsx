@@ -128,6 +128,9 @@ export function ImportWizard() {
   );
   const upload_locked = busy || detecting;
   const start_upload_error = Boolean(error && step === "start" && file);
+  const include_mapping_step =
+    !mapping_skipped &&
+    (step === "map" || step === "preview" || step === "done");
 
   const counts = useMemo(() => {
     const new_count = rows.filter((r) => r.status === "new").length;
@@ -392,7 +395,10 @@ export function ImportWizard() {
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <ImportStepper current={step} mapping_skipped={mapping_skipped} />
+      <ImportStepper
+        current={step}
+        include_mapping_step={include_mapping_step}
+      />
 
       {step === "start" ? (
         <section className={CARD_SHELL}>
