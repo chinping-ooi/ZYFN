@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
-import { chart_window, snapshot_for_month } from "@/lib/dashboard/metrics";
+import { daily_spending_for_month } from "@/lib/dashboard/daily_spending";
+import { snapshot_for_month } from "@/lib/dashboard/metrics";
 import { spending_breakdown_for_month } from "@/lib/dashboard/spending_breakdown";
 import { dashboard_account_balances } from "@/lib/dashboard/dashboard_balances";
 import { compute_spending_change } from "@/lib/spending_change";
@@ -10,7 +11,7 @@ import { major_to_minor } from "@/lib/money";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
-import { CashFlowChart } from "@/components/cash_flow_chart";
+import { DailySpendingChart } from "@/components/daily_spending_chart";
 import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
 import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
@@ -76,26 +77,12 @@ export function DashboardView({
     [statements, month],
   );
 
-  const chart = chart_window(metrics, month, 6);
-  const chart_labels = chart.map((m) =>
-    new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" }).format(
-      new Date(`${m.month}-01T00:00:00Z`),
-    ),
-  );
-
-  const chart_period = `${chart[0]?.label ?? ""} – ${chart.at(-1)?.label ?? ""}`;
   const month_label = snapshot?.label ?? month;
 
-  const chart_props = {
-    fill_height: true as const,
-    cell_fill: true as const,
-    labels: chart_labels,
-    income_sen: chart.map((m) => m.income_sen),
-    spending_sen: chart.map((m) => m.spending_sen),
-    period_note: chart_period,
-    monthly_income_sen: income_sen,
-    monthly_spending_sen: spending_sen,
-  };
+  const daily_spending = useMemo(
+    () => daily_spending_for_month(statements, month),
+    [statements, month],
+  );
 
   return (
     <div className="dashboard-shell lg:flex-1">
@@ -148,7 +135,12 @@ export function DashboardView({
               />
             </div>
             <div className="dashboard-column dashboard-column-right">
-              <CashFlowChart className="min-h-0 flex-1" {...chart_props} />
+              <DailySpendingChart
+                className="min-h-0 flex-1"
+                month={month}
+                month_label={month_label}
+                series={daily_spending}
+              />
               <DashboardAccountBalancesCard
                 column_fill
                 className="min-h-0 flex-1"

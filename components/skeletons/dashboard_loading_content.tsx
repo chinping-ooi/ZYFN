@@ -28,7 +28,12 @@ export function DashboardLoadingContent() {
           />
         </div>
         <div className="dashboard-column dashboard-column-right">
-          <CashFlowChartSkeleton cell_fill className="min-h-0 flex-1" />
+          <CashFlowChartSkeleton
+            cell_fill
+            className="min-h-0 flex-1"
+            title="Daily spending"
+            subtitle=" "
+          />
           <AccountBalancesSkeleton column_fill className="min-h-0 flex-1" />
         </div>
       </div>

@@ -4,9 +4,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function CashFlowChartSkeleton({
   className = "",
   cell_fill = false,
+  title = "Monthly cash flow",
+  subtitle = "Last 6 months",
 }: {
   className?: string;
   cell_fill?: boolean;
+  title?: string;
+  subtitle?: string;
 }) {
   const shell_class = `card flex w-full min-w-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${
     cell_fill ? "h-full min-h-0 flex-1" : "h-fit shrink-0"
@@ -23,8 +27,8 @@ export function CashFlowChartSkeleton({
     <section className={shell_class}>
       <CardHead
         compact
-        title="Monthly cash flow"
-        subtitle="Last 6 months"
+        title={title}
+        subtitle={subtitle}
         align="center"
         className="shrink-0 flex-nowrap gap-1.5 !py-2 lg:gap-2 lg:!py-2.5"
         aside={legend}
