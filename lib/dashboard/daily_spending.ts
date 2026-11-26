@@ -41,7 +41,22 @@ export function ledger_money_out_sen(
 }
 
 /**
- * Daily totals of every money-out row for one dashboard month (includes FD and transfers).
+ * Fixed-deposit ledger rows (aligned with dashboard cash-flow FD rules).
+ * Matches when `txn_type` is `fd_placement`, `fd_withdrawal`, starts with `fd_`,
+ * or `fixed_deposit_id` is set.
+ */
+export function is_fixed_deposit_daily_chart_row(
+  row: Pick<TransactionDbRow, "txn_type" | "fixed_deposit_id">,
+): boolean {
+  const type = row.txn_type.trim().toLowerCase();
+  if (type.startsWith("fd_")) return true;
+  if (type === "fd_placement" || type === "fd_withdrawal") return true;
+  const fd_id = row.fixed_deposit_id;
+  return fd_id != null && fd_id !== 0;
+}
+
+/**
+ * Daily totals of money-out rows for one dashboard month (excludes FD; includes transfers).
  */
 export function daily_spending_for_month(
   statements: AccountStatementFromDb[],
@@ -54,6 +69,7 @@ export function daily_spending_for_month(
     const use_micro = statement.amount_scale === "micro";
     for (const row of statement.rows) {
       if (kl_month_key(row.date) !== month) continue;
+      if (is_fixed_deposit_daily_chart_row(row)) continue;
       const spent = ledger_money_out_sen(row, use_micro);
       if (spent <= 0) continue;
       const day_index = kl_day_of_month(row.date) - 1;

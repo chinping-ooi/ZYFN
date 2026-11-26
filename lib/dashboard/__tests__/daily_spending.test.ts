@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { daily_spending_for_month } from "@/lib/dashboard/daily_spending";
+import {
+  daily_spending_for_month,
+  is_fixed_deposit_daily_chart_row,
+} from "@/lib/dashboard/daily_spending";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 
@@ -68,12 +71,21 @@ describe("daily_spending_for_month", () => {
     expect(data.month_total_sen).toBe(17_500);
   });
 
-  it("includes FD placements and other outflows excluded from the cash-flow KPI", () => {
+  it("excludes fixed deposit placements from the daily chart", () => {
     const month = "2026-11";
     const fd_row = row("2026-11-03T04:00:00.000Z", 50_000, 1, "fd_placement");
+    expect(is_fixed_deposit_daily_chart_row(fd_row)).toBe(true);
     const data = daily_spending_for_month([statement([fd_row])], month);
-    expect(data.month_total_sen).toBe(50_000);
-    expect(data.spending_sen[2]).toBe(50_000);
+    expect(data.month_total_sen).toBe(0);
+    expect(data.spending_sen[2]).toBe(0);
+  });
+
+  it("excludes out rows linked by fixed_deposit_id", () => {
+    const month = "2026-11";
+    const linked = { ...row("2026-11-04T04:00:00.000Z", 20_000, 1), fixed_deposit_id: 42 };
+    expect(is_fixed_deposit_daily_chart_row(linked)).toBe(true);
+    const data = daily_spending_for_month([statement([linked])], month);
+    expect(data.month_total_sen).toBe(0);
   });
 
   it("counts paired own-account transfers when they have an out amount", () => {
