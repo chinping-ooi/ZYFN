@@ -126,7 +126,7 @@ export function AccountSummaryChartsSection({
     >
       <SummaryCardShell title="Total in vs Total out" className="h-full">
         {flow_has_data ? (
-          <div className="flex min-h-0 w-full max-w-md flex-1 flex-col items-center justify-center gap-5 self-center">
+          <div className="flex min-h-0 w-full flex-1 flex-col justify-center gap-5">
             <SummaryDoughnutPanel
               chart_ref={flow_chart_ref}
               values={flow_values}
