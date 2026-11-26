@@ -30,11 +30,15 @@ function row(
   };
 }
 
-function statement(rows: TransactionDbRow[]): AccountStatementFromDb {
+function statement(
+  rows: TransactionDbRow[],
+  account_ref = "PBE_SAVINGS",
+  account_label = "Public Bank",
+): AccountStatementFromDb {
   return {
     kind: "data",
-    account_ref: "PBE_SAVINGS",
-    account_label: "Public Bank",
+    account_ref,
+    account_label,
     account_kind: "bank",
     amount_scale: "sen",
     source: "supabase",
@@ -56,7 +60,7 @@ describe("spending_breakdown_for_month", () => {
       [
         statement([
           row("2026-11-05T04:00:00.000Z", 200_000, 1, "fd_placement"),
-          row("2026-11-05T12:00:00.000Z", 604_78, 2, "purchase"),
+          row("2026-11-05T12:00:00.000Z", 60_478, 2, "purchase"),
           row("2026-11-06T04:00:00.000Z", 40_000, 3, "rental"),
           row("2026-11-07T04:00:00.000Z", 30_000, 4, "transfer"),
           row("2026-11-08T04:00:00.000Z", 30_000, 5, "ptptn"),
@@ -67,11 +71,9 @@ describe("spending_breakdown_for_month", () => {
 
     const labels = breakdown.map((b) => b.label);
     expect(labels).not.toContain("fd_placement");
+    expect(labels).toEqual(["Public Bank"]);
     expect(spending_total_sen(breakdown)).toBe(160_478);
-    expect(breakdown.find((b) => b.label === "purchase")?.pct).toBeCloseTo(
-      (60_478 / 160_478) * 100,
-      1,
-    );
+    expect(breakdown[0]?.pct).toBe(100);
   });
 
   it("excludes FD category in detail when txn_type is empty", () => {
@@ -84,7 +86,8 @@ describe("spending_breakdown_for_month", () => {
       ],
       "2026-11",
     );
-    expect(breakdown.map((b) => b.label)).toEqual(["ptptn"]);
+    expect(breakdown.map((b) => b.label)).toEqual(["Public Bank"]);
+    expect(breakdown[0]?.amount_sen).toBe(5_000);
     expect(spending_total_sen(breakdown)).toBe(5_000);
   });
 
@@ -100,7 +103,7 @@ describe("spending_breakdown_for_month", () => {
       ],
       "2026-11",
     );
-    expect(breakdown.map((b) => b.label)).toEqual(["ptptn"]);
+    expect(breakdown.map((b) => b.label)).toEqual(["Public Bank"]);
     expect(spending_total_sen(breakdown)).toBe(1_000);
   });
 
@@ -114,8 +117,44 @@ describe("spending_breakdown_for_month", () => {
       ],
       "2026-11",
     );
-    expect(breakdown[0]?.label).toBe("ptptn");
+    expect(breakdown[0]?.label).toBe("Public Bank");
     expect(breakdown[0]?.amount_sen).toBe(1_000);
     expect(breakdown[0]?.pct).toBe(100);
+    expect(spending_total_sen(breakdown)).toBe(1_000);
+  });
+
+  it("omits FD-only spending from another account bucket", () => {
+    const breakdown = spending_breakdown_for_month(
+      [
+        statement(
+          [row("2026-11-04T12:00:00.000Z", 8_000, 1, "purchase")],
+          "PBE_SAVINGS",
+          "Public Bank",
+        ),
+        statement(
+          [row("2026-11-04T04:00:00.000Z", 500_000, 2, "fd_placement")],
+          "MBB_SAVINGS",
+          "Maybank",
+        ),
+      ],
+      "2026-11",
+    );
+    expect(breakdown.map((b) => b.label)).toEqual(["Public Bank"]);
+    expect(spending_total_sen(breakdown)).toBe(8_000);
+  });
+
+  it("does not emit fixed deposit account buckets", () => {
+    const breakdown = spending_breakdown_for_month(
+      [
+        statement(
+          [row("2026-11-05T12:00:00.000Z", 2_000, 1, "debit")],
+          "HLB_FD",
+          "HLB Fixed Deposit",
+        ),
+      ],
+      "2026-11",
+    );
+    expect(breakdown).toHaveLength(0);
+    expect(spending_total_sen(breakdown)).toBe(0);
   });
 });
