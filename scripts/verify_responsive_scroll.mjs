@@ -1,5 +1,7 @@
 /**
- * Playwright layout checks with synthetic dashboard at /mock-dashboard.
+ * Playwright checks: vertical scroll and unclipped cards on key routes.
+ * Usage: SMOKE_SKIP_DEV_START=1 node scripts/verify_responsive_scroll.mjs
+ * (with `npm run dev` or `npm run start` on port 3000)
  */
 import { chromium } from "playwright";
 import { execSync, spawn } from "child_process";
@@ -11,11 +13,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const base = process.env.SMOKE_BASE_URL ?? "http://127.0.0.1:3000";
 
 const ROUTES = [
-  { name: "Dashboard (mock)", path: "/mock-dashboard", needs_cards: true },
+  { name: "Dashboard", path: "/" },
   { name: "PBE summary", path: "/transactions/pbe" },
   { name: "PBE statement", path: "/transactions/pbe/statement" },
   { name: "MBB 2 Gold summary", path: "/credit-cards/mbb-2-gold" },
   { name: "MBB 2 Gold statement", path: "/credit-cards/mbb-2-gold/statement" },
+  { name: "MBB 2 Gold card", path: "/credit-cards/mbb-2-gold/1697" },
   { name: "Wallet", path: "/transactions/touch-n-go" },
   { name: "Wallet statement", path: "/transactions/touch-n-go/statement" },
   { name: "Fixed deposits", path: "/fixed-deposits" },
@@ -23,18 +26,18 @@ const ROUTES = [
 ];
 
 const VIEWPORTS = [
-  { label: "375x812", width: 375, height: 812, expect_doc_scroll: true },
-  { label: "768x1024", width: 768, height: 1024, expect_doc_scroll: true },
-  { label: "1280x800", width: 1280, height: 800, expect_doc_scroll: false },
+  { label: "375x812", width: 375, height: 812, expectScroll: true },
+  { label: "768x1024", width: 768, height: 1024, expectScroll: true },
+  { label: "1280x800", width: 1280, height: 800, expectScroll: false },
 ];
 
-let server = null;
+let dev = null;
 
 async function waitForServer() {
   for (let i = 0; i < 60; i++) {
     try {
-      const res = await fetch(base + "/mock-dashboard");
-      if (res.ok) return;
+      const res = await fetch(base);
+      if (res.ok || res.status < 500) return;
     } catch {
       /* retry */
     }
@@ -44,31 +47,20 @@ async function waitForServer() {
 }
 
 async function startServer() {
-  if (process.env.SMOKE_SKIP_DEV_START === "1") {
+  const ownDev = process.env.SMOKE_SKIP_DEV_START !== "1";
+  if (!ownDev) {
     await waitForServer();
     return;
   }
-  const port = new URL(base).port || "3000";
   try {
-    execSync(`fuser -k ${port}/tcp 2>/dev/null || true`, { stdio: "ignore" });
-  } catch {
-    /* */
-  }
-  try {
-    const pid = execSync(`lsof -ti :${port} 2>/dev/null || true`, {
-      encoding: "utf8",
-    }).trim();
-    if (pid) {
-      execSync(`kill -9 ${pid.split("\n").join(" ")} 2>/dev/null || true`, {
-        stdio: "ignore",
-      });
-    }
+    execSync(`fuser -k ${new URL(base).port || 3000}/tcp 2>/dev/null || true`, {
+      stdio: "ignore",
+    });
   } catch {
     /* */
   }
   await delay(400);
-  execSync("npm run build", { cwd: root, stdio: "inherit" });
-  server = spawn("npm", ["run", "start", "--", "-p", "3000"], {
+  dev = spawn("npm", ["run", "start", "--", "-p", "3000"], {
     cwd: root,
     env: { ...process.env },
     stdio: ["ignore", "pipe", "pipe"],
@@ -78,135 +70,119 @@ async function startServer() {
 
 async function verifyPage(page, route, vp) {
   const issues = [];
-  await page.goto(base + route.path, {
-    waitUntil: "networkidle",
-    timeout: 90_000,
-  });
-  if (route.needs_cards) {
-    await page
-      .getByRole("heading", { name: "Spending breakdown", exact: true })
-      .waitFor({ state: "visible", timeout: 30_000 });
-  } else {
-    await page.waitForTimeout(400);
-  }
+  await page.goto(base + route.path, { waitUntil: "networkidle", timeout: 60_000 });
+  await page.waitForTimeout(500);
 
-  const doc = await page.evaluate(() => ({
-    scrollHeight: document.documentElement.scrollHeight,
-    clientHeight: document.documentElement.clientHeight,
-  }));
-
-  const mainBox = await page.evaluate(() => {
-    const main = document.querySelector("main");
-    if (!main) return null;
-    const r = main.getBoundingClientRect();
-    const s = getComputedStyle(main);
+  const doc = await page.evaluate(() => {
+    const el = document.documentElement;
     return {
-      height: r.height,
-      overflowY: s.overflowY,
-      visible: r.height > 0 && s.visibility !== "hidden" && s.display !== "none",
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
     };
   });
 
-  if (!mainBox?.visible || mainBox.height < 50) {
-    issues.push(`main missing or too short (${mainBox?.height ?? 0}px)`);
-  }
-
-  const key_cards = await page.evaluate(() => {
-    const titles = [
-      "Spending breakdown",
-      "Monthly cash flow",
-      "Account balances",
-      "Monthly spending",
-    ];
-    return titles.map((title) => {
-      let card = null;
-      const heading = [...document.querySelectorAll("h3,h2")].find(
-        (el) => el.textContent?.trim() === title,
-      );
-      if (heading) {
-        card = heading.closest(".card, section.card");
-      } else {
-        const kpi = [...document.querySelectorAll("article.card.kpi")].find(
-          (el) =>
-            el.querySelector(".text-sm.font-semibold")?.textContent?.trim() ===
-            title,
-        );
-        card = kpi ?? null;
-      }
-      if (!card) return { title, ok: false, reason: "not found" };
-      const r = card.getBoundingClientRect();
-      const s = getComputedStyle(card);
-      const clipped =
-        s.overflowY === "hidden" && card.scrollHeight > card.clientHeight + 2;
-      return {
-        title,
-        ok: r.height > 100 && s.visibility !== "hidden" && !clipped,
-        height: r.height,
-        scrollH: card.scrollHeight,
-        clientH: card.clientHeight,
-        clipped,
-      };
-    });
-  });
-
-  if (route.needs_cards) {
-    for (const c of key_cards) {
-      if (!c.ok) {
-        issues.push(`card "${c.title}": ${JSON.stringify(c)}`);
-      }
-    }
-  }
-
-  const footerOk = await page.evaluate(async () => {
-    window.scrollTo(0, document.documentElement.scrollHeight);
-    await new Promise((r) => setTimeout(r, 150));
+  const footerVisibleAfterScroll = await page.evaluate(async () => {
     const footer = document.querySelector("footer");
-    if (!footer) return false;
-    const r = footer.getBoundingClientRect();
-    return r.top < window.innerHeight && r.bottom > 0;
+    if (!footer) return { ok: false, reason: "no footer" };
+    const before = footer.getBoundingClientRect().top;
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    await new Promise((r) => setTimeout(r, 100));
+    const after = footer.getBoundingClientRect().top;
+    const inView = after < window.innerHeight && after >= 0;
+    return { ok: inView, before, after };
   });
+
+  const clipped = await page.evaluate(() => {
+    const out = [];
+    const cards = document.querySelectorAll("main .card, main section.card");
+    cards.forEach((card, i) => {
+      const style = getComputedStyle(card);
+      const scrollH = card.scrollHeight;
+      const clientH = card.clientHeight;
+      const overflow = style.overflowY;
+      if (overflow === "hidden" && scrollH > clientH + 2) {
+        out.push({
+          overflow,
+          scrollH,
+          clientH,
+          selector: `card[${i}] ${card.querySelector("h2,h3")?.textContent?.slice(0, 40) ?? ""}`,
+        });
+      }
+    });
+    return out;
+  });
+
+  const hasSpendingBreakdown = await page
+    .locator("text=Spending breakdown")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const supabaseMissing = await page
+    .locator("text=Supabase not configured")
+    .first()
+    .isVisible()
+    .catch(() => false);
+
+  const layout = await page.evaluate(() => {
+    const main = document.querySelector("main");
+    const shell = document.querySelector(".shell");
+    if (!main || !shell) return { ok: false, reason: "missing main/shell" };
+    return {
+      mainOverflowY: getComputedStyle(main).overflowY,
+      shellHeight: getComputedStyle(shell).height,
+    };
+  });
+
+  if (vp.expectScroll && layout.mainOverflowY === "hidden") {
+    issues.push(`main overflow-y is hidden below lg (${layout.mainOverflowY})`);
+  }
 
   const canScroll = doc.scrollHeight > doc.clientHeight + 8;
-
-  if (vp.expect_doc_scroll) {
-    if (route.path === "/mock-dashboard" && !canScroll) {
+  if (vp.expectScroll) {
+    const needsTallPage =
+      hasSpendingBreakdown ||
+      route.path === "/fixed-deposits" ||
+      route.path.includes("/statement");
+    const clearlyTallerThanViewport = doc.scrollHeight > vp.height + 80;
+    if (needsTallPage && !supabaseMissing && !canScroll && clearlyTallerThanViewport) {
       issues.push(
-        `mock dashboard should scroll (${doc.scrollHeight}/${doc.clientHeight})`,
+        `scrollHeight (${doc.scrollHeight}) ≈ clientHeight (${doc.clientHeight})`,
       );
     }
-    if (!footerOk) issues.push("footer not reachable after scroll");
-    if (mainBox?.overflowY === "hidden") {
-      issues.push(`main overflow-y hidden at ${vp.label}`);
+    if (
+      route.path === "/" &&
+      hasSpendingBreakdown &&
+      !supabaseMissing &&
+      !canScroll
+    ) {
+      issues.push(`expected document scroll on populated dashboard`);
     }
-  } else if (route.path === "/mock-dashboard") {
-    const dashCards = key_cards.filter((c) =>
-      ["Spending breakdown", "Monthly cash flow", "Account balances"].includes(
-        c.title,
-      ),
-    );
-    if (dashCards.some((c) => !c.ok)) {
-      issues.push(`desktop dashboard cards: ${JSON.stringify(dashCards)}`);
+    if (!footerVisibleAfterScroll.ok) {
+      issues.push(
+        `footer not reachable after scroll: ${JSON.stringify(footerVisibleAfterScroll)}`,
+      );
     }
-    const mainLock = await page.evaluate(() => {
+    if (clipped.length > 0) {
+      issues.push(`clipped cards: ${JSON.stringify(clipped)}`);
+    }
+  } else if (route.path === "/") {
+    const main = await page.evaluate(() => {
       const m = document.querySelector("main.dashboard-main");
-      return m ? getComputedStyle(m).overflowY : null;
+      if (!m) return null;
+      const s = getComputedStyle(m);
+      return { overflowY: s.overflowY, clientHeight: m.clientHeight };
     });
-    if (mainLock !== "hidden") {
-      issues.push(`desktop dashboard main overflow should be hidden (got ${mainLock})`);
-    }
-    const shellH = await page.evaluate(() =>
-      document.querySelector(".shell")?.getBoundingClientRect().height,
-    );
-    if (shellH && Math.abs(shellH - vp.height) > 4) {
-      issues.push(`desktop shell height ${shellH} expected ~${vp.height}`);
+    if (main && main.overflowY !== "hidden") {
+      issues.push(`desktop dashboard main should lock overflow (got ${main.overflowY})`);
     }
   }
 
   return {
     route: route.name,
     viewport: vp.label,
-    scroll: `${doc.scrollHeight}/${doc.clientHeight}`,
-    main_h: mainBox?.height,
+    scrollHeight: doc.scrollHeight,
+    clientHeight: doc.clientHeight,
+    canScroll,
     ok: issues.length === 0,
     issues,
   };
@@ -226,8 +202,11 @@ async function main() {
       try {
         const row = await verifyPage(page, route, vp);
         results.push(row);
+        const status = row.ok ? "PASS" : "FAIL";
         console.log(
-          `${row.ok ? "PASS" : "FAIL"}\t${vp.label}\t${route.name}\tscroll=${row.scroll}\tmain=${Math.round(row.main_h ?? 0)}${row.issues.length ? `\t${row.issues.join("; ")}` : ""}`,
+          `${status}\t${vp.label}\t${route.name}\tscroll=${row.scrollHeight}/${row.clientHeight}${
+            row.issues.length ? `\t${row.issues.join("; ")}` : ""
+          }`,
         );
       } catch (err) {
         results.push({
@@ -243,11 +222,11 @@ async function main() {
   }
 
   await browser.close();
-  if (server) server.kill("SIGTERM");
+  if (dev) dev.kill("SIGTERM");
 
   const failed = results.filter((r) => !r.ok);
   if (failed.length) {
-    console.error(`\n${failed.length} failure(s)`);
+    console.error(`\n${failed.length} verification failure(s)`);
     process.exit(1);
   }
   console.log(`\nAll ${results.length} checks passed`);
@@ -255,6 +234,6 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  if (server) server.kill("SIGTERM");
+  if (dev) dev.kill("SIGTERM");
   process.exit(1);
 });

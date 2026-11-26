@@ -65,6 +65,8 @@
     --dash-gap: 16px;
     gap: var(--dash-gap);
     padding: var(--dash-gap) !important;
+    overflow-y: auto;
+    overflow-x: clip;
   }
 
   @media (min-width: 1024px) and (min-height: 600px) {
@@ -93,33 +95,8 @@
     }
   }
 
-  /* Below lg: document scroll — shell stays h-screen in markup; CSS releases height chain. */
+  /* Below lg: document scroll — no viewport-height flex squeezing. */
   @media (max-width: 1023px) {
-    .shell {
-      height: auto !important;
-      min-height: 100vh;
-      max-height: none !important;
-      overflow-x: clip;
-      overflow-y: visible !important;
-    }
-
-    .workspace {
-      height: auto !important;
-      min-height: 0;
-      max-height: none !important;
-      overflow: visible !important;
-    }
-
-    main.content,
-    main.dashboard-main {
-      flex: 0 0 auto !important;
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
-      overflow-x: clip;
-      overflow-y: visible !important;
-    }
-
     .dashboard-main {
       flex: none !important;
       min-height: auto !important;
@@ -150,19 +127,6 @@
     .dashboard-shell .balance-rows {
       flex: none !important;
       min-height: auto !important;
-      overflow: visible !important;
-    }
-
-    main .flex.h-full.min-h-0.flex-col.overflow-hidden,
-    main .flex.h-full.min-h-0.w-full.flex-col.overflow-hidden {
-      height: auto !important;
-      max-height: none !important;
-      overflow: visible !important;
-    }
-
-    main .statement-table.card.flex.min-h-0 {
-      flex: none !important;
-      height: auto !important;
       overflow: visible !important;
     }
   }

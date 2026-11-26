@@ -64,8 +64,8 @@ export function DashboardAccountBalancesCard({
     "border-zyfn-line",
     "bg-white",
     column_fill
-      ? "min-h-0 flex-1 overflow-hidden lg:h-auto lg:min-h-0"
-      : "shrink-0 overflow-hidden",
+      ? "h-fit shrink-0 overflow-visible lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:h-auto"
+      : "shrink-0 overflow-visible lg:overflow-hidden",
     className,
   ].join(" ");
 
