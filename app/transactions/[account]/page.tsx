@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { TransactionAccountRoute } from "@/components/transaction_account_page";
 import {
   account_by_prefix_and_slug,
@@ -18,8 +18,13 @@ export function generateStaticParams() {
   }));
 }
 
+const LEGACY_TNG_SLUGS = new Set(["tng-ewallet", "tng-go-plus"]);
+
 export default async function TransactionAccountPage({ params }: Props) {
   const { account: slug } = await params;
+  if (LEGACY_TNG_SLUGS.has(slug)) {
+    redirect("/transactions/touch-n-go");
+  }
   const entry = account_by_prefix_and_slug("transactions", slug);
   if (!entry) notFound();
 

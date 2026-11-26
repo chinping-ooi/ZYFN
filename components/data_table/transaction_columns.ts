@@ -106,7 +106,9 @@ export function transaction_columns(
   options?: TransactionColumnsOptions,
 ): DataTableColumn<TransactionTableRow>[] {
   const money_cols =
-    kind === "tng_go_plus" ? go_plus_money_columns() : sen_money_columns(kind);
+    kind === "tng_go_plus" || kind === "tng_combined"
+      ? go_plus_money_columns()
+      : sen_money_columns(kind);
 
   const cols = [DATE_COL, TYPE_COL, DETAIL_COL, DESCRIPTION_COL, ...money_cols];
   if (options?.account_label) {

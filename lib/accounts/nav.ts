@@ -38,7 +38,9 @@ function build_account_nav_groups(): NavGroup[] {
   const groups: NavGroup[] = NAV_GROUP_ORDER.map((title) => ({
     title,
     defaultOpen: true,
-    items: ACCOUNTS.filter((entry) => entry.nav_group === title).map(
+    items: ACCOUNTS.filter(
+      (entry) => entry.nav_group === title && entry.show_in_nav !== false,
+    ).map(
       (entry) => ({
         href: account_path(entry),
         label: entry.account_label,

@@ -77,6 +77,16 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     kind: "credit_card",
   },
   {
+    slug: "touch-n-go",
+    route_prefix: "transactions",
+    nav_group: "Wallets",
+    title: "Touch 'n Go",
+    account_ref: "TNG",
+    account_label: "Touch 'n Go",
+    kind: "tng_combined",
+    show_in_nav: true,
+  },
+  {
     slug: "tng-ewallet",
     route_prefix: "transactions",
     nav_group: "Wallets",
@@ -85,6 +95,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     account_label: "TNG eWallet",
     account_id: 4,
     kind: "tng_wallet",
+    show_in_nav: false,
   },
   {
     slug: "tng-go-plus",
@@ -95,6 +106,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     account_label: "TNG GO+",
     account_id: 5,
     kind: "tng_go_plus",
+    show_in_nav: false,
   },
 ];
 

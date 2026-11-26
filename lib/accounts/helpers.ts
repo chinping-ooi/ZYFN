@@ -7,7 +7,7 @@ export function spending_breakdown_account_bucket(statement: {
   account_label: string;
 }): { id: string; label: string } {
   if (TNG_SPENDING_BREAKDOWN_REFS.has(statement.account_ref)) {
-    return { id: "tng", label: "TNG" };
+    return { id: "tng", label: "Touch 'n Go" };
   }
   return {
     id: statement.account_ref.toLowerCase(),
@@ -16,6 +16,13 @@ export function spending_breakdown_account_bucket(statement: {
 }
 
 export function statement_kpi_labels(kind: TransactionAccountKind) {
+  if (kind === "tng_combined") {
+    return {
+      total_in: "Total in",
+      total_out: "Total out",
+      closing: "Combined balance",
+    };
+  }
   if (kind === "credit_card") {
     return {
       total_in: "Total credits",

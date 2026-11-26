@@ -9,6 +9,7 @@ const ACCOUNT_KINDS = [
   "credit_card",
   "tng_wallet",
   "tng_go_plus",
+  "tng_combined",
 ] as const;
 
 function assert_labeled_columns<T>(

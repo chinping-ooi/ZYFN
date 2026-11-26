@@ -72,7 +72,7 @@ export function dashboard_account_balances(
     },
     {
       id: "tng",
-      name: "TNG",
+      name: "Touch 'n Go",
       sub_label: "eWallet + GO+",
       balance_sen: tng_sen,
     },

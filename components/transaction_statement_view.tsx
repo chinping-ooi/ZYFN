@@ -7,6 +7,7 @@ import {
   transaction_month_options,
 } from "@/lib/supabase/transaction_statement";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
+import { use_hide_amounts } from "@/lib/hooks/use_hide_amounts";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
@@ -20,6 +21,7 @@ export function TransactionStatementView({
   data: AccountStatementFromDb;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
+  const { amounts_hidden } = use_hide_amounts();
   const use_micro = data.amount_scale === "micro";
   const money_dp = use_micro ? 4 : 2;
 
@@ -71,6 +73,7 @@ export function TransactionStatementView({
           <KpiCard
             compact_amount
             label={labels.total_in}
+            hide_amount={amounts_hidden}
             amount_sen={use_micro ? null : statement.total_in_sen}
             amount_micro={use_micro ? statement.total_in_micro : null}
             money_dp={money_dp}
@@ -78,6 +81,7 @@ export function TransactionStatementView({
           <KpiCard
             compact_amount
             label={labels.total_out}
+            hide_amount={amounts_hidden}
             amount_sen={use_micro ? null : statement.total_out_sen}
             amount_micro={use_micro ? statement.total_out_micro : null}
             money_dp={money_dp}
@@ -85,12 +89,12 @@ export function TransactionStatementView({
           <KpiCard
             compact_amount
             label="Transactions"
-            hide_amount
             meta={`${row_count_in_view} row${row_count_in_view === 1 ? "" : "s"} in view`}
           />
           <KpiCard
             compact_amount
             label={labels.closing}
+            hide_amount={amounts_hidden}
             amount_sen={use_micro ? null : statement.closing_sen}
             amount_micro={use_micro ? statement.closing_micro : null}
             money_dp={money_dp}
@@ -106,6 +110,7 @@ export function TransactionStatementView({
           rows={table_rows}
           kind={data.account_kind}
           fill_height
+          mask_amounts={amounts_hidden}
         />
       </AccountTableCard>
     </div>

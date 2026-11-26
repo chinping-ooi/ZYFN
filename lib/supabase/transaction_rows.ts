@@ -39,7 +39,8 @@ export type ZyfnTransactionRow = {
 };
 
 function amount_scale_for_kind(kind: TransactionAccountKind): AmountScale {
-  return kind === "tng_go_plus" ? "micro" : "sen";
+  if (kind === "tng_go_plus" || kind === "tng_combined") return "micro";
+  return "sen";
 }
 
 export function map_transaction_row(

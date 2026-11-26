@@ -61,6 +61,10 @@ type Props<T extends Record<string, unknown>> = {
   loading?: boolean;
   skeleton_variant?: DataTableSkeletonVariant;
   skeleton_show_bank?: boolean;
+  /** When true, money columns render as RM *** (hide-amounts preference). */
+  mask_amounts?: boolean;
+  /** TNG combined: badge on GO+ ledger rows when visible. */
+  show_go_plus_badge?: boolean;
 };
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -81,6 +85,8 @@ export function DataTable<T extends Record<string, unknown>>({
   loading = false,
   skeleton_variant = "transaction",
   skeleton_show_bank = false,
+  mask_amounts = false,
+  show_go_plus_badge = false,
 }: Props<T>) {
   void scope;
   const safe_columns = columns ?? EMPTY_COLUMNS;
@@ -108,7 +114,7 @@ export function DataTable<T extends Record<string, unknown>>({
     let result = safe_rows.filter((row) =>
       labeled_columns.some((column) => {
         const raw = row[column.key];
-        const display = display_cell(row, column);
+        const display = display_cell(row, column, { mask_amounts });
         return `${raw ?? ""} ${display}`.toLocaleLowerCase().includes(query);
       }),
     );
@@ -118,7 +124,7 @@ export function DataTable<T extends Record<string, unknown>>({
       result = [...result].sort((a, b) => compare_rows(a, b, column, dir));
     }
     return result;
-  }, [safe_rows, labeled_columns, search, sort_key, sort_direction]);
+  }, [safe_rows, labeled_columns, search, sort_key, sort_direction, mask_amounts]);
 
   const export_source_rows = useMemo(
     () =>
@@ -274,7 +280,11 @@ export function DataTable<T extends Record<string, unknown>>({
                     column.type ?? "",
                   );
                   const raw = row[column.key];
-                  const text = display_cell(row, column);
+                  const text = display_cell(row, column, { mask_amounts });
+                  const is_go_plus_row =
+                    show_go_plus_badge &&
+                    column.key === "description" &&
+                    row.tng_sub_account === "go_plus";
                   return (
                     <td
                       key={column.key}
@@ -294,7 +304,16 @@ export function DataTable<T extends Record<string, unknown>>({
                       {column.type === "status" ? (
                         <StatusBadge status={String(raw)} />
                       ) : column.key === "description" ? (
-                        <div className="line-clamp-3 break-words">{text}</div>
+                        <div className="flex flex-wrap items-start gap-1.5">
+                          {is_go_plus_row ? (
+                            <span className="mt-0.5 shrink-0 rounded-[2px] border border-zyfn-line bg-[#f4f6f8] px-1 py-px text-[10px] font-semibold uppercase tracking-wide text-zyfn-navy">
+                              GO+
+                            </span>
+                          ) : null}
+                          <div className="line-clamp-3 min-w-0 flex-1 break-words">
+                            {text}
+                          </div>
+                        </div>
                       ) : (
                         text
                       )}
