@@ -25,7 +25,7 @@ export function FixedDepositBankToggle({
   const active_slug = searchParams.get("bank")?.trim() || null;
 
   const options = [
-    { slug: null as string | null, label: "All" },
+    { slug: null as string | null, label: "Overview" },
     ...ordered_bank_codes(bank_codes).map((code) => ({
       slug: bank_code_to_slug(code),
       label: bank_code_to_label(code),
