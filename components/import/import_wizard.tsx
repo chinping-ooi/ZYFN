@@ -725,7 +725,7 @@ export function ImportWizard() {
       />
 
       {step === "preview" ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+        <div className="flex flex-col gap-3 max-lg:h-auto lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <section className={`${CARD_SHELL} shrink-0 py-4`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">

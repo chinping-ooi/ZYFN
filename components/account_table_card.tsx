@@ -22,8 +22,8 @@ export function AccountTableCard({
 }) {
   return (
     <section
-      className={`statement-table card flex min-h-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${
-        fill_height ? "flex-1" : ""
+      className={`statement-table card flex flex-col rounded-[3px] border border-zyfn-line bg-white max-lg:h-auto max-lg:overflow-visible lg:min-h-0 lg:overflow-hidden ${
+        fill_height ? "lg:flex-1" : ""
       }`}
     >
       <CardHead title={title} table_shell align="center" />

@@ -11,7 +11,8 @@
     "report:tng-parse": "npx tsx scripts/report_tng_parse.mjs",
     "smoke:tng-client-parse": "npx tsx scripts/smoke_tng_client_parse.mjs",
     "audit:dashboard-month": "npx tsx scripts/audit_dashboard_month.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:responsive-scroll": "node scripts/verify_responsive_scroll.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",
@@ -33,6 +34,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.3",
+    "playwright": "^1.52.0",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"

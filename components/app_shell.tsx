@@ -27,9 +27,9 @@ export function AppShell({
     : null;
 
   return (
-    <div className="shell flex h-screen min-h-screen min-w-0 overflow-hidden">
+    <div className="shell flex min-h-screen min-w-0 max-lg:h-auto max-lg:overflow-x-clip lg:h-screen lg:overflow-hidden">
       <Sidebar mobile_open={mobile_nav} on_close={close_nav} />
-      <div className="workspace flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
+      <div className="workspace flex min-h-0 min-w-0 w-full flex-1 flex-col max-lg:h-auto max-lg:overflow-visible lg:h-full lg:overflow-hidden">
         <header className="topbar flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-zyfn-line bg-white px-4 lg:px-8">
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <button
@@ -49,7 +49,7 @@ export function AppShell({
           <WorkspaceProfileMenu />
         </header>
         <main
-          className={`content mx-auto flex w-full min-w-0 max-w-[1560px] flex-1 flex-col min-h-0 overflow-y-auto overflow-x-clip lg:overflow-x-hidden ${
+          className={`content mx-auto flex w-full min-w-0 max-w-[1560px] flex-col max-lg:h-auto max-lg:flex-none max-lg:overflow-visible lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:overflow-x-clip ${
             dashboard_grid
               ? "dashboard-main"
               : `px-4 lg:px-8 ${viewport_lock ? "py-3 lg:py-3" : "py-4 lg:py-6"} ${
