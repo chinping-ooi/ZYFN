@@ -56,6 +56,7 @@ export function SummaryBreakdownLegendList({
   aria_label,
   color_for_index,
   className = "",
+  layout = "default",
 }: {
   rows: TxnTypeBreakdownRow[];
   scale: AmountScale;
@@ -66,6 +67,8 @@ export function SummaryBreakdownLegendList({
   /** Accepted for API stability; single-line legend does not use bar colours. */
   bar_color_for_index?: (index: number) => string;
   className?: string;
+  /** Tighter right columns for Income/Spending cards. */
+  layout?: "default" | "type_card";
 }) {
   const dot_color = color_for_index ?? ((i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length]);
 
@@ -77,7 +80,11 @@ export function SummaryBreakdownLegendList({
       {rows.map((row, i) => (
         <li
           key={row.type_key}
-          className="grid grid-cols-[auto_minmax(0,1fr)_auto_3.25rem] items-center gap-x-2.5 py-3 text-sm first:pt-0"
+          className={
+            layout === "type_card"
+              ? "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 py-3 text-sm first:pt-0"
+              : "grid grid-cols-[auto_minmax(0,1fr)_auto_3.25rem] items-center gap-x-2.5 py-3 text-sm first:pt-0"
+          }
           onMouseEnter={() =>
             chart_ref ? highlight_slice(chart_ref, i) : undefined
           }
@@ -85,23 +92,54 @@ export function SummaryBreakdownLegendList({
             chart_ref ? highlight_slice(chart_ref, null) : undefined
           }
         >
-          <span
-            className="size-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: dot_color(i) }}
-            aria-hidden
-          />
-          <span
-            className="min-w-0 truncate font-medium text-zyfn-ink"
-            title={row.label}
-          >
-            {row.label}
-          </span>
-          <span className="shrink-0 text-right text-[13px] font-semibold tabular-nums text-zyfn-ink">
-            {format_row_amount(scale, row, money_dp)}
-          </span>
-          <span className="text-right text-[12px] tabular-nums text-zyfn-muted">
-            {row.pct.toFixed(1)}%
-          </span>
+          {layout === "type_card" ? (
+            <span className="flex min-w-0 items-center gap-2">
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: dot_color(i) }}
+                aria-hidden
+              />
+              <span
+                className="min-w-0 truncate font-medium text-zyfn-ink"
+                title={row.label}
+              >
+                {row.label}
+              </span>
+            </span>
+          ) : (
+            <>
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: dot_color(i) }}
+                aria-hidden
+              />
+              <span
+                className="min-w-0 truncate font-medium text-zyfn-ink"
+                title={row.label}
+              >
+                {row.label}
+              </span>
+            </>
+          )}
+          {layout === "type_card" ? (
+            <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
+              <span className="text-[13px] font-semibold text-zyfn-ink">
+                {format_row_amount(scale, row, money_dp)}
+              </span>
+              <span className="w-10 text-right text-[12px] text-zyfn-muted">
+                {row.pct.toFixed(1)}%
+              </span>
+            </span>
+          ) : (
+            <>
+              <span className="shrink-0 text-right text-[13px] font-semibold tabular-nums text-zyfn-ink">
+                {format_row_amount(scale, row, money_dp)}
+              </span>
+              <span className="text-right text-[12px] tabular-nums text-zyfn-muted">
+                {row.pct.toFixed(1)}%
+              </span>
+            </>
+          )}
         </li>
       ))}
     </ul>

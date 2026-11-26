@@ -60,14 +60,18 @@ function format_net(
   return `${sign}${format_rm(Math.abs(net_sen))}`;
 }
 
+const TYPE_CARD_SHELL_BODY = "!px-6 md:!px-6";
+
 const TYPE_CARD_BODY =
-  "grid min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-5 md:items-start md:gap-x-6 md:gap-y-4";
+  "grid min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-5 md:items-center md:gap-x-6 md:gap-y-4";
 
 const TYPE_CARD_DONUT_CELL =
-  "col-span-1 flex min-w-0 items-center justify-center md:col-span-2";
+  "col-span-1 flex w-full min-w-0 items-center justify-center md:col-span-2";
 
 const TYPE_CARD_LEGEND_CELL =
-  "col-span-1 min-w-0 md:col-span-3 md:pl-1 md:pr-3 md:pt-0.5";
+  "col-span-1 flex min-w-0 items-center justify-start md:col-span-3";
+
+const TYPE_CARD_LEGEND_INNER = "w-full min-w-0 max-w-md";
 
 const OVERVIEW_DONUT_PX = 275;
 const DONUT_CENTER_CAPTION = "Total";
@@ -95,13 +99,16 @@ function SummaryTypeCardEmpty({
           center_caption={DONUT_CENTER_CAPTION}
           center_bottom={empty_total}
           size_px={size_px}
+          constrain_to_column
           aria_label="Empty summary donut"
         />
       </div>
-      <div
-        className={`${TYPE_CARD_LEGEND_CELL} flex min-h-[220px] items-center justify-center`}
-      >
-        <p className="m-0 text-sm text-zyfn-muted">{message}</p>
+      <div className={TYPE_CARD_LEGEND_CELL}>
+        <div
+          className={`${TYPE_CARD_LEGEND_INNER} flex min-h-[220px] items-center justify-center`}
+        >
+          <p className="m-0 text-sm text-zyfn-muted">{message}</p>
+        </div>
       </div>
     </div>
   );
@@ -243,7 +250,11 @@ export function CashFlowSummary({
       </div>
 
       <div className="flex h-full min-h-0 flex-col gap-[18px]">
-        <SummaryCardShell title="Income" className="min-h-[280px] flex-1">
+        <SummaryCardShell
+          title="Income"
+          className="min-h-[280px] flex-1"
+          bodyClassName={TYPE_CARD_SHELL_BODY}
+        >
           {in_has_data ? (
             <div className={TYPE_CARD_BODY}>
               <div className={TYPE_CARD_DONUT_CELL}>
@@ -255,6 +266,7 @@ export function CashFlowSummary({
                   )}
                   center_caption={DONUT_CENTER_CAPTION}
                   center_bottom={money_in_total}
+                  constrain_to_column
                   aria_label={`Income donut, total ${money_in_total}`}
                 tooltip_callback={(index) => {
                   const row = breakdown_in.rows[index];
@@ -268,13 +280,16 @@ export function CashFlowSummary({
                 />
               </div>
               <div className={TYPE_CARD_LEGEND_CELL}>
-                <SummaryBreakdownLegendList
-                  rows={breakdown_in.rows}
-                  scale={amount_scale}
-                  money_dp={money_dp}
-                  chart_ref={money_in_chart_ref}
-                  aria_label="Money in by transaction type"
-                />
+                <div className={TYPE_CARD_LEGEND_INNER}>
+                  <SummaryBreakdownLegendList
+                    rows={breakdown_in.rows}
+                    scale={amount_scale}
+                    money_dp={money_dp}
+                    chart_ref={money_in_chart_ref}
+                    aria_label="Money in by transaction type"
+                    layout="type_card"
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -285,7 +300,11 @@ export function CashFlowSummary({
           )}
         </SummaryCardShell>
 
-        <SummaryCardShell title="Spending" className="min-h-[280px] flex-1">
+        <SummaryCardShell
+          title="Spending"
+          className="min-h-[280px] flex-1"
+          bodyClassName={TYPE_CARD_SHELL_BODY}
+        >
           {out_has_data ? (
             <div className={TYPE_CARD_BODY}>
               <div className={TYPE_CARD_DONUT_CELL}>
@@ -297,6 +316,7 @@ export function CashFlowSummary({
                   )}
                   center_caption={DONUT_CENTER_CAPTION}
                   center_bottom={money_out_total}
+                  constrain_to_column
                   aria_label={`Spending donut, total ${money_out_total}`}
                 tooltip_callback={(index) => {
                   const row = breakdown_out.rows[index];
@@ -310,13 +330,16 @@ export function CashFlowSummary({
                 />
               </div>
               <div className={TYPE_CARD_LEGEND_CELL}>
-                <SummaryBreakdownLegendList
-                  rows={breakdown_out.rows}
-                  scale={amount_scale}
-                  money_dp={money_dp}
-                  chart_ref={money_out_chart_ref}
-                  aria_label="Money out by transaction type"
-                />
+                <div className={TYPE_CARD_LEGEND_INNER}>
+                  <SummaryBreakdownLegendList
+                    rows={breakdown_out.rows}
+                    scale={amount_scale}
+                    money_dp={money_dp}
+                    chart_ref={money_out_chart_ref}
+                    aria_label="Money out by transaction type"
+                    layout="type_card"
+                  />
+                </div>
               </div>
             </div>
           ) : (

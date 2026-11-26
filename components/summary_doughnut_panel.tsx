@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useRef, type RefObject } from "react";
+import {
+  useMemo,
+  useRef,
+  type CSSProperties,
+  type RefObject,
+} from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -46,6 +51,26 @@ function DonutCenterLabel({
   );
 }
 
+function donutFrameStyle(
+  size_px: number,
+  constrain_to_column: boolean,
+): CSSProperties {
+  if (constrain_to_column) {
+    return { width: "100%", maxWidth: size_px, aspectRatio: 1 };
+  }
+  return { width: size_px, height: size_px };
+}
+
+function donutFrameClass(
+  constrain_to_column: boolean,
+  className: string,
+): string {
+  const base = constrain_to_column
+    ? "relative mx-auto flex aspect-square w-full items-center justify-center"
+    : "relative flex shrink-0 items-center justify-center";
+  return `${base} ${className}`.trim();
+}
+
 /** Grey placeholder ring for summary cards with no data (no tooltips). */
 export function SummaryPlaceholderDonut({
   center_caption,
@@ -53,12 +78,14 @@ export function SummaryPlaceholderDonut({
   aria_label,
   className = "mx-auto",
   size_px = DEFAULT_DONUT_PX,
+  constrain_to_column = false,
 }: {
   center_caption?: string;
   center_bottom: string;
   aria_label: string;
   className?: string;
   size_px?: number;
+  constrain_to_column?: boolean;
 }) {
   const chart_data = useMemo(
     () => ({
@@ -95,8 +122,8 @@ export function SummaryPlaceholderDonut({
 
   return (
     <div
-      className={`relative flex shrink-0 items-center justify-center ${className}`}
-      style={{ height: size_px, width: size_px }}
+      className={donutFrameClass(constrain_to_column, className)}
+      style={donutFrameStyle(size_px, constrain_to_column)}
       aria-label={aria_label}
     >
       <Doughnut
@@ -122,6 +149,7 @@ export function SummaryDoughnutPanel({
   chart_ref: external_ref,
   className = "mx-auto",
   size_px = DEFAULT_DONUT_PX,
+  constrain_to_column = false,
 }: {
   values: number[];
   colors: string[];
@@ -132,6 +160,7 @@ export function SummaryDoughnutPanel({
   chart_ref?: RefObject<ChartInstance<"doughnut"> | null>;
   className?: string;
   size_px?: number;
+  constrain_to_column?: boolean;
 }) {
   const internal_ref = useRef<ChartInstance<"doughnut"> | null>(null);
   const chart_ref = external_ref ?? internal_ref;
@@ -190,8 +219,8 @@ export function SummaryDoughnutPanel({
 
   return (
     <div
-      className={`relative flex shrink-0 items-center justify-center ${className}`}
-      style={{ height: size_px, width: size_px }}
+      className={donutFrameClass(constrain_to_column, className)}
+      style={donutFrameStyle(size_px, constrain_to_column)}
       aria-label={aria_label}
     >
       <Doughnut
