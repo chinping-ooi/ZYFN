@@ -47,6 +47,9 @@ export function AccountBalancesSkeleton({
           </div>
         ))}
       </div>
+      <div className="chart-summary-footer relative z-10 mt-auto flex shrink-0 border-t border-zyfn-line bg-white px-2 py-1.5 lg:px-3 lg:py-2">
+        <Skeleton className="h-3 w-36" />
+      </div>
     </section>
   );
 }

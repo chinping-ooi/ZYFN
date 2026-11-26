@@ -1,7 +1,13 @@
 "use client";
 
 import { Eye, EyeOff } from "lucide-react";
+import { useMemo } from "react";
 import type { DashboardBalanceRow } from "@/lib/dashboard/dashboard_balances";
+import { sum_dashboard_balance_rows_sen } from "@/lib/dashboard/dashboard_balances";
+import {
+  CardSummaryFooter,
+  CardSummaryFooterMetric,
+} from "@/components/card_summary_footer";
 import { CardHead } from "@/components/card_head";
 import { MaskedAmount } from "@/components/masked_amount";
 import { use_hide_amounts } from "@/lib/hooks/use_hide_amounts";
@@ -44,6 +50,10 @@ export function DashboardAccountBalancesCard({
   column_fill?: boolean;
 }) {
   const { amounts_hidden, toggle_amounts_hidden } = use_hide_amounts();
+  const total_sen = useMemo(
+    () => sum_dashboard_balance_rows_sen(rows),
+    [rows],
+  );
 
   const shell = [
     "card",
@@ -95,6 +105,17 @@ export function DashboardAccountBalancesCard({
           </div>
         ))}
       </div>
+      <CardSummaryFooter testId="account-balances-footer">
+        <CardSummaryFooterMetric
+          label="Total assets"
+          value={
+            <MaskedAmount
+              amounts_hidden={amounts_hidden}
+              amount_sen={total_sen}
+            />
+          }
+        />
+      </CardSummaryFooter>
     </section>
   );
 }

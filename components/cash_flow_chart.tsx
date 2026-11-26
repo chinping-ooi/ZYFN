@@ -7,6 +7,10 @@ import {
   chart_axis_max,
 } from "@/lib/chart_scale";
 import { format_rm, type MinorAmount } from "@/lib/money";
+import {
+  CardSummaryFooter,
+  CardSummaryFooterMetric,
+} from "@/components/card_summary_footer";
 import { CardHead } from "@/components/card_head";
 
 type Props = {
@@ -135,23 +139,13 @@ export function CashFlowChart({
     : `card overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${className}`;
 
   const footer = (
-    <div
-      className="chart-summary-footer relative z-10 mt-auto flex shrink-0 flex-col gap-0.5 border-t border-zyfn-line bg-white px-2 py-1.5 text-[10px] leading-snug text-zyfn-muted min-[1100px]:flex-row min-[1100px]:items-center min-[1100px]:justify-between min-[1100px]:gap-2 lg:px-3 lg:py-2 lg:text-[11px]"
-      data-testid="chart-summary-footer"
-    >
-      <span className="whitespace-nowrap">
-        Monthly income
-        <strong className="ml-1 text-[10px] font-semibold text-zyfn-ink lg:ml-1.5 lg:text-xs">
-          {format_rm(monthly_income_sen)}
-        </strong>
-      </span>
-      <span className="whitespace-nowrap">
-        Net cash flow
-        <strong className="ml-1 text-[10px] font-semibold text-zyfn-ink lg:ml-1.5 lg:text-xs">
-          {net_label}
-        </strong>
-      </span>
-    </div>
+    <CardSummaryFooter testId="chart-summary-footer">
+      <CardSummaryFooterMetric
+        label="Monthly income"
+        value={format_rm(monthly_income_sen)}
+      />
+      <CardSummaryFooterMetric label="Net cash flow" value={net_label} />
+    </CardSummaryFooter>
   );
 
   const plot_body = (

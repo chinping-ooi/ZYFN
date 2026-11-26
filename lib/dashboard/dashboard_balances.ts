@@ -84,3 +84,10 @@ export function dashboard_account_balances(
     },
   ];
 }
+
+/** Sum dashboard balance rows in integer sen (no float drift). */
+export function sum_dashboard_balance_rows_sen(
+  rows: DashboardBalanceRow[],
+): MinorAmount {
+  return rows.reduce((sum, row) => sum + row.balance_sen, 0);
+}
