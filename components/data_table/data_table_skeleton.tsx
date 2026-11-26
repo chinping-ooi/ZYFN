@@ -10,7 +10,7 @@ const TRANSACTION_HEADER_WIDTHS = [
   "w-[6.75rem] max-w-[6.75rem]",
   "w-[8.5rem] max-w-[8.5rem]",
   "w-[8.5rem] max-w-[8.5rem]",
-  "w-[38%] min-w-[11rem]",
+  "min-w-[11rem]",
   "w-[6.25rem] max-w-[6.25rem]",
   "w-[6.25rem] max-w-[6.25rem]",
   "w-[6.25rem] max-w-[6.25rem]",

@@ -337,16 +337,12 @@ export function ImportWizard() {
 
   const file_input_id = "import-statement-file";
 
-  const narrow = "mx-auto w-full max-w-3xl";
-
   return (
     <div className="flex w-full flex-col gap-4">
-      <div className={narrow}>
-        <ImportStepper current={step} mapping_skipped={mapping_skipped} />
-      </div>
+      <ImportStepper current={step} mapping_skipped={mapping_skipped} />
 
       {step === "start" ? (
-        <section className={`${CARD_SHELL} ${narrow}`}>
+        <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
             1. Account &amp; statement
           </h2>
@@ -463,7 +459,7 @@ export function ImportWizard() {
       ) : null}
 
       {step === "map" && mapping && headers.length > 0 ? (
-        <section className={`${CARD_SHELL} ${narrow}`}>
+        <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
             2. Column mapping
           </h2>
@@ -499,7 +495,7 @@ export function ImportWizard() {
 
       {step === "preview" ? (
         <>
-          <section className={`${CARD_SHELL} ${narrow} py-4`}>
+          <section className={`${CARD_SHELL} py-4`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-zyfn-navy">
@@ -564,7 +560,7 @@ export function ImportWizard() {
       ) : null}
 
       {step === "done" && result ? (
-        <section className={`${CARD_SHELL} ${narrow}`}>
+        <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">4. Import complete</h2>
           <p className="mt-2 text-[13px] text-slate-700">
             Inserted {result.inserted} row(s). Skipped {result.skipped_duplicates}{" "}

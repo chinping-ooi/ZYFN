@@ -199,6 +199,11 @@ export function DataTable<T extends Record<string, unknown>>({
           }`}
           aria-label={label}
         >
+          <colgroup>
+            {labeled_columns.map((column) => (
+              <col key={column.key} className={column_header_class(column)} />
+            ))}
+          </colgroup>
           <thead>
             <tr>
               {labeled_columns.map((column) => {

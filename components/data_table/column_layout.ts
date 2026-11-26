@@ -13,7 +13,8 @@ export function column_header_class<T>(
   } else if (column.type === "money" || column.type === "money_micro") {
     parts.push("w-[6.25rem] max-w-[6.25rem]");
   } else if (column.key === "description") {
-    parts.push("w-[38%] min-w-[11rem]");
+    /* No % width — table-fixed + rem columns must not exceed 100% (avoids phantom col). */
+    parts.push("min-w-[11rem]");
   } else if (
     column.key === "status" ||
     column.key === "status_label" ||
@@ -56,9 +57,7 @@ export function column_cell_class<T>(
   } else if (column.type === "money" || column.type === "money_micro") {
     parts.push("whitespace-nowrap tabular-nums");
   } else if (column.key === "description") {
-    parts.push(
-      "min-w-[11rem] whitespace-normal break-words line-clamp-3 text-left",
-    );
+    parts.push("min-w-0 whitespace-normal break-words line-clamp-3 text-left");
   } else if (column.type === "status" || column.key === "days_left") {
     parts.push("whitespace-nowrap");
   } else {
