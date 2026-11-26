@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type ReactNode } from "react";
 import type { Chart as ChartInstance } from "chart.js";
 import type { AmountScale } from "@/lib/supabase/transaction_rows";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
@@ -32,6 +32,8 @@ export type CashFlowSummaryProps = {
   closing_micro?: number;
   section_aria_label?: string;
   className?: string;
+  /** Rendered inside the Overview card below the donut and legend. */
+  overview_footer?: ReactNode;
 };
 
 function format_flow_total(
@@ -127,6 +129,7 @@ export function CashFlowSummary({
   closing_micro = 0,
   section_aria_label = "Cash flow summary",
   className = "",
+  overview_footer,
 }: CashFlowSummaryProps) {
   const flow_chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
   const money_in_chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
@@ -233,6 +236,7 @@ export function CashFlowSummary({
                 i === 0 ? IN_FLOW_COLOR : OUT_FLOW_COLOR
               }
             />
+            {overview_footer}
           </div>
         ) : (
           <div className="flex w-full flex-col gap-5">
@@ -245,6 +249,7 @@ export function CashFlowSummary({
             <p className="m-0 py-2 text-center text-sm text-zyfn-muted">
               No transactions this month
             </p>
+            {overview_footer}
           </div>
         )}
         </SummaryCardShell>
