@@ -9,7 +9,10 @@ import { txn_type_breakdown } from "@/lib/transactions/type_breakdown";
 import { in_out_flow_breakdown } from "@/lib/transactions/in_out_flow";
 import { format_rm } from "@/lib/money";
 import { format_micro_money } from "@/lib/tng/money_micro";
-import { SummaryDoughnutPanel } from "@/components/summary_doughnut_panel";
+import {
+  SummaryDoughnutPanel,
+  SummaryPlaceholderDonut,
+} from "@/components/summary_doughnut_panel";
 import {
   IN_FLOW_COLOR,
   OUT_FLOW_COLOR,
@@ -68,6 +71,41 @@ const TYPE_CARD_LEGEND_CELL =
 
 const OVERVIEW_DONUT_PX = 275;
 const DONUT_CENTER_CAPTION = "Total";
+
+function empty_total_label(scale: AmountScale, money_dp: 2 | 4): string {
+  if (scale === "micro") {
+    return `RM ${format_micro_money(0, money_dp)}`;
+  }
+  return format_rm(0);
+}
+
+function SummaryTypeCardEmpty({
+  message,
+  empty_total,
+  size_px = 220,
+}: {
+  message: string;
+  empty_total: string;
+  size_px?: number;
+}) {
+  return (
+    <div className={TYPE_CARD_BODY}>
+      <div className={TYPE_CARD_DONUT_CELL}>
+        <SummaryPlaceholderDonut
+          center_caption={DONUT_CENTER_CAPTION}
+          center_bottom={empty_total}
+          size_px={size_px}
+          aria_label="Empty summary donut"
+        />
+      </div>
+      <div
+        className={`${TYPE_CARD_LEGEND_CELL} flex min-h-[220px] items-center justify-center`}
+      >
+        <p className="m-0 text-sm text-zyfn-muted">{message}</p>
+      </div>
+    </div>
+  );
+}
 
 /** Three-card summary: net in vs out donut, money in / money out type breakdowns. */
 export function CashFlowSummary({
@@ -143,6 +181,7 @@ export function CashFlowSummary({
   const flow_has_data = flow_values.some((v) => v > 0);
   const in_has_data = in_values.some((v) => v > 0);
   const out_has_data = out_values.some((v) => v > 0);
+  const empty_total = empty_total_label(amount_scale, money_dp);
 
   return (
     <section
@@ -188,9 +227,17 @@ export function CashFlowSummary({
             />
           </div>
         ) : (
-          <p className="m-0 text-center text-sm text-zyfn-muted">
-            No money in or out in this period.
-          </p>
+          <div className="flex w-full flex-col gap-5">
+            <SummaryPlaceholderDonut
+              center_caption={DONUT_CENTER_CAPTION}
+              center_bottom={empty_total}
+              size_px={OVERVIEW_DONUT_PX}
+              aria_label="Empty overview donut"
+            />
+            <p className="m-0 py-2 text-center text-sm text-zyfn-muted">
+              No transactions this month
+            </p>
+          </div>
         )}
         </SummaryCardShell>
       </div>
@@ -231,9 +278,10 @@ export function CashFlowSummary({
               </div>
             </div>
           ) : (
-            <p className="text-center text-sm text-zyfn-muted">
-              No money in in this period.
-            </p>
+            <SummaryTypeCardEmpty
+              message="No income this month"
+              empty_total={empty_total}
+            />
           )}
         </SummaryCardShell>
 
@@ -272,9 +320,10 @@ export function CashFlowSummary({
               </div>
             </div>
           ) : (
-            <p className="text-center text-sm text-zyfn-muted">
-              No money out in this period.
-            </p>
+            <SummaryTypeCardEmpty
+              message="No spending this month"
+              empty_total={empty_total}
+            />
           )}
         </SummaryCardShell>
       </div>

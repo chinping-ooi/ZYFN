@@ -17,6 +17,100 @@ import {
 ChartJS.register(ArcElement, Tooltip);
 
 const DEFAULT_DONUT_PX = 220;
+const EMPTY_RING_COLOR = "#e2e8f0";
+
+function DonutCenterLabel({
+  center_caption,
+  center_bottom,
+}: {
+  center_caption?: string;
+  center_bottom: string;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      <div className="flex max-w-[62%] flex-col items-center text-center leading-tight">
+        {center_caption ? (
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-zyfn-muted">
+            {center_caption}
+          </span>
+        ) : null}
+        <span
+          className={`text-lg font-medium tabular-nums text-zyfn-ink md:text-xl ${
+            center_caption ? "mt-0.5" : ""
+          }`}
+        >
+          {center_bottom}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Grey placeholder ring for summary cards with no data (no tooltips). */
+export function SummaryPlaceholderDonut({
+  center_caption,
+  center_bottom,
+  aria_label,
+  className = "mx-auto",
+  size_px = DEFAULT_DONUT_PX,
+}: {
+  center_caption?: string;
+  center_bottom: string;
+  aria_label: string;
+  className?: string;
+  size_px?: number;
+}) {
+  const chart_data = useMemo(
+    () => ({
+      labels: [""],
+      datasets: [
+        {
+          data: [1],
+          backgroundColor: [EMPTY_RING_COLOR],
+          borderColor: "#ffffff",
+          borderWidth: 0,
+          hoverOffset: 0,
+        },
+      ],
+    }),
+    [],
+  );
+
+  const options: ChartOptions<"doughnut"> = useMemo(
+    () =>
+      summary_doughnut_options({
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        layout: { padding: 4 },
+        animation: false,
+        events: [],
+        plugins: {
+          tooltip: { enabled: false },
+        },
+        cutout: "62%",
+      }),
+    [],
+  );
+
+  return (
+    <div
+      className={`relative flex shrink-0 items-center justify-center ${className}`}
+      style={{ height: size_px, width: size_px }}
+      aria-label={aria_label}
+    >
+      <Doughnut
+        data={chart_data}
+        options={options}
+        plugins={[ZYFN_SUPPRESS_ARC_LABELS_PLUGIN]}
+      />
+      <DonutCenterLabel
+        center_caption={center_caption}
+        center_bottom={center_bottom}
+      />
+    </div>
+  );
+}
 
 export function SummaryDoughnutPanel({
   values,
@@ -106,22 +200,10 @@ export function SummaryDoughnutPanel({
         options={options}
         plugins={[ZYFN_SUPPRESS_ARC_LABELS_PLUGIN]}
       />
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="flex max-w-[62%] flex-col items-center text-center leading-tight">
-          {center_caption ? (
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-zyfn-muted">
-              {center_caption}
-            </span>
-          ) : null}
-          <span
-            className={`text-lg font-medium tabular-nums text-zyfn-ink md:text-xl ${
-              center_caption ? "mt-0.5" : ""
-            }`}
-          >
-            {center_bottom}
-          </span>
-        </div>
-      </div>
+      <DonutCenterLabel
+        center_caption={center_caption}
+        center_bottom={center_bottom}
+      />
     </div>
   );
 }
