@@ -8,6 +8,7 @@ import { mbb_2_gold_combined_href } from "@/lib/credit_cards/mbb_2_gold_routes";
 import { mbb_2_gold_card_breakdown } from "@/lib/credit_cards/mbb_2_gold_breakdown";
 import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
+import { overview_includes_fd_slice } from "@/lib/wallets/overview";
 import { MonthSelect } from "@/components/month_select";
 import { Mbb2GoldCardBreakdownTable } from "@/components/mbb_2_gold_card_breakdown_table";
 
@@ -72,6 +73,7 @@ export function Mbb2GoldCombinedSummaryView({
         closing_micro={combined.closing_micro}
         section_aria_label="Account summary charts"
         overview_footer={overview_footer}
+        overview_include_fd_slice={overview_includes_fd_slice(combined.account_kind)}
       />
     </div>
   );
