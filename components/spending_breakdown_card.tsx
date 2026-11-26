@@ -270,12 +270,13 @@ function SpendingDonutPanel({
 
 export function SpendingBreakdownCard({
   rows,
-  month_label,
+  month_label: _month_label,
   className = "",
   content_sized = false,
   column_fill = false,
 }: {
   rows: SpendingAccountRow[];
+  /** Reserved for callers; subtitle removed from the card header. */
   month_label: string;
   className?: string;
   content_sized?: boolean;
@@ -327,7 +328,6 @@ export function SpendingBreakdownCard({
       <CardHead
         compact={content_sized}
         title="Spending breakdown"
-        subtitle={`By account · ${month_label}`}
         align="center"
       />
       {rows.length === 0 ? (

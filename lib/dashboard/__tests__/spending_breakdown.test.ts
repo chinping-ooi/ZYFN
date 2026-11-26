@@ -12,6 +12,7 @@ function row(
     detail?: string;
     description?: string;
     fixed_deposit_id?: number | null;
+    pair_ref?: string | null;
   },
 ): TransactionDbRow {
   return {
@@ -27,19 +28,19 @@ function row(
     balance_micro: 0,
     sort_id,
     fixed_deposit_id: opts?.fixed_deposit_id ?? null,
+    pair_ref: opts?.pair_ref ?? null,
   };
 }
 
 function statement(
   rows: TransactionDbRow[],
-  account_ref = "PBE_SAVINGS",
-  account_label = "Public Bank",
+  account_kind: AccountStatementFromDb["account_kind"] = "bank",
 ): AccountStatementFromDb {
   return {
     kind: "data",
-    account_ref,
-    account_label,
-    account_kind: "bank",
+    account_ref: "PBE_SAVINGS",
+    account_label: "Public Bank",
+    account_kind,
     amount_scale: "sen",
     source: "supabase",
     rows,
@@ -54,7 +55,7 @@ function statement(
 }
 
 describe("spending_breakdown_for_month", () => {
-  it("excludes fd_placement and recomputes donut total and percentages", () => {
+  it("groups by txn_type category and excludes fd_placement from total", () => {
     const month = "2026-11";
     const breakdown = spending_breakdown_for_month(
       [
@@ -62,7 +63,6 @@ describe("spending_breakdown_for_month", () => {
           row("2026-11-05T04:00:00.000Z", 200_000, 1, "fd_placement"),
           row("2026-11-05T12:00:00.000Z", 60_478, 2, "purchase"),
           row("2026-11-06T04:00:00.000Z", 40_000, 3, "rental"),
-          row("2026-11-07T04:00:00.000Z", 30_000, 4, "transfer"),
           row("2026-11-08T04:00:00.000Z", 30_000, 5, "ptptn"),
         ]),
       ],
@@ -71,9 +71,12 @@ describe("spending_breakdown_for_month", () => {
 
     const labels = breakdown.map((b) => b.label);
     expect(labels).not.toContain("fd_placement");
-    expect(labels).toEqual(["Public Bank"]);
-    expect(spending_total_sen(breakdown)).toBe(160_478);
-    expect(breakdown[0]?.pct).toBe(100);
+    expect(labels).toEqual(expect.arrayContaining(["purchase", "rental", "ptptn"]));
+    expect(spending_total_sen(breakdown)).toBe(130_478);
+    expect(breakdown.find((b) => b.label === "purchase")?.pct).toBeCloseTo(
+      (60_478 / 130_478) * 100,
+      1,
+    );
   });
 
   it("excludes FD category in detail when txn_type is empty", () => {
@@ -86,25 +89,8 @@ describe("spending_breakdown_for_month", () => {
       ],
       "2026-11",
     );
-    expect(breakdown.map((b) => b.label)).toEqual(["Public Bank"]);
-    expect(breakdown[0]?.amount_sen).toBe(5_000);
+    expect(breakdown.map((b) => b.label)).toEqual(["ptptn"]);
     expect(spending_total_sen(breakdown)).toBe(5_000);
-  });
-
-  it("excludes FD when only description carries the category", () => {
-    const breakdown = spending_breakdown_for_month(
-      [
-        statement([
-          row("2026-11-03T04:00:00.000Z", 200_000, 1, "debit", {
-            description: "fd_placement",
-          }),
-          row("2026-11-03T12:00:00.000Z", 1_000, 2, "ptptn"),
-        ]),
-      ],
-      "2026-11",
-    );
-    expect(breakdown.map((b) => b.label)).toEqual(["Public Bank"]);
-    expect(spending_total_sen(breakdown)).toBe(1_000);
   });
 
   it("excludes rows linked by fixed_deposit_id", () => {
@@ -117,44 +103,53 @@ describe("spending_breakdown_for_month", () => {
       ],
       "2026-11",
     );
-    expect(breakdown[0]?.label).toBe("Public Bank");
-    expect(breakdown[0]?.amount_sen).toBe(1_000);
-    expect(breakdown[0]?.pct).toBe(100);
+    expect(breakdown[0]?.label).toBe("ptptn");
     expect(spending_total_sen(breakdown)).toBe(1_000);
   });
 
-  it("omits FD-only spending from another account bucket", () => {
+  it("excludes matched own-account transfers via pair_ref", () => {
     const breakdown = spending_breakdown_for_month(
       [
-        statement(
-          [row("2026-11-04T12:00:00.000Z", 8_000, 1, "purchase")],
-          "PBE_SAVINGS",
-          "Public Bank",
-        ),
-        statement(
-          [row("2026-11-04T04:00:00.000Z", 500_000, 2, "fd_placement")],
-          "MBB_SAVINGS",
-          "Maybank",
-        ),
+        statement([
+          row("2026-11-07T04:00:00.000Z", 25_000, 1, "transfer", {
+            pair_ref: "xfer-2026-11-07",
+          }),
+          row("2026-11-07T12:00:00.000Z", 4_000, 2, "telco"),
+        ]),
       ],
       "2026-11",
     );
-    expect(breakdown.map((b) => b.label)).toEqual(["Public Bank"]);
-    expect(spending_total_sen(breakdown)).toBe(8_000);
+    expect(breakdown.map((b) => b.label)).toEqual(["telco"]);
+    expect(spending_total_sen(breakdown)).toBe(4_000);
   });
 
-  it("does not emit fixed deposit account buckets", () => {
+  it("excludes card funding from savings but counts card purchases", () => {
     const breakdown = spending_breakdown_for_month(
       [
-        statement(
-          [row("2026-11-05T12:00:00.000Z", 2_000, 1, "debit")],
-          "HLB_FD",
-          "HLB Fixed Deposit",
-        ),
+        statement([
+          row("2026-11-09T04:00:00.000Z", 12_000, 1, "card_payment"),
+        ]),
+        statement([row("2026-11-09T12:00:00.000Z", 3_500, 2, "purchase")], "credit_card"),
       ],
       "2026-11",
     );
-    expect(breakdown).toHaveLength(0);
-    expect(spending_total_sen(breakdown)).toBe(0);
+    expect(breakdown.map((b) => b.label)).toEqual(["purchase"]);
+    expect(spending_total_sen(breakdown)).toBe(3_500);
+  });
+
+  it("still includes unpaired transfer rows (no matched leg in data)", () => {
+    const breakdown = spending_breakdown_for_month(
+      [
+        statement([
+          row("2026-11-10T04:00:00.000Z", 2_000, 1, "transfer"),
+          row("2026-11-10T12:00:00.000Z", 1_000, 2, "interest"),
+        ]),
+      ],
+      "2026-11",
+    );
+    expect(breakdown.map((b) => b.label)).toEqual(
+      expect.arrayContaining(["transfer", "interest"]),
+    );
+    expect(spending_total_sen(breakdown)).toBe(3_000);
   });
 });

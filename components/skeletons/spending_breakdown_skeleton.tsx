@@ -36,7 +36,6 @@ export function SpendingBreakdownSkeleton({
       <CardHead
         compact={content_sized}
         title="Spending breakdown"
-        subtitle="By account"
         align="center"
       />
       <div className="spending-chart-body flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1 md:px-5 md:pb-4 lg:flex-1 lg:min-h-0">
