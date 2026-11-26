@@ -16,6 +16,8 @@ export type TransactionDataTableProps = {
   fill_height?: boolean;
   export_account_label?: string;
   loading?: boolean;
+  /** Import preview only — appends Status column via shared column builder. */
+  show_import_status?: boolean;
 };
 
 /** Single table implementation for all institution transaction pages. */
@@ -28,12 +30,15 @@ export function TransactionDataTable({
   fill_height = false,
   export_account_label,
   loading,
+  show_import_status = false,
 }: TransactionDataTableProps) {
   return (
     <DataTable<TransactionTableRow>
       label={label}
       scope={scope}
-      columns={transaction_columns(kind)}
+      columns={transaction_columns(kind, {
+        import_status: show_import_status,
+      })}
       rows={rows}
       date_key="date"
       empty_period_message={empty_period_message}

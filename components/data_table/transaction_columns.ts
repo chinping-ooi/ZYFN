@@ -77,12 +77,28 @@ function go_plus_money_columns(): DataTableColumn<TransactionTableRow>[] {
   ];
 }
 
+const IMPORT_STATUS_COL: DataTableColumn<TransactionTableRow> = {
+  key: "import_status",
+  label: "Status",
+  type: "status",
+};
+
+export type TransactionColumnsOptions = {
+  /** Import preview: append dedupe/review status after the standard ledger columns. */
+  import_status?: boolean;
+};
+
 /** Shared column layout for every Supabase account statement table. */
 export function transaction_columns(
   kind: TransactionAccountKind,
+  options?: TransactionColumnsOptions,
 ): DataTableColumn<TransactionTableRow>[] {
   const money_cols =
     kind === "tng_go_plus" ? go_plus_money_columns() : sen_money_columns(kind);
 
-  return [DATE_COL, TYPE_COL, DETAIL_COL, DESCRIPTION_COL, ...money_cols];
+  const cols = [DATE_COL, TYPE_COL, DETAIL_COL, DESCRIPTION_COL, ...money_cols];
+  if (options?.import_status) {
+    return [...cols, IMPORT_STATUS_COL];
+  }
+  return cols;
 }

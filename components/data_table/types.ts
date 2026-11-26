@@ -20,8 +20,6 @@ export type DataTableColumn<T> = {
   sortable?: boolean;
   /** For money_micro: row key holding wallet | go_plus */
   account_key?: keyof T & string;
-  /** Description column: single-line truncate instead of line-clamp wrap */
-  single_line?: boolean;
   /** When true, render even if `label` is empty (e.g. icon-only actions). */
   allow_blank_header?: boolean;
 };

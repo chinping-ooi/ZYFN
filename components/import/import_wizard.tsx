@@ -18,12 +18,9 @@ import type {
 } from "@/lib/import/types";
 import { extract_pdf_text_local } from "@/lib/import/pdf_extract";
 import { AccountTableCard } from "@/components/account_table_card";
-import { DataTable } from "@/components/data_table/data_table";
+import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import { ColumnMappingForm } from "@/components/import/column_mapping_form";
-import {
-  IMPORT_PREVIEW_COLUMNS,
-  type ImportPreviewTableRow,
-} from "@/components/import/import_preview_columns";
+import { map_import_rows_to_statement_rows } from "@/lib/import/map_preview_rows";
 import {
   ImportStepper,
   type ImportWizardStep,
@@ -42,26 +39,6 @@ function kind_from_filename(name: string): ImportSourceKind | null {
   if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) return "excel";
   if (lower.endsWith(".csv")) return "csv";
   return null;
-}
-
-function status_label(status: NormalizedImportRow["status"]): string {
-  if (status === "duplicate") return "Duplicate";
-  if (status === "needs_review") return "Needs review";
-  return "New";
-}
-
-function to_preview_rows(rows: NormalizedImportRow[]): ImportPreviewTableRow[] {
-  return rows.map((row) => ({
-    date: row.txn_at.slice(0, 10),
-    txn_type: row.txn_type,
-    detail: row.detail,
-    description: row.description,
-    in_sen: row.in_sen,
-    out_sen: row.out_sen,
-    balance_sen: row.balance_sen,
-    import_status: status_label(row.status),
-    status_hint: row.review_reasons.join("; "),
-  }));
 }
 
 function suggest_account_from_pdf_text(
@@ -88,7 +65,7 @@ function format_file_size(bytes: number): string {
 
 function StatChip({ label, value }: { label: string; value: string | number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-[3px] border border-[#dce1e7] bg-[#f8f9fb] px-2.5 py-1 text-xs text-slate-700">
+    <span className="inline-flex items-center gap-1 rounded-[3px] border border-[#dce1e7] bg-white px-2 py-0.5 text-[11px] text-slate-700">
       <span className="text-slate-500">{label}</span>
       <span className="font-semibold text-zyfn-navy">{value}</span>
     </span>
@@ -118,6 +95,10 @@ export function ImportWizard() {
     [account_ref],
   );
   const account_id = account?.account_id;
+  const preview_rows = useMemo(
+    () => map_import_rows_to_statement_rows(rows),
+    [rows],
+  );
   const can_parse = Boolean(file && account_ref && account_id != null);
 
   const counts = useMemo(() => {
@@ -416,35 +397,40 @@ export function ImportWizard() {
                 />
                 {file ? (
                   <div
-                    className="mt-2 flex h-[120px] items-center gap-3 rounded-[3px] border border-zyfn-line bg-[#f8f9fb] px-4"
+                    className="mt-2 flex h-14 items-center gap-3 rounded-[3px] border border-zyfn-line bg-white px-3"
                     aria-labelledby="import-file-label"
                   >
                     <FileSpreadsheet
-                      className="size-8 shrink-0 text-slate-500"
+                      className="size-5 shrink-0 text-slate-500"
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-medium text-slate-800">
+                      <p className="truncate text-[13px] font-medium leading-tight text-slate-800">
                         {file.name}
                       </p>
-                      <p className="text-xs text-zyfn-muted">
+                      <p className="truncate text-[11px] leading-tight text-zyfn-muted">
                         {format_file_size(file.size)}
                         {detecting ? " · Detecting account…" : ""}
                       </p>
                     </div>
+                    {account ? (
+                      <span className="hidden max-w-[9rem] shrink-0 truncate rounded-[3px] border border-[#dce1e7] bg-[#f8f9fb] px-2 py-0.5 text-[11px] font-medium text-zyfn-navy sm:inline">
+                        {account.account_label}
+                      </span>
+                    ) : null}
                     <button
                       type="button"
-                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-[3px] border border-zyfn-line bg-white text-slate-600 hover:bg-slate-50"
+                      className="inline-flex size-7 shrink-0 items-center justify-center rounded-[3px] border border-zyfn-line bg-white text-slate-600 hover:bg-slate-50"
                       aria-label="Remove file"
                       disabled={busy || detecting}
                       onClick={clear_file}
                     >
-                      <X className="size-4" aria-hidden />
+                      <X className="size-3.5" aria-hidden />
                     </button>
                   </div>
                 ) : (
                   <div
-                    className="mt-2 flex h-[120px] flex-col items-center justify-center rounded-[3px] border border-dashed border-[#b8c2cf] bg-[#f8f9fb] px-4 text-center"
+                    className="mt-2 flex h-28 flex-col items-center justify-center rounded-[3px] border border-dashed border-[#b8c2cf] bg-[#f8f9fb] px-4 text-center"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={on_drop}
                     aria-labelledby="import-file-label"
@@ -513,13 +499,13 @@ export function ImportWizard() {
 
       {step === "preview" ? (
         <>
-          <section className={`${CARD_SHELL} ${narrow}`}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+          <section className={`${CARD_SHELL} ${narrow} py-4`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-zyfn-navy">
                   3. Import preview
                 </h2>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
                   <StatChip label="New" value={counts.new_count} />
                   <StatChip label="Duplicate" value={counts.dup} />
                   <StatChip label="Needs review" value={counts.review} />
@@ -530,51 +516,49 @@ export function ImportWizard() {
                     <StatChip label="OCR pages" value={ocr_pages} />
                   ) : null}
                 </div>
-                {parse_warning ? (
-                  <p
-                    className="mt-3 text-[13px] text-amber-800"
-                    role="alert"
-                  >
-                    {parse_warning}
-                  </p>
-                ) : null}
-                {rows.length === 0 && !parse_warning ? (
-                  <p className="mt-3 text-[13px] text-zyfn-muted">
-                    No rows to import. Go back and try another file or account.
-                  </p>
-                ) : null}
               </div>
-              <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
-                  className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
+                  className="rounded-[3px] border border-zyfn-line px-3 py-1.5 text-[13px] hover:bg-slate-50"
                   onClick={reset_wizard}
                 >
                   Start over
                 </button>
                 <button
                   type="button"
-                  className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
+                  className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-3 py-1.5 text-[13px] font-medium text-white disabled:opacity-50"
                   disabled={busy || counts.new_count === 0}
                   onClick={() => void confirm_import()}
                 >
-                  {busy ? "Importing…" : `Confirm import (${counts.new_count} new)`}
+                  {busy ? "Importing…" : `Confirm (${counts.new_count})`}
                 </button>
               </div>
             </div>
+            {parse_warning ? (
+              <p className="mt-2 text-[13px] text-amber-800" role="alert">
+                {parse_warning}
+              </p>
+            ) : null}
+            {rows.length === 0 && !parse_warning ? (
+              <p className="mt-2 text-[13px] text-zyfn-muted">
+                No rows to import. Go back and try another file or account.
+              </p>
+            ) : null}
           </section>
-          <AccountTableCard title="Parsed rows">
-            <DataTable
-              label="Import preview"
-              scope={`import-${account_ref}`}
-              columns={IMPORT_PREVIEW_COLUMNS}
-              rows={to_preview_rows(rows)}
-              date_key="date"
-              fill_height={false}
-              export_account_label={account?.account_label ?? "import"}
-              empty_period_message="No parsed rows to display."
-            />
-          </AccountTableCard>
+          {account ? (
+            <AccountTableCard title="Parsed rows">
+              <TransactionDataTable
+                label="Import preview"
+                scope={`import-${account_ref}`}
+                rows={preview_rows}
+                kind={account.kind}
+                show_import_status
+                export_account_label={account.account_label}
+                empty_period_message="No parsed rows to display."
+              />
+            </AccountTableCard>
+          ) : null}
         </>
       ) : null}
 
