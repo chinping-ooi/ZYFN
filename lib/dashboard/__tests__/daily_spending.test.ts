@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   daily_spending_for_month,
+  is_credit_card_payment_daily_chart_row,
   is_fixed_deposit_daily_chart_row,
 } from "@/lib/dashboard/daily_spending";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
@@ -30,10 +31,11 @@ function row(
 function statement(
   rows: TransactionDbRow[],
   account_kind: AccountStatementFromDb["account_kind"] = "bank",
+  account_ref = "PBE_SAVINGS",
 ): AccountStatementFromDb {
   return {
     kind: "data",
-    account_ref: "PBE_SAVINGS",
+    account_ref,
     account_label: "Public Bank",
     account_kind,
     amount_scale: "sen",
@@ -96,6 +98,47 @@ describe("daily_spending_for_month", () => {
     };
     const data = daily_spending_for_month([statement([transfer])], month);
     expect(data.spending_sen[7]).toBe(3_000);
+  });
+
+  it("excludes card bill pay from savings and the matching credit on the card", () => {
+    const month = "2026-11";
+    const date = "2026-11-15T04:00:00.000Z";
+    const savings_pay = row(date, 8_000, 1, "cc_payment");
+    const card_credit: TransactionDbRow = {
+      ...row(date, 0, 2, "credit_card_payment"),
+      in_sen: 8_000,
+    };
+    expect(is_credit_card_payment_daily_chart_row(savings_pay, "bank")).toBe(
+      true,
+    );
+    expect(
+      is_credit_card_payment_daily_chart_row(card_credit, "credit_card"),
+    ).toBe(true);
+    const data = daily_spending_for_month(
+      [
+        statement([savings_pay], "bank"),
+        statement([card_credit], "credit_card", "MBB_VISA_1697"),
+      ],
+      month,
+    );
+    expect(data.month_total_sen).toBe(0);
+  });
+
+  it("still counts credit card purchases on the card ledger", () => {
+    const month = "2026-11";
+    const purchase: TransactionDbRow = {
+      ...row("2026-11-16T04:00:00.000Z", 0, 1, "debit"),
+      in_sen: 4_500,
+    };
+    expect(is_credit_card_payment_daily_chart_row(purchase, "credit_card")).toBe(
+      false,
+    );
+    const data = daily_spending_for_month(
+      [statement([purchase], "credit_card", "MBB_VISA_1697")],
+      month,
+    );
+    expect(data.month_total_sen).toBe(4_500);
+    expect(data.spending_sen[15]).toBe(4_500);
   });
 
   it("ignores transactions outside the selected month", () => {

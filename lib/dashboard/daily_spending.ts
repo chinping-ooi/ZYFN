@@ -4,6 +4,7 @@ import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import type { MonthKey } from "@/lib/dashboard/metrics";
 import type { MinorAmount } from "@/lib/money";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
+import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 
 const KL = "Asia/Kuala_Lumpur";
 
@@ -29,13 +30,53 @@ function kl_day_of_month(iso: string): number {
   return Number(parts.find((p) => p.type === "day")?.value ?? "1");
 }
 
-/** Ledger out column for one row (all accounts; no cash-flow exclusions). */
+/** Ledger out column for bank/wallet rows. */
 export function ledger_money_out_sen(
   row: TransactionDbRow,
   use_micro: boolean,
 ): number {
   if (use_micro) {
     return row.out_micro > 0 ? micro_to_sen_display(row.out_micro) : 0;
+  }
+  return row.out_sen > 0 ? row.out_sen : 0;
+}
+
+/**
+ * Credit card bill payments (savings/wallet out plus matching card-side credits).
+ * — Any account: `txn_type` is `card_payment`, `cc_payment`, or `credit_card_payment`.
+ * — Credit card ledger: `txn_type` contains `payment` or `refund` (bill pay / credits).
+ */
+export function is_credit_card_payment_daily_chart_row(
+  row: Pick<TransactionDbRow, "txn_type">,
+  account_kind: TransactionAccountKind,
+): boolean {
+  const type = row.txn_type.trim().toLowerCase();
+  if (
+    type === "card_payment" ||
+    type === "cc_payment" ||
+    type === "credit_card_payment"
+  ) {
+    return true;
+  }
+  if (account_kind === "credit_card") {
+    return type.includes("payment") || type.includes("refund");
+  }
+  return false;
+}
+
+/** Money counted toward the daily chart (purchases on card `in_sen` still included). */
+export function daily_chart_money_out_sen(
+  row: TransactionDbRow,
+  account_kind: TransactionAccountKind,
+  use_micro: boolean,
+): number {
+  if (use_micro) {
+    return row.out_micro > 0 ? micro_to_sen_display(row.out_micro) : 0;
+  }
+  if (account_kind === "credit_card") {
+    if (row.out_sen > 0) return row.out_sen;
+    if (row.in_sen > 0) return row.in_sen;
+    return 0;
   }
   return row.out_sen > 0 ? row.out_sen : 0;
 }
@@ -56,7 +97,7 @@ export function is_fixed_deposit_daily_chart_row(
 }
 
 /**
- * Daily totals of money-out rows for one dashboard month (excludes FD; includes transfers).
+ * Daily totals for one dashboard month (excludes FD and card bill payments).
  */
 export function daily_spending_for_month(
   statements: AccountStatementFromDb[],
@@ -70,7 +111,16 @@ export function daily_spending_for_month(
     for (const row of statement.rows) {
       if (kl_month_key(row.date) !== month) continue;
       if (is_fixed_deposit_daily_chart_row(row)) continue;
-      const spent = ledger_money_out_sen(row, use_micro);
+      if (
+        is_credit_card_payment_daily_chart_row(row, statement.account_kind)
+      ) {
+        continue;
+      }
+      const spent = daily_chart_money_out_sen(
+        row,
+        statement.account_kind,
+        use_micro,
+      );
       if (spent <= 0) continue;
       const day_index = kl_day_of_month(row.date) - 1;
       if (day_index < 0 || day_index >= days_in_month) continue;
