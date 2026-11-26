@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  DEFAULT_AMOUNTS_HIDDEN,
   read_hide_amounts_pref,
   write_hide_amounts_pref,
 } from "@/lib/hooks/hide_amounts_storage";
@@ -26,12 +27,12 @@ export type HideAmountsContextValue = {
 const HideAmountsContext = createContext<HideAmountsContextValue | null>(null);
 
 function useHideAmountsController(): HideAmountsContextValue {
-  const [amounts_hidden, set_amounts_hidden] = useState(false);
+  const [amounts_hidden, set_amounts_hidden] = useState(DEFAULT_AMOUNTS_HIDDEN);
   const [hydrated, set_hydrated] = useState(false);
 
   useEffect(() => {
     const stored = read_hide_amounts_pref();
-    // Hydrate from localStorage after mount (default visible for SSR).
+    // Apply saved preference after mount (`"0"` = user chose to show amounts).
     queueMicrotask(() => {
       set_amounts_hidden(stored);
       set_hydrated(true);
