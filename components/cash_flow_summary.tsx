@@ -66,6 +66,9 @@ const TYPE_CARD_DONUT_CELL =
 const TYPE_CARD_LEGEND_CELL =
   "col-span-1 min-w-0 md:col-span-3 md:pl-1 md:pr-3 md:pt-0.5";
 
+const OVERVIEW_DONUT_PX = 275;
+const DONUT_CENTER_CAPTION = "Total";
+
 /** Three-card summary: net in vs out donut, money in / money out type breakdowns. */
 export function CashFlowSummary({
   rows,
@@ -148,7 +151,7 @@ export function CashFlowSummary({
     >
       <div className="flex h-full min-h-0 flex-col">
         <SummaryCardShell
-          title="Total in vs Total out"
+          title="Overview"
           className="h-full min-h-0 flex-1"
           bodyClassName="justify-center"
         >
@@ -158,7 +161,9 @@ export function CashFlowSummary({
               chart_ref={flow_chart_ref}
               values={flow_values}
               colors={[IN_FLOW_COLOR, OUT_FLOW_COLOR]}
+              center_caption={DONUT_CENTER_CAPTION}
               center_bottom={net_label}
+              size_px={OVERVIEW_DONUT_PX}
               aria_label={`In vs out donut, net ${net_label}`}
               tooltip_callback={(index) => {
                 const row = flow.slices[index];
@@ -191,7 +196,7 @@ export function CashFlowSummary({
       </div>
 
       <div className="flex h-full min-h-0 flex-col gap-[18px]">
-        <SummaryCardShell title="Money in" className="min-h-[280px] flex-1">
+        <SummaryCardShell title="Income" className="min-h-[280px] flex-1">
           {in_has_data ? (
             <div className={TYPE_CARD_BODY}>
               <div className={TYPE_CARD_DONUT_CELL}>
@@ -201,8 +206,9 @@ export function CashFlowSummary({
                   colors={breakdown_in.rows.map(
                     (_, i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length],
                   )}
+                  center_caption={DONUT_CENTER_CAPTION}
                   center_bottom={money_in_total}
-                aria_label={`Money in donut, total ${money_in_total}`}
+                  aria_label={`Income donut, total ${money_in_total}`}
                 tooltip_callback={(index) => {
                   const row = breakdown_in.rows[index];
                   if (!row) return "";
@@ -231,7 +237,7 @@ export function CashFlowSummary({
           )}
         </SummaryCardShell>
 
-        <SummaryCardShell title="Money out" className="min-h-[280px] flex-1">
+        <SummaryCardShell title="Spending" className="min-h-[280px] flex-1">
           {out_has_data ? (
             <div className={TYPE_CARD_BODY}>
               <div className={TYPE_CARD_DONUT_CELL}>
@@ -241,8 +247,9 @@ export function CashFlowSummary({
                   colors={breakdown_out.rows.map(
                     (_, i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length],
                   )}
+                  center_caption={DONUT_CENTER_CAPTION}
                   center_bottom={money_out_total}
-                aria_label={`Money out donut, total ${money_out_total}`}
+                  aria_label={`Spending donut, total ${money_out_total}`}
                 tooltip_callback={(index) => {
                   const row = breakdown_out.rows[index];
                   if (!row) return "";

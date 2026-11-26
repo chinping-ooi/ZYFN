@@ -16,24 +16,28 @@ import {
 
 ChartJS.register(ArcElement, Tooltip);
 
-const DONUT_PX = 220;
+const DEFAULT_DONUT_PX = 220;
 
 export function SummaryDoughnutPanel({
   values,
   colors,
+  center_caption,
   center_bottom,
   aria_label,
   tooltip_callback,
   chart_ref: external_ref,
   className = "mx-auto",
+  size_px = DEFAULT_DONUT_PX,
 }: {
   values: number[];
   colors: string[];
+  center_caption?: string;
   center_bottom: string;
   aria_label: string;
   tooltip_callback: (index: number) => string;
   chart_ref?: RefObject<ChartInstance<"doughnut"> | null>;
   className?: string;
+  size_px?: number;
 }) {
   const internal_ref = useRef<ChartInstance<"doughnut"> | null>(null);
   const chart_ref = external_ref ?? internal_ref;
@@ -93,7 +97,7 @@ export function SummaryDoughnutPanel({
   return (
     <div
       className={`relative flex shrink-0 items-center justify-center ${className}`}
-      style={{ height: DONUT_PX, width: DONUT_PX }}
+      style={{ height: size_px, width: size_px }}
       aria-label={aria_label}
     >
       <Doughnut
@@ -103,9 +107,20 @@ export function SummaryDoughnutPanel({
         plugins={[ZYFN_SUPPRESS_ARC_LABELS_PLUGIN]}
       />
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <span className="max-w-[62%] text-center text-lg font-medium tabular-nums leading-tight text-zyfn-ink md:text-xl">
-          {center_bottom}
-        </span>
+        <div className="flex max-w-[62%] flex-col items-center text-center leading-tight">
+          {center_caption ? (
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-zyfn-muted">
+              {center_caption}
+            </span>
+          ) : null}
+          <span
+            className={`text-lg font-medium tabular-nums text-zyfn-ink md:text-xl ${
+              center_caption ? "mt-0.5" : ""
+            }`}
+          >
+            {center_bottom}
+          </span>
+        </div>
       </div>
     </div>
   );
