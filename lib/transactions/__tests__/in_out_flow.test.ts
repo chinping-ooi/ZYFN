@@ -61,7 +61,7 @@ describe("in_out_flow_breakdown", () => {
 
     expect(flow.total_out_sen).toBe(60_478);
     expect(flow.total_fd_out_sen).toBe(200_000);
-    expect(flow.net_sen).toBe(500_000 - 60_478 - 200_000);
+    expect(flow.net_sen).toBe(500_000 - 60_478);
     expect(flow.slices[2]?.label).toBe("FD");
     expect(flow.slices[2]?.pct).toBeCloseTo((200_000 / 760_478) * 100, 1);
   });

@@ -12,7 +12,7 @@ import { build_overview_flow_slices } from "@/lib/transactions/in_out_flow";
 
 /**
  * Dashboard Overview donut: cash-flow in, cash-flow out (no FD), and FD placement out.
- * Centre net matches dashboard KPIs (in − spending − FD outflows).
+ * Centre net matches dashboard KPIs (in − spending, FD out shown only as its slice).
  */
 export function dashboard_overview_flow_for_month(
   statements: AccountStatementFromDb[],

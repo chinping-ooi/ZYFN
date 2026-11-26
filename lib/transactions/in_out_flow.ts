@@ -91,13 +91,13 @@ export function build_overview_flow_slices(params: {
     total_in_micro,
     total_out_micro,
     total_fd_out_micro,
-    net_sen: total_in_sen - total_out_sen - total_fd_out_sen,
-    net_micro: total_in_micro - total_out_micro - total_fd_out_micro,
+    net_sen: total_in_sen - total_out_sen,
+    net_micro: total_in_micro - total_out_micro,
   };
 }
 
 /**
- * In vs out vs FD for the Overview donut. Net = in − out (excl. FD) − FD out.
+ * In vs out vs FD for the Overview donut. Centre net = in − out (out slice excludes FD).
  */
 export function in_out_flow_breakdown(
   rows: TransactionDbRow[],

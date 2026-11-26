@@ -61,7 +61,7 @@ describe("dashboard_overview_flow_for_month", () => {
 
     expect(flow.total_fd_out_sen).toBe(200_000);
     expect(flow.total_out_sen).toBe(60_478);
-    expect(flow.net_sen).toBe(80_000 - 60_478 - 200_000);
+    expect(flow.net_sen).toBe(80_000 - 60_478);
     expect(flow.slices).toHaveLength(3);
     expect(flow.slices.reduce((s, r) => s + r.pct, 0)).toBeCloseTo(100, 5);
   });
