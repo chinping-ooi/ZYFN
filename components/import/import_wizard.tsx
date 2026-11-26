@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { FileSpreadsheet, Upload, X } from "lucide-react";
+import { FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { ACCOUNTS, account_path } from "@/lib/accounts/registry";
 import {
   IMPORT_STATUS_CHIP_LABELS,
@@ -115,6 +115,7 @@ export function ImportWizard() {
   const [error, set_error] = useState<string | null>(null);
   const [result, set_result] = useState<ImportConfirmResult | null>(null);
   const [confirm_open, set_confirm_open] = useState(false);
+  const auto_parse_key_ref = useRef<string | null>(null);
 
   const account = useMemo(
     () => IMPORTABLE.find((a) => a.account_ref === account_ref),
@@ -125,7 +126,8 @@ export function ImportWizard() {
     () => map_import_rows_to_statement_rows(rows),
     [rows],
   );
-  const can_parse = Boolean(file && account_ref && account_id != null);
+  const upload_locked = busy || detecting;
+  const start_upload_error = Boolean(error && step === "start" && file);
 
   const counts = useMemo(() => {
     const new_count = rows.filter((r) => r.status === "new").length;
@@ -141,6 +143,7 @@ export function ImportWizard() {
         set_error("Use .xlsx, .xls, .csv, or .pdf");
         return;
       }
+      auto_parse_key_ref.current = null;
       set_file(f);
       set_source_kind(kind);
       set_pdf_text_cache(null);
@@ -251,6 +254,7 @@ export function ImportWizard() {
         await run_dedupe(parsed);
       }
     } catch (err) {
+      auto_parse_key_ref.current = null;
       set_error(err instanceof Error ? err.message : "Parse failed");
     } finally {
       set_busy(false);
@@ -264,6 +268,24 @@ export function ImportWizard() {
     run_dedupe,
     pdf_text_cache,
     ocr_pages,
+  ]);
+
+  useEffect(() => {
+    if (step !== "start") return;
+    if (!file || account_id == null || !account_ref || !source_kind) return;
+    if (upload_locked) return;
+    const key = `${account_ref}\0${file.name}\0${file.size}\0${file.lastModified}`;
+    if (auto_parse_key_ref.current === key) return;
+    auto_parse_key_ref.current = key;
+    void parse_file();
+  }, [
+    step,
+    file,
+    account_id,
+    account_ref,
+    source_kind,
+    upload_locked,
+    parse_file,
   ]);
 
   const apply_mapping = useCallback(async () => {
@@ -345,18 +367,22 @@ export function ImportWizard() {
     set_mapping_skipped(false);
     set_error(null);
     set_confirm_open(false);
+    auto_parse_key_ref.current = null;
   };
 
   const clear_file = useCallback(() => {
+    auto_parse_key_ref.current = null;
     set_file(null);
     set_source_kind(null);
     set_pdf_text_cache(null);
     set_parse_warning(null);
     set_detecting(false);
+    set_error(null);
   }, []);
 
   const on_drop = (e: React.DragEvent) => {
     e.preventDefault();
+    if (upload_locked) return;
     const f = e.dataTransfer.files[0];
     if (!f) return;
     void assign_file(f);
@@ -388,6 +414,7 @@ export function ImportWizard() {
                   id="import-account"
                   className="mt-2 h-10 w-full rounded-[3px] border border-zyfn-line px-3 text-[13px]"
                   value={account_ref}
+                  disabled={upload_locked && step === "start"}
                   onChange={(e) => set_account_ref(e.target.value)}
                 >
                   <option value="">Select account…</option>
@@ -413,12 +440,55 @@ export function ImportWizard() {
                   type="file"
                   className="sr-only"
                   accept=".xlsx,.xls,.csv,.pdf,application/pdf"
+                  disabled={upload_locked}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) void assign_file(f);
+                    e.target.value = "";
                   }}
                 />
-                {file ? (
+                {file && upload_locked ? (
+                  <div
+                    className="mt-2 flex h-28 flex-col items-center justify-center gap-2 rounded-[3px] border border-dashed border-[#b8c2cf] bg-[#f8f9fb] px-4 text-center"
+                    aria-labelledby="import-file-label"
+                    aria-busy
+                  >
+                    <Loader2
+                      className="size-7 animate-spin text-zyfn-navy"
+                      aria-hidden
+                    />
+                    <p className="text-[13px] font-medium text-slate-700">
+                      Reading {file.name}…
+                    </p>
+                    {detecting && !busy ? (
+                      <p className="text-[11px] text-zyfn-muted">
+                        Detecting account…
+                      </p>
+                    ) : null}
+                  </div>
+                ) : file && start_upload_error ? (
+                  <div
+                    className="mt-2 flex h-28 flex-col items-center justify-center gap-2 rounded-[3px] border border-dashed border-[#e0abab] bg-[#fffbfb] px-4 text-center"
+                    aria-labelledby="import-file-label"
+                  >
+                    <p className="text-[13px] text-zyfn-red" role="alert">
+                      {error}
+                    </p>
+                    <label
+                      htmlFor={file_input_id}
+                      className="cursor-pointer text-[13px] font-medium text-sky-700 hover:underline"
+                    >
+                      Choose another file
+                    </label>
+                    <button
+                      type="button"
+                      className="text-[12px] text-zyfn-muted underline-offset-2 hover:underline"
+                      onClick={clear_file}
+                    >
+                      Remove file
+                    </button>
+                  </div>
+                ) : file ? (
                   <div
                     className="mt-2 flex h-14 items-center gap-3 rounded-[3px] border border-zyfn-line bg-white px-3"
                     aria-labelledby="import-file-label"
@@ -433,7 +503,7 @@ export function ImportWizard() {
                       </p>
                       <p className="truncate text-[11px] leading-tight text-zyfn-muted">
                         {format_file_size(file.size)}
-                        {detecting ? " · Detecting account…" : ""}
+                        {!account_ref ? " · Select an account to continue" : ""}
                       </p>
                     </div>
                     {account ? (
@@ -445,7 +515,6 @@ export function ImportWizard() {
                       type="button"
                       className="inline-flex size-7 shrink-0 items-center justify-center rounded-[3px] border border-zyfn-line bg-white text-slate-600 hover:bg-slate-50"
                       aria-label="Remove file"
-                      disabled={busy || detecting}
                       onClick={clear_file}
                     >
                       <X className="size-3.5" aria-hidden />
@@ -470,16 +539,11 @@ export function ImportWizard() {
                     </label>
                   </div>
                 )}
-              </div>
-              <div className="flex justify-end pt-1">
-                <button
-                  type="button"
-                  className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
-                  disabled={!can_parse || busy || detecting}
-                  onClick={() => void parse_file()}
-                >
-                  {busy ? "Reading…" : "Read statement"}
-                </button>
+                {!file && error ? (
+                  <p className="mt-2 text-[13px] text-zyfn-red" role="alert">
+                    {error}
+                  </p>
+                ) : null}
               </div>
             </div>
         </section>
@@ -504,7 +568,10 @@ export function ImportWizard() {
             <button
               type="button"
               className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
-              onClick={() => set_step("start")}
+              onClick={() => {
+                auto_parse_key_ref.current = null;
+                set_step("start");
+              }}
             >
               Back
             </button>
@@ -692,7 +759,7 @@ export function ImportWizard() {
         </div>
       ) : null}
 
-      {error ? (
+      {error && step !== "start" ? (
         <p className="text-[13px] text-red-700" role="alert">
           {error}
         </p>
