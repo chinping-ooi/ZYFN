@@ -52,6 +52,24 @@ Balance From Last Statement 20.00
     expect(out.rows.length).toBe(1);
   });
 
+  it("routes Hong Leong savings text to hlb_savings, not hlb stub", () => {
+    const text = `
+Hong Leong Bank Berhad
+BASIC SAVINGS ACCOUNT STATEMENT
+Date / Tarikh : 31-10-2026
+Date  Transaction Description                    Deposit  Withdrawal  Balance
+Balance from previous statement   10.00
+01-10-2026  Sample withdrawal  1.00
+`;
+    const meta = { author: "CheckFree i-Solutions" };
+    expect(
+      select_statement_parser(text, "HLB", meta).id,
+    ).toBe("hlb_savings");
+    const out = parse_statement_text(text, "HLB", meta);
+    expect(out.parser_id).toBe("hlb_savings");
+    expect(out.rows.length).toBe(1);
+  });
+
   it("returns a warning when maybank keyword parser matches but finds no rows", () => {
     const plain_maybank = "MAYBANK BERHAD\nRandom marketing flyer\nNo dates here";
     const out = parse_statement_text(plain_maybank, "PBE_SAVINGS");

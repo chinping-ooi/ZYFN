@@ -34,6 +34,10 @@ import {
   pbe_savings_is_likely_statement,
   parse_pbe_savings_statement,
 } from "@/lib/import/parsers/pbe_savings";
+import {
+  hlb_savings_is_likely_statement,
+  parse_hlb_savings_statement,
+} from "@/lib/import/parsers/hlb_savings";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
 import {
   load_column_mapping,
@@ -90,6 +94,7 @@ function suggest_account_from_pdf_text(
   }
   if (parser_id === "mbb_savings") return "MBB_SAVINGS";
   if (parser_id === "pbe_savings") return "PBE_SAVINGS";
+  if (parser_id === "hlb_savings") return "HLB";
   return null;
 }
 
@@ -264,6 +269,16 @@ export function ImportWizard() {
             } else {
               set_detected_upload_accounts([]);
             }
+          } else if (hlb_savings_is_likely_statement(detection_corpus)) {
+            const hlb = parse_hlb_savings_statement(text);
+            set_multi_account(false);
+            set_parsed_accounts([]);
+            if (hlb.account) {
+              set_detected_upload_accounts([hlb.account]);
+              set_account_ref(hlb.account.account_ref);
+            } else {
+              set_detected_upload_accounts([]);
+            }
           } else if (pbe_savings_is_likely_statement(detection_corpus)) {
             const pbe_sav = parse_pbe_savings_statement(text);
             set_multi_account(false);
@@ -414,11 +429,14 @@ export function ImportWizard() {
         );
         const bias_ref =
           account_ref ||
-          (pdf_meta_cache && pbe_savings_is_likely_statement(detection_corpus)
-            ? "PBE_SAVINGS"
-            : pdf_meta_cache && mbb_savings_is_likely_statement(detection_corpus)
-              ? "MBB_SAVINGS"
-              : "MBB_VISA_1697");
+          (pdf_meta_cache && hlb_savings_is_likely_statement(detection_corpus)
+            ? "HLB"
+            : pdf_meta_cache && pbe_savings_is_likely_statement(detection_corpus)
+              ? "PBE_SAVINGS"
+              : pdf_meta_cache &&
+                  mbb_savings_is_likely_statement(detection_corpus)
+                ? "MBB_SAVINGS"
+                : "MBB_VISA_1697");
         const {
           parser_id: pid,
           rows: parsed,

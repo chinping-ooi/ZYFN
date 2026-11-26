@@ -4,6 +4,10 @@ import {
   pbe_parser,
 } from "@/lib/import/parsers/bank_stub";
 import {
+  hlb_savings_parser,
+  parse_hlb_savings_statement,
+} from "@/lib/import/parsers/hlb_savings";
+import {
   mbb_card_parser,
   parse_mbb_card_statement,
 } from "@/lib/import/parsers/mbb_card";
@@ -29,6 +33,7 @@ import type { StatementParser } from "@/lib/import/parsers/types";
 
 const PARSERS: StatementParser[] = [
   tng_text_parser,
+  hlb_savings_parser,
   hlb_parser,
   pbe_savings_parser,
   pbe_parser,
@@ -83,7 +88,14 @@ export function select_statement_parser(
     ) {
       result.score += 0.25;
     }
-    if (account_ref === "HLB" && p.id === "hlb") result.score += 0.2;
+    if (
+      (account_ref === "HLB" || account_ref.includes("HLB")) &&
+      p.id === "hlb_savings"
+    ) {
+      result.score += 0.25;
+    } else if (account_ref === "HLB" && p.id === "hlb") {
+      result.score += 0.1;
+    }
     if (account_ref.includes("TNG") && p.id === "tng_text") result.score += 0.3;
     return { parser: p, ...result };
   });
@@ -134,6 +146,19 @@ export function parse_statement_text(
   }
   if (parser.id === "mbb_savings") {
     const result = parse_mbb_savings_statement(text);
+    const parse_warning =
+      result.rows.length === 0
+        ? (result.parse_warning ?? empty_parse_warning(parser.id))
+        : result.parse_warning;
+    return {
+      parser_id: parser.id,
+      rows: result.rows,
+      parse_warning,
+      parsed_accounts: result.account ? [result.account] : undefined,
+    };
+  }
+  if (parser.id === "hlb_savings") {
+    const result = parse_hlb_savings_statement(text);
     const parse_warning =
       result.rows.length === 0
         ? (result.parse_warning ?? empty_parse_warning(parser.id))

@@ -7,6 +7,7 @@ export const PARSER_DISPLAY_NAMES: Record<string, string> = {
   maybank: "Maybank statement",
   mbb_savings: "Maybank savings",
   hlb: "Hong Leong Bank statement",
+  hlb_savings: "Hong Leong savings",
   mbb_card: "Maybank credit card",
   tng_text: "TNG eWallet export",
   generic: "Generic table",
