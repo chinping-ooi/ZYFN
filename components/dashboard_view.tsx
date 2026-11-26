@@ -13,9 +13,7 @@ import { MonthSelect } from "@/components/month_select";
 import { CashFlowChart } from "@/components/cash_flow_chart";
 import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
 import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
-import { DashboardAccountSelect } from "@/components/dashboard_account_select";
-import { DashboardAccountSummarySection } from "@/components/dashboard_account_summary_section";
-import { useDashboardSummaryAccount } from "@/lib/hooks/use_dashboard_summary_account";
+import { DashboardCashFlowSummaryBlock } from "@/components/dashboard_cash_flow_summary_block";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
 
 function spending_meta(change: ReturnType<typeof compute_spending_change>) {
@@ -48,8 +46,6 @@ export function DashboardView({
   statements: AccountStatementFromDb[];
 }) {
   const [month, set_month] = useState<MonthKey>(metrics.default_month);
-  const { account_key, set_account_key, account_options } =
-    useDashboardSummaryAccount();
 
   const snapshot = snapshot_for_month(metrics, month);
   const month_index = metrics.monthly.findIndex((m) => m.month === month);
@@ -112,33 +108,17 @@ export function DashboardView({
           </p>
         </div>
         {metrics.months.length > 0 ? (
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <DashboardAccountSelect
-              label="Summary account"
-              value={account_key}
-              options={account_options}
-              onChange={set_account_key}
-            />
-            <MonthSelect
-              label="Dashboard month"
-              value={month}
-              options={metrics.months}
-              onChange={(v) => set_month(v)}
-            />
-          </div>
+          <MonthSelect
+            label="Dashboard month"
+            value={month}
+            options={metrics.months}
+            onChange={(v) => set_month(v)}
+          />
         ) : null}
       </header>
 
       {metrics.monthly.length > 0 ? (
         <>
-          <div className="mb-5">
-            <DashboardAccountSummarySection
-              statements={statements}
-              month={month}
-              account_key={account_key}
-            />
-          </div>
-
           <div className="dashboard-columns" data-gap-check="body">
             <div className="dashboard-column dashboard-column-left">
               <div
@@ -177,6 +157,14 @@ export function DashboardView({
               />
             </div>
           </div>
+
+          <DashboardCashFlowSummaryBlock
+            statements={statements}
+            month={month}
+            on_month_change={set_month}
+            month_options={metrics.months}
+            month_label={month_label}
+          />
         </>
       ) : null}
     </div>
