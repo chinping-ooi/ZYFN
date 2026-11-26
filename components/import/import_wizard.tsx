@@ -26,6 +26,10 @@ import { build_import_preview_export_filename } from "@/lib/export_filename";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
 import { parse_statement_text } from "@/lib/import/parsers";
 import { parse_mbb_card_statement } from "@/lib/import/parsers/mbb_card";
+import {
+  mbb_savings_is_likely_statement,
+  parse_mbb_savings_statement,
+} from "@/lib/import/parsers/mbb_savings";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
 import {
   load_column_mapping,
@@ -75,6 +79,7 @@ function suggest_account_from_pdf_text(
       ? "TNG_GO_PLUS"
       : "TNG_EWALLET";
   }
+  if (parser_id === "mbb_savings") return "MBB_SAVINGS";
   return null;
 }
 
@@ -233,6 +238,16 @@ export function ImportWizard() {
               set_account_ref(mbb.accounts[0].account_ref);
             } else {
               set_account_ref("");
+            }
+          } else if (mbb_savings_is_likely_statement(text)) {
+            const savings = parse_mbb_savings_statement(text);
+            set_multi_account(false);
+            set_parsed_accounts([]);
+            if (savings.account) {
+              set_detected_upload_accounts([savings.account]);
+              set_account_ref(savings.account.account_ref);
+            } else {
+              set_detected_upload_accounts([]);
             }
           } else {
             set_multi_account(false);

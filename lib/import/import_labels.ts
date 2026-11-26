@@ -4,6 +4,7 @@ export const PARSER_DISPLAY_NAMES: Record<string, string> = {
   pbe_card: "Public Bank credit card",
   pbe: "Public Bank statement",
   maybank: "Maybank statement",
+  mbb_savings: "Maybank savings",
   hlb: "Hong Leong Bank statement",
   mbb_card: "Maybank credit card",
   tng_text: "TNG eWallet export",

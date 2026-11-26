@@ -8,6 +8,10 @@ import {
   parse_mbb_card_statement,
 } from "@/lib/import/parsers/mbb_card";
 import {
+  mbb_savings_parser,
+  parse_mbb_savings_statement,
+} from "@/lib/import/parsers/mbb_savings";
+import {
   parse_pbe_card_statement,
   pbe_card_parser,
 } from "@/lib/import/parsers/pbe_card";
@@ -21,6 +25,7 @@ const PARSERS: StatementParser[] = [
   pbe_parser,
   maybank_parser,
   hlb_parser,
+  mbb_savings_parser,
   mbb_card_parser,
   pbe_card_parser,
   generic_statement_parser(),
@@ -49,6 +54,12 @@ export function select_statement_parser(
     if (
       (account_ref.includes("MBB_VISA") || account_ref.includes("MBB_AMEX")) &&
       p.id === "mbb_card"
+    ) {
+      result.score += 0.25;
+    }
+    if (
+      (account_ref === "MBB_SAVINGS" || account_ref.includes("MBB_SAVINGS")) &&
+      p.id === "mbb_savings"
     ) {
       result.score += 0.25;
     }
@@ -85,6 +96,15 @@ export function parse_statement_text(
       rows: result.rows,
       parse_warning: result.parse_warning,
       parsed_accounts: result.accounts,
+    };
+  }
+  if (parser.id === "mbb_savings") {
+    const result = parse_mbb_savings_statement(text);
+    return {
+      parser_id: parser.id,
+      rows: result.rows,
+      parse_warning: result.parse_warning,
+      parsed_accounts: result.account ? [result.account] : undefined,
     };
   }
   return {
