@@ -6,14 +6,12 @@ import { AccountViewTabs } from "@/components/account_view_tabs";
 
 export function AccountPageHeader({
   title,
-  subtitle,
   route_prefix,
   account_slug,
   active_view,
   controls,
 }: {
   title: string;
-  subtitle?: ReactNode;
   route_prefix: AccountRoutePrefix;
   account_slug: string;
   active_view: "statement" | "summary";
@@ -28,9 +26,6 @@ export function AccountPageHeader({
           account_slug={account_slug}
           active={active_view}
         />
-        {subtitle ? (
-          <p className="m-0 mt-2 text-[13px] text-zyfn-muted">{subtitle}</p>
-        ) : null}
       </div>
       {controls ? <div className="shrink-0">{controls}</div> : null}
     </div>

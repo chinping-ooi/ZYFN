@@ -1,3 +1,4 @@
+import { StatementViewSuspense } from "@/components/statement_view_suspense";
 import { TransactionSummaryView } from "@/components/transaction_summary_view";
 import { TngCombinedSummaryView } from "@/components/tng_combined_summary_view";
 import { TransactionAppShell } from "@/components/transaction_app_shell";
@@ -58,18 +59,20 @@ export async function TransactionAccountSummaryRoute({
       viewport_lock={false}
     >
       {is_account_statement_data(statement) ? (
-        config.kind === "tng_combined" ? (
-          <TngCombinedSummaryView
-            data={statement}
-            account_slug={account_slug}
-          />
-        ) : (
-          <TransactionSummaryView
-            data={statement}
-            route_prefix={route_prefix}
-            account_slug={account_slug}
-          />
-        )
+        <StatementViewSuspense>
+          {config.kind === "tng_combined" ? (
+            <TngCombinedSummaryView
+              data={statement}
+              account_slug={account_slug}
+            />
+          ) : (
+            <TransactionSummaryView
+              data={statement}
+              route_prefix={route_prefix}
+              account_slug={account_slug}
+            />
+          )}
+        </StatementViewSuspense>
       ) : (
         <SupabaseStatusPanel result={statement} />
       )}

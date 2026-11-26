@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
-import {
-  build_transaction_statement,
-  transaction_month_options,
-} from "@/lib/supabase/transaction_statement";
+import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
+import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { filter_tng_rows_for_go_plus_visibility } from "@/lib/tng/combined_statement";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { useShowGoPlus } from "@/lib/hooks/use_show_go_plus";
@@ -29,13 +27,7 @@ export function TngCombinedSummaryView({
     [data.rows, show_go_plus],
   );
 
-  const month_options = useMemo(
-    () => transaction_month_options(visible_rows),
-    [visible_rows],
-  );
-  const [month, set_month] = useState<string | "all">(
-    month_options[0]?.value ?? "all",
-  );
+  const { month, set_month, month_options } = useStatementMonth(visible_rows);
 
   const statement = useMemo(
     () =>
@@ -52,7 +44,6 @@ export function TngCombinedSummaryView({
     <div className="min-h-0">
       <AccountPageHeader
         title="Summary"
-        subtitle={`Supabase · TNG · ${statement.period_label}`}
         route_prefix="transactions"
         account_slug={account_slug}
         active_view="summary"
