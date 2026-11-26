@@ -131,16 +131,13 @@ export function DashboardView({
 
       {metrics.monthly.length > 0 ? (
         <>
-          <section
-            className="mb-5"
-            aria-label="Account summary charts"
-          >
+          <div className="mb-5">
             <DashboardAccountSummarySection
               statements={statements}
               month={month}
               account_key={account_key}
             />
-          </section>
+          </div>
 
           <div className="dashboard-columns" data-gap-check="body">
             <div className="dashboard-column dashboard-column-left">

@@ -1,13 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
 import type { AccountRoutePrefix } from "@/lib/accounts/types";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
-import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { AccountPageHeader } from "@/components/account_page_header";
-import { AccountSummaryChartsSection } from "@/components/account_summary_charts_section";
+import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { MonthSelect } from "@/components/month_select";
 
 export function TransactionSummaryView({
@@ -25,17 +23,6 @@ export function TransactionSummaryView({
 
   const { month, set_month, month_options } = useStatementMonth(data.rows);
 
-  const statement = useMemo(
-    () =>
-      build_transaction_statement(
-        data.rows,
-        month,
-        data.closing_sen,
-        data.closing_micro,
-      ),
-    [data.rows, month, data.closing_sen, data.closing_micro],
-  );
-
   return (
     <div className="min-h-0">
       <AccountPageHeader
@@ -52,12 +39,16 @@ export function TransactionSummaryView({
           />
         }
       />
-      <AccountSummaryChartsSection
-        statement={statement}
+      <CashFlowSummary
+        rows={data.rows}
+        month={month}
+        amount_scale={data.amount_scale}
         total_in_label={labels.total_in}
         total_out_label={labels.total_out}
-        amount_scale={data.amount_scale}
         money_dp={money_dp}
+        closing_sen={data.closing_sen}
+        closing_micro={data.closing_micro}
+        section_aria_label="Account summary charts"
       />
     </div>
   );

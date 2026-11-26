@@ -2,13 +2,12 @@
 
 import { useMemo } from "react";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
-import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { filter_tng_rows_for_go_plus_visibility } from "@/lib/tng/combined_statement";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { useShowGoPlus } from "@/lib/hooks/use_show_go_plus";
 import { AccountPageHeader } from "@/components/account_page_header";
-import { AccountSummaryChartsSection } from "@/components/account_summary_charts_section";
+import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { MonthSelect } from "@/components/month_select";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
 
@@ -28,17 +27,6 @@ export function TngCombinedSummaryView({
   );
 
   const { month, set_month, month_options } = useStatementMonth(visible_rows);
-
-  const statement = useMemo(
-    () =>
-      build_transaction_statement(
-        visible_rows,
-        month,
-        data.closing_sen,
-        data.closing_micro,
-      ),
-    [visible_rows, month, data.closing_sen, data.closing_micro],
-  );
 
   return (
     <div className="min-h-0">
@@ -62,12 +50,16 @@ export function TngCombinedSummaryView({
           </div>
         }
       />
-      <AccountSummaryChartsSection
-        statement={statement}
+      <CashFlowSummary
+        rows={visible_rows}
+        month={month}
+        amount_scale={data.amount_scale}
         total_in_label={labels.total_in}
         total_out_label={labels.total_out}
-        amount_scale={data.amount_scale}
         money_dp={4}
+        closing_sen={data.closing_sen}
+        closing_micro={data.closing_micro}
+        section_aria_label="Account summary charts"
       />
     </div>
   );

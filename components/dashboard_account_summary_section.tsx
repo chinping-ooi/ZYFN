@@ -8,9 +8,8 @@ import {
   dashboard_summary_money_dp,
   dashboard_summary_source_rows,
 } from "@/lib/dashboard/dashboard_summary";
-import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
-import { AccountSummaryChartsSection } from "@/components/account_summary_charts_section";
+import { CashFlowSummary } from "@/components/cash_flow_summary";
 
 export function DashboardAccountSummarySection({
   statements,
@@ -38,18 +37,16 @@ export function DashboardAccountSummarySection({
 
   const money_dp = dashboard_summary_money_dp(amount_scale);
 
-  const statement = useMemo(
-    () => build_transaction_statement(source_rows, month, 0, 0),
-    [source_rows, month],
-  );
-
   return (
-    <AccountSummaryChartsSection
-      statement={statement}
+    <CashFlowSummary
+      rows={source_rows}
+      month={month}
+      amount_scale={amount_scale}
       total_in_label={labels.total_in}
       total_out_label={labels.total_out}
-      amount_scale={amount_scale}
       money_dp={money_dp}
+      section_aria_label="Account summary charts"
+      className="pb-0"
     />
   );
 }

@@ -2,8 +2,9 @@
 
 import { useMemo, useRef } from "react";
 import type { Chart as ChartInstance } from "chart.js";
-import type { TransactionStatementSlice } from "@/lib/supabase/transaction_statement";
 import type { AmountScale } from "@/lib/supabase/transaction_rows";
+import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
+import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import { txn_type_breakdown } from "@/lib/transactions/type_breakdown";
 import { in_out_flow_breakdown } from "@/lib/transactions/in_out_flow";
 import { format_rm } from "@/lib/money";
@@ -16,6 +17,19 @@ import {
   SummaryCardShell,
   TYPE_SEGMENT_COLORS,
 } from "@/components/summary_breakdown_legend";
+
+export type CashFlowSummaryProps = {
+  rows: TransactionDbRow[];
+  month: string | "all";
+  amount_scale: AmountScale;
+  total_in_label: string;
+  total_out_label: string;
+  money_dp: 2 | 4;
+  closing_sen?: number;
+  closing_micro?: number;
+  section_aria_label?: string;
+  className?: string;
+};
 
 function format_flow_total(
   scale: AmountScale,
@@ -43,28 +57,32 @@ function format_net(
   return `${sign}${format_rm(Math.abs(net_sen))}`;
 }
 
-const SIDE_BY_SIDE_DONUT =
-  "mx-auto md:mx-0";
+const SIDE_BY_SIDE_DONUT = "mx-auto md:mx-0";
 
 const TYPE_CARD_BODY =
   "flex min-h-0 w-full flex-1 flex-col gap-4 md:flex-row md:items-start md:gap-5";
 
-export function AccountSummaryChartsSection({
-  statement,
+/** Three-card summary: net in vs out donut, money in / money out type breakdowns. */
+export function CashFlowSummary({
+  rows,
+  month,
+  amount_scale,
   total_in_label,
   total_out_label,
-  amount_scale,
   money_dp,
-}: {
-  statement: TransactionStatementSlice;
-  total_in_label: string;
-  total_out_label: string;
-  amount_scale: AmountScale;
-  money_dp: 2 | 4;
-}) {
+  closing_sen = 0,
+  closing_micro = 0,
+  section_aria_label = "Cash flow summary",
+  className = "",
+}: CashFlowSummaryProps) {
   const flow_chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
   const money_in_chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
   const money_out_chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
+
+  const statement = useMemo(
+    () => build_transaction_statement(rows, month, closing_sen, closing_micro),
+    [rows, month, closing_sen, closing_micro],
+  );
 
   const flow = useMemo(
     () =>
@@ -121,8 +139,8 @@ export function AccountSummaryChartsSection({
 
   return (
     <section
-      className="account-summary-charts grid grid-cols-1 gap-[18px] pb-6 lg:grid-cols-2 lg:items-stretch"
-      aria-label="Account summary charts"
+      className={`account-summary-charts grid grid-cols-1 gap-[18px] pb-6 lg:grid-cols-2 lg:items-stretch ${className}`.trim()}
+      aria-label={section_aria_label}
     >
       <SummaryCardShell title="Total in vs Total out" className="h-full">
         {flow_has_data ? (
