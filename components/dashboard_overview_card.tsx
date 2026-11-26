@@ -13,7 +13,6 @@ import {
   OUT_FLOW_COLOR,
   SummaryBreakdownLegendList,
   SummaryCardShell,
-  OVERVIEW_LEGEND_LAYOUT,
 } from "@/components/summary_breakdown_legend";
 
 const OVERVIEW_DONUT_PX = 250;
@@ -68,8 +67,6 @@ export function DashboardOverviewCard({
             money_dp={2}
             chart_ref={chart_ref}
             aria_label="Overview cash flow legend"
-            layout={OVERVIEW_LEGEND_LAYOUT}
-            className="shrink-0"
             color_for_index={(i) =>
               [IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR][i] ?? IN_FLOW_COLOR
             }

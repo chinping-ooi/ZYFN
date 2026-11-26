@@ -21,7 +21,6 @@ import {
   SummaryBreakdownLegendList,
   SummaryCardShell,
   TYPE_SEGMENT_COLORS,
-  OVERVIEW_LEGEND_LAYOUT,
 } from "@/components/summary_breakdown_legend";
 
 export type CashFlowSummaryProps = {
@@ -249,8 +248,6 @@ export function CashFlowSummary({
                   money_dp={money_dp}
                   chart_ref={flow_chart_ref}
                   aria_label="Total in vs total out legend"
-                  layout={OVERVIEW_LEGEND_LAYOUT}
-                  className="shrink-0"
                   color_for_index={(i) =>
                     overview_flow_colors[i] ?? IN_FLOW_COLOR
                   }

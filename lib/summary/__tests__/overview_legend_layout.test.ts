@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { TxnTypeBreakdownRow } from "@/lib/transactions/type_breakdown";
-import { OVERVIEW_LEGEND_LAYOUT } from "@/components/summary_breakdown_legend";
 
 /** Synthetic Overview slices (in / out / FD) for layout wiring checks. */
 const synthetic_overview_rows: TxnTypeBreakdownRow[] = [
@@ -31,10 +30,6 @@ const synthetic_overview_rows: TxnTypeBreakdownRow[] = [
 ];
 
 describe("Overview legend layout", () => {
-  it("uses the horizontal Overview-only layout token", () => {
-    expect(OVERVIEW_LEGEND_LAYOUT).toBe("overview_horizontal");
-  });
-
   it("synthetic three-slice Overview data includes FD row", () => {
     expect(synthetic_overview_rows).toHaveLength(3);
     expect(synthetic_overview_rows[2]?.label).toBe("FD");
