@@ -12,6 +12,10 @@ import {
   group_import_rows_by_account,
   import_account_summaries,
 } from "@/lib/import/group_rows_by_account";
+import {
+  should_show_detected_upload_accounts,
+  should_show_upload_account_select,
+} from "@/lib/import/import_upload_account";
 import type { ImportParsedAccount } from "@/lib/import/types";
 import {
   IMPORT_STATUS_CHIP_LABELS,
@@ -132,7 +136,24 @@ export function ImportWizard() {
   const [done_by_account, set_done_by_account] = useState<
     Array<{ account_label: string; inserted: number; skipped_duplicates: number }>
   >([]);
+  const [detected_upload_accounts, set_detected_upload_accounts] = useState<
+    ImportParsedAccount[]
+  >([]);
+  const [account_select_override, set_account_select_override] = useState(false);
   const auto_parse_key_ref = useRef<string | null>(null);
+
+  const show_detected_upload_accounts = should_show_detected_upload_accounts({
+    has_file: Boolean(file),
+    source_kind,
+    detected_accounts: detected_upload_accounts,
+    account_select_override,
+  });
+  const show_upload_account_select = should_show_upload_account_select({
+    has_file: Boolean(file),
+    source_kind,
+    detected_accounts: detected_upload_accounts,
+    account_select_override,
+  });
 
   const account = useMemo(
     () => IMPORTABLE.find((a) => a.account_ref === account_ref),
@@ -183,11 +204,19 @@ export function ImportWizard() {
         return;
       }
       auto_parse_key_ref.current = null;
+      set_account_select_override(false);
+      set_detected_upload_accounts([]);
       set_file(f);
       set_source_kind(kind);
       set_pdf_text_cache(null);
       set_parse_warning(null);
       set_error(null);
+      if (kind === "excel" || kind === "csv") {
+        set_multi_account(false);
+        set_parsed_accounts([]);
+        set_detected_upload_accounts([]);
+        set_account_ref("");
+      }
       if (kind === "pdf") {
         set_detecting(true);
         try {
@@ -199,14 +228,33 @@ export function ImportWizard() {
           if (mbb.accounts.length > 0) {
             set_multi_account(true);
             set_parsed_accounts(mbb.accounts);
+            set_detected_upload_accounts(mbb.accounts);
             if (mbb.accounts.length === 1) {
               set_account_ref(mbb.accounts[0].account_ref);
+            } else {
+              set_account_ref("");
             }
           } else {
             set_multi_account(false);
             set_parsed_accounts([]);
             const suggested = suggest_account_from_pdf_text(text, account_ref);
-            if (suggested) set_account_ref(suggested);
+            if (suggested) {
+              const entry = IMPORTABLE.find((a) => a.account_ref === suggested);
+              if (entry?.account_id != null) {
+                set_detected_upload_accounts([
+                  {
+                    account_id: entry.account_id,
+                    account_ref: entry.account_ref,
+                    account_label: entry.account_label,
+                  },
+                ]);
+                set_account_ref(suggested);
+              } else {
+                set_detected_upload_accounts([]);
+              }
+            } else {
+              set_detected_upload_accounts([]);
+            }
           }
         } catch {
           /* user can still parse after choosing account */
@@ -526,6 +574,8 @@ export function ImportWizard() {
     set_multi_account(false);
     set_parsed_accounts([]);
     set_done_by_account([]);
+    set_detected_upload_accounts([]);
+    set_account_select_override(false);
     auto_parse_key_ref.current = null;
   };
 
@@ -539,6 +589,8 @@ export function ImportWizard() {
     set_error(null);
     set_multi_account(false);
     set_parsed_accounts([]);
+    set_detected_upload_accounts([]);
+    set_account_select_override(false);
   }, []);
 
   const on_drop = (e: React.DragEvent) => {
@@ -693,48 +745,61 @@ export function ImportWizard() {
             Insert-only import; PDFs may auto-detect PBE card accounts.
           </p>
           <div className="mt-4 flex flex-col gap-4">
-              <div>
-                {multi_account && parsed_accounts.length > 0 ? (
-                  <div>
-                    <span className="text-[13px] font-medium text-slate-700">
-                      Accounts
-                    </span>
-                    <p className="mt-2 text-[13px] text-slate-700">
-                      {parsed_accounts.map((a) => a.account_label).join(" · ")}
-                    </p>
-                    <p className="mt-1.5 text-xs text-zyfn-muted">
-                      Maybank combined statement — rows route to each card
-                      account.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <label
-                      htmlFor="import-account"
-                      className="text-[13px] font-medium text-slate-700"
-                    >
-                      Account
-                    </label>
-                    <select
-                      id="import-account"
-                      className="mt-2 h-10 w-full rounded-[3px] border border-zyfn-line px-3 text-[13px]"
-                      value={account_ref}
-                      disabled={upload_locked && step === "start"}
-                      onChange={(e) => set_account_ref(e.target.value)}
-                    >
-                      <option value="">Select account…</option>
-                      {IMPORTABLE.map((a) => (
-                        <option key={a.account_ref} value={a.account_ref}>
-                          {a.account_label}
-                        </option>
+              {show_detected_upload_accounts || show_upload_account_select ? (
+                <div>
+                  {show_detected_upload_accounts ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[13px] font-medium text-slate-700">
+                        Account
+                      </span>
+                      {detected_upload_accounts.map((detected) => (
+                        <span
+                          key={detected.account_ref}
+                          className="inline-flex items-center rounded-[3px] border border-[#dce1e7] bg-[#f8f9fb] px-2 py-1 text-[12px] font-medium text-zyfn-navy"
+                        >
+                          {detected.account_label}
+                        </span>
                       ))}
-                    </select>
-                    <p className="mt-1.5 text-xs text-zyfn-muted">
-                      New rows are inserted for this account only.
-                    </p>
-                  </>
-                )}
-              </div>
+                      <button
+                        type="button"
+                        className="text-[12px] font-medium text-sky-700 hover:underline"
+                        disabled={upload_locked}
+                        onClick={() => set_account_select_override(true)}
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <label
+                        htmlFor="import-account"
+                        className="text-[13px] font-medium text-slate-700"
+                      >
+                        Account
+                      </label>
+                      <select
+                        id="import-account"
+                        className="mt-2 h-10 w-full rounded-[3px] border border-zyfn-line px-3 text-[13px]"
+                        value={account_ref}
+                        disabled={upload_locked}
+                        onChange={(e) => {
+                          set_account_ref(e.target.value);
+                          if (account_select_override) {
+                            auto_parse_key_ref.current = null;
+                          }
+                        }}
+                      >
+                        <option value="">Select account…</option>
+                        {IMPORTABLE.map((a) => (
+                          <option key={a.account_ref} value={a.account_ref}>
+                            {a.account_label}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  )}
+                </div>
+              ) : null}
               <div>
                 <span
                   id="import-file-label"
@@ -810,7 +875,7 @@ export function ImportWizard() {
                       </p>
                       <p className="truncate text-[11px] leading-tight text-zyfn-muted">
                         {format_file_size(file.size)}
-                        {!account_ref && !multi_account
+                        {show_upload_account_select && !account_ref
                           ? " · Select an account to continue"
                           : ""}
                       </p>
