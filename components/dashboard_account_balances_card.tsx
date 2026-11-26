@@ -1,6 +1,37 @@
-import { format_rm } from "@/lib/money";
+"use client";
+
+import { Eye, EyeOff } from "lucide-react";
 import type { DashboardBalanceRow } from "@/lib/dashboard/dashboard_balances";
 import { CardHead } from "@/components/card_head";
+import { MaskedAmount } from "@/components/masked_amount";
+import { use_hide_amounts } from "@/lib/hooks/use_hide_amounts";
+
+function AmountsVisibilityToggle({
+  amounts_hidden,
+  on_toggle,
+}: {
+  amounts_hidden: boolean;
+  on_toggle: () => void;
+}) {
+  const label = amounts_hidden ? "Show amounts" : "Hide amounts";
+
+  return (
+    <button
+      type="button"
+      className="inline-flex shrink-0 items-center justify-center rounded-[3px] border border-zyfn-line bg-white p-1.5 text-zyfn-navy hover:bg-[#f4f6f8]"
+      onClick={on_toggle}
+      aria-label={label}
+      aria-pressed={amounts_hidden}
+      title={label}
+    >
+      {amounts_hidden ? (
+        <EyeOff className="size-4" aria-hidden />
+      ) : (
+        <Eye className="size-4" aria-hidden />
+      )}
+    </button>
+  );
+}
 
 export function DashboardAccountBalancesCard({
   rows,
@@ -12,6 +43,8 @@ export function DashboardAccountBalancesCard({
   /** lg dashboard: grow in column; rows list scrolls internally. */
   column_fill?: boolean;
 }) {
+  const { amounts_hidden, toggle_amounts_hidden } = use_hide_amounts();
+
   const shell = [
     "card",
     "flex",
@@ -37,6 +70,12 @@ export function DashboardAccountBalancesCard({
         title="Account balances"
         subtitle="Savings, wallet, and active fixed deposits"
         align="center"
+        aside={
+          <AmountsVisibilityToggle
+            amounts_hidden={amounts_hidden}
+            on_toggle={toggle_amounts_hidden}
+          />
+        }
       />
       <div className={list_class}>
         {rows.map((account) => (
@@ -48,7 +87,10 @@ export function DashboardAccountBalancesCard({
               {account.name}
             </div>
             <div className="shrink-0 text-right text-xs font-semibold tabular-nums md:text-sm">
-              {format_rm(account.balance_sen)}
+              <MaskedAmount
+                amounts_hidden={amounts_hidden}
+                amount_sen={account.balance_sen}
+              />
             </div>
           </div>
         ))}
