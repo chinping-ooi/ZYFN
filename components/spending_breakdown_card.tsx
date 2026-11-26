@@ -91,12 +91,16 @@ export function SpendingDonutLegendList({
 export function SpendingDonutSideBySideLayout({
   donut,
   legend,
+  className = "",
 }: {
   donut: ReactNode;
   legend: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="spending-donut-layout flex w-full shrink-0 flex-col items-center py-1">
+    <div
+      className={`spending-donut-layout flex w-full shrink-0 flex-col items-center py-1 ${className}`.trim()}
+    >
       <div className="mx-auto flex w-fit max-w-full flex-col items-center gap-8 lg:flex-row lg:items-center">
         {donut}
         {legend}
@@ -146,9 +150,11 @@ function center_amount_class(total_label: string): string {
 function SpendingDonutPanel({
   rows,
   total_sen,
+  layout_className,
 }: {
   rows: SpendingAccountRow[];
   total_sen: number;
+  layout_className?: string;
 }) {
   const total_label = format_rm(total_sen);
   const amount_class = center_amount_class(total_label);
@@ -224,6 +230,7 @@ function SpendingDonutPanel({
 
   return (
     <SpendingDonutSideBySideLayout
+      className={layout_className}
       donut={
         <div
           className="spending-donut relative shrink-0"
@@ -287,7 +294,9 @@ export function SpendingBreakdownCard({
     "bg-white",
   ];
 
-  if (content_sized) {
+  if (content_sized && column_fill) {
+    shell_parts.push("min-h-0", "flex-1");
+  } else if (content_sized) {
     shell_parts.push("h-fit", "shrink-0");
   } else if (column_fill) {
     shell_parts.push("min-h-0", "lg:flex-1", "lg:h-auto");
@@ -298,7 +307,6 @@ export function SpendingBreakdownCard({
   const body_parts = [
     "spending-chart-body",
     "flex",
-    "shrink-0",
     "flex-col",
     "px-4",
     "pb-3",
@@ -306,8 +314,12 @@ export function SpendingBreakdownCard({
     "md:px-5",
     "md:pb-4",
   ];
-  if (column_fill && !content_sized) {
-    body_parts.push("lg:flex-1", "lg:min-h-0", "lg:overflow-hidden");
+  if (content_sized && column_fill) {
+    body_parts.push("min-h-min", "flex-1", "justify-center");
+  } else if (column_fill && !content_sized) {
+    body_parts.push("shrink-0", "lg:flex-1", "lg:min-h-0", "lg:overflow-hidden");
+  } else {
+    body_parts.push("shrink-0");
   }
 
   return (
@@ -325,7 +337,13 @@ export function SpendingBreakdownCard({
       ) : (
         <>
           <div className={body_parts.join(" ")}>
-            <SpendingDonutPanel rows={rows} total_sen={total_sen} />
+            <SpendingDonutPanel
+              rows={rows}
+              total_sen={total_sen}
+              layout_className={
+                content_sized && column_fill ? "w-full shrink-0" : undefined
+              }
+            />
           </div>
           <SpendingChartCardFooter
             label="Total"

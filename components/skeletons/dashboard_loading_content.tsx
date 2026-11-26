@@ -24,7 +24,7 @@ export function DashboardLoadingContent() {
           <SpendingBreakdownSkeleton
             content_sized
             column_fill
-            className="min-h-0"
+            className="min-h-0 flex-1"
           />
         </div>
         <div className="dashboard-column dashboard-column-right">
