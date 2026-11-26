@@ -40,7 +40,7 @@ export function ImportStepper({
   return (
     <nav
       aria-label="Import progress"
-      className="mb-5 rounded-[3px] border border-zyfn-line bg-white px-3 py-3 sm:px-5 sm:py-4"
+      className="w-full shrink-0 rounded-[3px] border border-zyfn-line bg-white px-4 py-4"
     >
       <ol className="flex items-start justify-between gap-1 sm:gap-2">
         {STEPS.map((step, index) => {
@@ -100,7 +100,7 @@ export function ImportStepper({
                 )}
               </div>
               <span
-                className={`mt-1.5 hidden text-center text-[11px] leading-tight sm:block ${
+                className={`mt-1.5 hidden text-center text-[11px] leading-tight md:block ${
                   active
                     ? "font-semibold text-zyfn-navy"
                     : skipped

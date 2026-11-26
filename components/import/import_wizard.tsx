@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Upload } from "lucide-react";
+import { FileSpreadsheet, Upload, X } from "lucide-react";
 import { ACCOUNTS } from "@/lib/accounts/registry";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
 import { parse_statement_text } from "@/lib/import/parsers";
@@ -77,6 +77,12 @@ function suggest_account_from_pdf_text(
       : "TNG_EWALLET";
   }
   return null;
+}
+
+function format_file_size(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function StatChip({ label, value }: { label: string; value: string | number }) {
@@ -332,6 +338,14 @@ export function ImportWizard() {
     set_error(null);
   };
 
+  const clear_file = useCallback(() => {
+    set_file(null);
+    set_source_kind(null);
+    set_pdf_text_cache(null);
+    set_parse_warning(null);
+    set_detecting(false);
+  }, []);
+
   const on_drop = (e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files[0];
@@ -342,60 +356,54 @@ export function ImportWizard() {
   const file_input_id = "import-statement-file";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5">
+    <div
+      className={`flex w-full flex-col gap-4 ${
+        step === "preview" ? "min-h-0 flex-1" : ""
+      }`}
+    >
       <ImportStepper current={step} mapping_skipped={mapping_skipped} />
 
       {step === "start" ? (
         <section className={CARD_SHELL}>
-          <h2 className="text-sm font-semibold text-zyfn-navy">
-            1. Account &amp; statement
-          </h2>
-          <p className="mt-1 text-[13px] text-zyfn-muted">
-            Insert-only import. PDF uploads can auto-detect PBE cards by last
-            four digits.
-          </p>
-          <div className="mt-4 grid gap-4 md:grid-cols-2 md:items-stretch">
-            <div className="flex min-h-[168px] flex-col">
-              <label
-                htmlFor="import-account"
-                className="text-[13px] font-medium text-slate-700"
-              >
-                Account
-              </label>
-              <select
-                id="import-account"
-                className="mt-2 h-10 w-full rounded-[3px] border border-zyfn-line px-3 text-[13px]"
-                value={account_ref}
-                onChange={(e) => set_account_ref(e.target.value)}
-              >
-                <option value="">Select account…</option>
-                {IMPORTABLE.map((a) => (
-                  <option key={a.account_ref} value={a.account_ref}>
-                    {a.account_label}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-auto pt-3 text-xs text-zyfn-muted">
-                Choose the account that should receive new rows.
-              </p>
-            </div>
-            <div className="flex min-h-[168px] flex-col">
-              <span className="text-[13px] font-medium text-slate-700">File</span>
-              <div
-                className="mt-2 flex min-h-0 flex-1 flex-col items-center justify-center rounded-[3px] border border-dashed border-[#b8c2cf] bg-[#f8f9fb] px-4 py-6 text-center"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={on_drop}
-              >
-                <Upload className="mb-2 size-8 text-slate-400" aria-hidden />
-                <p className="text-[13px] text-slate-600">
-                  .xlsx, .xls, .csv, or .pdf
-                </p>
+          <div className="mx-auto w-full max-w-[720px]">
+            <h2 className="text-sm font-semibold text-zyfn-navy">
+              1. Account &amp; statement
+            </h2>
+            <p className="mt-1 text-[13px] text-zyfn-muted">
+              Insert-only import; PDFs may auto-detect PBE card accounts.
+            </p>
+            <div className="mt-4 flex flex-col gap-4">
+              <div>
                 <label
-                  htmlFor={file_input_id}
-                  className="mt-2 cursor-pointer text-[13px] font-medium text-sky-700 hover:underline"
+                  htmlFor="import-account"
+                  className="text-[13px] font-medium text-slate-700"
                 >
-                  Browse files
+                  Account
                 </label>
+                <select
+                  id="import-account"
+                  className="mt-2 h-10 w-full rounded-[3px] border border-zyfn-line px-3 text-[13px]"
+                  value={account_ref}
+                  onChange={(e) => set_account_ref(e.target.value)}
+                >
+                  <option value="">Select account…</option>
+                  {IMPORTABLE.map((a) => (
+                    <option key={a.account_ref} value={a.account_ref}>
+                      {a.account_label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs text-zyfn-muted">
+                  New rows are inserted for this account only.
+                </p>
+              </div>
+              <div>
+                <span
+                  id="import-file-label"
+                  className="text-[13px] font-medium text-slate-700"
+                >
+                  Statement file
+                </span>
                 <input
                   id={file_input_id}
                   type="file"
@@ -407,25 +415,64 @@ export function ImportWizard() {
                   }}
                 />
                 {file ? (
-                  <p className="mt-2 truncate px-2 text-xs text-slate-500">
-                    {file.name}
-                  </p>
-                ) : null}
-                {detecting ? (
-                  <p className="mt-1 text-xs text-slate-500">Detecting account…</p>
-                ) : null}
+                  <div
+                    className="mt-2 flex h-[120px] items-center gap-3 rounded-[3px] border border-zyfn-line bg-[#f8f9fb] px-4"
+                    aria-labelledby="import-file-label"
+                  >
+                    <FileSpreadsheet
+                      className="size-8 shrink-0 text-slate-500"
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-medium text-slate-800">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-zyfn-muted">
+                        {format_file_size(file.size)}
+                        {detecting ? " · Detecting account…" : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-[3px] border border-zyfn-line bg-white text-slate-600 hover:bg-slate-50"
+                      aria-label="Remove file"
+                      disabled={busy || detecting}
+                      onClick={clear_file}
+                    >
+                      <X className="size-4" aria-hidden />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className="mt-2 flex h-[120px] flex-col items-center justify-center rounded-[3px] border border-dashed border-[#b8c2cf] bg-[#f8f9fb] px-4 text-center"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={on_drop}
+                    aria-labelledby="import-file-label"
+                  >
+                    <Upload className="mb-1.5 size-7 text-slate-400" aria-hidden />
+                    <p className="text-[13px] text-slate-600">
+                      Drop .xlsx, .xls, .csv, or .pdf
+                    </p>
+                    <label
+                      htmlFor={file_input_id}
+                      className="mt-1.5 cursor-pointer text-[13px] font-medium text-sky-700 hover:underline"
+                    >
+                      Browse files
+                    </label>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
+                  disabled={!can_parse || busy || detecting}
+                  onClick={() => void parse_file()}
+                >
+                  {busy ? "Parsing…" : "Parse & preview"}
+                </button>
               </div>
             </div>
-          </div>
-          <div className="mt-5 flex justify-end border-t border-zyfn-line pt-4">
-            <button
-              type="button"
-              className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
-              disabled={!can_parse || busy || detecting}
-              onClick={() => void parse_file()}
-            >
-              {busy ? "Parsing…" : "Parse & preview"}
-            </button>
           </div>
         </section>
       ) : null}
