@@ -9,8 +9,9 @@ import {
 import { format_postgrest_error } from "@/lib/supabase/postgrest_error";
 import { row_money_from_direction } from "@/lib/import/amount";
 import {
-  existing_dedupe_keys,
-  mark_duplicates,
+  type ExistingTxnForDedupe,
+  dedupe_query_bounds,
+  mark_duplicate_matches,
 } from "@/lib/import/dedupe";
 import { validate_running_balance } from "@/lib/import/validate";
 import type {
@@ -21,7 +22,7 @@ import type {
 } from "@/lib/import/types";
 
 const TXN_SELECT =
-  "txn_at, amount, description, balance_after";
+  "id, txn_at, direction, amount, description, detail";
 
 function balance_validation_mode(
   kind: TransactionAccountKind | undefined,
@@ -37,18 +38,16 @@ export async function dedupe_import_rows(
   if (!supabase_configured()) {
     throw new Error("Supabase is not configured");
   }
-  const dates = rows.map((r) => r.txn_at.slice(0, 10)).sort();
-  const min = dates[0];
-  const max = dates.at(-1);
-  if (!min || !max) return rows;
+  const bounds = dedupe_query_bounds(rows);
+  if (!bounds) return rows;
 
   const supabase = create_supabase_data_client();
   const { data, error } = await supabase
     .from("zyfn_transactions")
     .select(TXN_SELECT)
     .eq("account_id", account_id)
-    .gte("txn_at", `${min}T00:00:00Z`)
-    .lte("txn_at", `${max}T23:59:59Z`);
+    .gte("txn_at", `${bounds.min}T00:00:00Z`)
+    .lte("txn_at", `${bounds.max}T23:59:59.999Z`);
 
   if (error) {
     const formatted = format_postgrest_error(error);
@@ -57,9 +56,16 @@ export async function dedupe_import_rows(
     );
   }
 
-  const keys = existing_dedupe_keys(account_id, data ?? []);
+  const existing: ExistingTxnForDedupe[] = (data ?? []).map((row) => ({
+    id: Number(row.id),
+    txn_at: String(row.txn_at),
+    direction: row.direction === "in" ? "in" : "out",
+    amount: row.amount,
+    description: row.description,
+    detail: row.detail,
+  }));
   const working = rows.map((r) => ({ ...r, review_reasons: [...r.review_reasons] }));
-  mark_duplicates(account_id, working, keys);
+  mark_duplicate_matches(working, existing);
   validate_running_balance(working, balance_validation_mode(account_kind));
   return working;
 }

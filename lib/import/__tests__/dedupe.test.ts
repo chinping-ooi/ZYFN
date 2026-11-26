@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mark_duplicates } from "@/lib/import/dedupe";
+import { mark_duplicate_matches } from "@/lib/import/dedupe";
 import type { NormalizedImportRow } from "@/lib/import/types";
 
 function row(partial: Partial<NormalizedImportRow>): NormalizedImportRow {
@@ -21,11 +21,19 @@ function row(partial: Partial<NormalizedImportRow>): NormalizedImportRow {
   };
 }
 
-describe("mark_duplicates", () => {
-  it("marks rows matching existing keys", () => {
-    const keys = new Set(["1|2025-11-01|5.00|coffee|100.00"]);
+describe("mark_duplicate_matches export", () => {
+  it("marks fuzzy duplicate matches", () => {
     const rows = [row({})];
-    mark_duplicates(1, rows, keys);
+    mark_duplicate_matches(rows, [
+      {
+        id: 9,
+        txn_at: "2025-11-01T12:00:00Z",
+        direction: "out",
+        amount: 5,
+        description: "CAFE",
+        detail: null,
+      },
+    ]);
     expect(rows[0]?.status).toBe("duplicate");
   });
 });
