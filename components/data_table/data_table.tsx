@@ -251,7 +251,13 @@ export function DataTable<T extends Record<string, unknown>>({
                     <td
                       key={column.key}
                       title={
-                        column.key === "description" ? String(text) : undefined
+                        column.key === "description"
+                          ? String(text)
+                          : column.key === "import_status" &&
+                              typeof row.status_hint === "string" &&
+                              row.status_hint.length > 0
+                            ? row.status_hint
+                            : undefined
                       }
                       className={`${LEDGER_CELL_DIVIDER} px-[13px] py-[11px] text-sm ${
                         numeric ? "text-right" : "text-left"

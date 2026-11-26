@@ -55,11 +55,12 @@ function to_preview_rows(rows: NormalizedImportRow[]): ImportPreviewTableRow[] {
     date: row.txn_at.slice(0, 10),
     txn_type: row.txn_type,
     detail: row.detail,
-    description: row.description,
+    merchant: row.description,
     in_sen: row.in_sen,
     out_sen: row.out_sen,
     balance_sen: row.balance_sen,
     import_status: status_label(row.status),
+    status_hint: row.review_reasons.join("; "),
   }));
 }
 
@@ -356,23 +357,18 @@ export function ImportWizard() {
   const file_input_id = "import-statement-file";
 
   return (
-    <div
-      className={`flex w-full flex-col gap-4 ${
-        step === "preview" ? "min-h-0 flex-1" : ""
-      }`}
-    >
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <ImportStepper current={step} mapping_skipped={mapping_skipped} />
 
       {step === "start" ? (
         <section className={CARD_SHELL}>
-          <div className="mx-auto w-full max-w-[720px]">
-            <h2 className="text-sm font-semibold text-zyfn-navy">
-              1. Account &amp; statement
-            </h2>
-            <p className="mt-1 text-[13px] text-zyfn-muted">
-              Insert-only import; PDFs may auto-detect PBE card accounts.
-            </p>
-            <div className="mt-4 flex flex-col gap-4">
+          <h2 className="text-sm font-semibold text-zyfn-navy">
+            1. Account &amp; statement
+          </h2>
+          <p className="mt-1 text-[13px] text-zyfn-muted">
+            Insert-only import; PDFs may auto-detect PBE card accounts.
+          </p>
+          <div className="mt-4 flex flex-col gap-4">
               <div>
                 <label
                   htmlFor="import-account"
@@ -473,7 +469,6 @@ export function ImportWizard() {
                 </button>
               </div>
             </div>
-          </div>
         </section>
       ) : null}
 
@@ -513,7 +508,7 @@ export function ImportWizard() {
       ) : null}
 
       {step === "preview" ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-5">
+        <>
           <section className={CARD_SHELL}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -564,19 +559,19 @@ export function ImportWizard() {
               </div>
             </div>
           </section>
-          <AccountTableCard title="Parsed rows" fill_height={rows.length > 0}>
+          <AccountTableCard title="Parsed rows">
             <DataTable
               label="Import preview"
               scope={`import-${account_ref}`}
               columns={IMPORT_PREVIEW_COLUMNS}
               rows={to_preview_rows(rows)}
               date_key="date"
-              fill_height={rows.length > 0}
+              fill_height={false}
               export_account_label={account?.account_label ?? "import"}
               empty_period_message="No parsed rows to display."
             />
           </AccountTableCard>
-        </div>
+        </>
       ) : null}
 
       {step === "done" && result ? (

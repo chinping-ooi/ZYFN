@@ -200,6 +200,69 @@ function txn_type_for_credit(description: string): string {
   return "refund";
 }
 
+function format_posted_detail(posting: string): string {
+  const match = posting.trim().match(/^(\d{1,2})\s+([A-Za-z]{3})$/i);
+  if (!match) return `Posted ${posting.trim()}`;
+  const day = Number.parseInt(match[1], 10);
+  const month =
+    match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase();
+  return `Posted ${day} ${month}`;
+}
+
+type TxnDraft = {
+  parse_index: number;
+  txn_at: string;
+  posting: string;
+  description: string;
+  direction: "in" | "out";
+  amount_major: string;
+  txn_type: string;
+  is_credit: boolean;
+};
+
+function assign_liability_balances(
+  drafts: TxnDraft[],
+  opening_major: string,
+): NormalizedImportRow[] {
+  const chronological = [...drafts].sort((a, b) => {
+    const by_date = a.txn_at.localeCompare(b.txn_at);
+    if (by_date !== 0) return by_date;
+    return a.parse_index - b.parse_index;
+  });
+  let owed = Number(opening_major);
+  const with_balance: NormalizedImportRow[] = [];
+  for (const item of chronological) {
+    const amt = Number(item.amount_major);
+    if (item.is_credit) owed -= amt;
+    else owed += amt;
+    const balance_major = owed.toFixed(2);
+    const money = row_money_from_direction(
+      item.direction,
+      item.amount_major,
+      balance_major,
+    );
+    with_balance.push({
+      temp_id: `pbe-cc-${item.parse_index}`,
+      txn_at: item.txn_at,
+      description: item.description,
+      detail: format_posted_detail(item.posting),
+      txn_type: item.txn_type,
+      direction: item.direction,
+      amount_major: item.amount_major,
+      balance_after_major: balance_major,
+      ...money,
+      status: "new",
+      review_reasons: [],
+    });
+  }
+  with_balance.sort((a, b) => {
+    const by_date = b.txn_at.localeCompare(a.txn_at);
+    if (by_date !== 0) return by_date;
+    return b.temp_id.localeCompare(a.temp_id);
+  });
+  return with_balance;
+}
+
 function mark_review(rows: NormalizedImportRow[], reason: string): void {
   for (const row of rows) {
     if (!row.review_reasons.includes(reason)) row.review_reasons.push(reason);
@@ -254,8 +317,7 @@ export function parse_pbe_card_statement(text: string): {
     parsed.push(parsed_line);
   }
 
-  let owed = Number(meta.opening_balance_major ?? "0");
-  const rows: NormalizedImportRow[] = [];
+  const drafts: TxnDraft[] = [];
   let debit_sum = 0;
   let credit_sum = 0;
   let index = 0;
@@ -270,36 +332,27 @@ export function parse_pbe_card_statement(text: string): {
     if (!iso) continue;
     const direction: "in" | "out" = item.is_credit ? "in" : "out";
     const amt = Number(item.amount_major);
-    if (item.is_credit) {
-      credit_sum += amt;
-      owed -= amt;
-    } else {
-      debit_sum += amt;
-      owed += amt;
-    }
-    const balance_major = owed.toFixed(2);
+    if (item.is_credit) credit_sum += amt;
+    else debit_sum += amt;
     const txn_type = item.is_credit
       ? txn_type_for_credit(item.description)
-      : "";
-    const money = row_money_from_direction(
-      direction,
-      item.amount_major,
-      balance_major,
-    );
-    rows.push({
-      temp_id: `pbe-cc-${index++}`,
+      : "purchase";
+    drafts.push({
+      parse_index: index++,
       txn_at: `${iso}T00:00:00Z`,
+      posting: item.posting,
       description: item.description,
-      detail: `Posting ${item.posting.trim()}`,
-      txn_type,
       direction,
       amount_major: item.amount_major,
-      balance_after_major: balance_major,
-      ...money,
-      status: "new",
-      review_reasons: [],
+      txn_type,
+      is_credit: item.is_credit,
     });
   }
+
+  const rows = assign_liability_balances(
+    drafts,
+    meta.opening_balance_major ?? "0.00",
+  );
 
   const round2 = (n: number) => Math.round(n * 100) / 100;
   if (meta.month_total_credit_major != null) {
@@ -316,7 +369,12 @@ export function parse_pbe_card_statement(text: string): {
   }
   if (meta.grand_total_major != null && rows.length > 0) {
     const target = Number(meta.grand_total_major);
-    const closing = Number(rows.at(-1)?.balance_after_major ?? "0");
+    const chronological_close = [...rows].sort((a, b) =>
+      a.txn_at.localeCompare(b.txn_at),
+    );
+    const closing = Number(
+      chronological_close.at(-1)?.balance_after_major ?? "0",
+    );
     if (Math.abs(closing - target) > 0.02) {
       mark_review(rows, "Grand total mismatch");
     }

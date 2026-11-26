@@ -39,7 +39,37 @@ describe("pbe_card_parser", () => {
     expect(payment?.direction).toBe("in");
     expect(payment?.amount_major).toBe("211.90");
     expect(rows.every((r) => r.status === "new")).toBe(true);
-    expect(rows.at(-1)?.balance_after_major).toBe("0.00");
+    const chron = [...rows].sort((a, b) => a.txn_at.localeCompare(b.txn_at));
+    expect(chron.at(-1)?.balance_after_major).toBe("0.00");
+  });
+
+  it("computes balances by transaction date when statement order differs", () => {
+    const text = [
+      "PUBLIC BANK BERHAD",
+      "PENYATA KAD / CARD STATEMENT",
+      "Tarikh Penyata / Statement Date    16 NOV 2026",
+      "MASTERCARD QUANTUM 1111 2222 3333 6357 CARDHOLDER",
+      "Maklumat Transaksi / Transaction Details",
+      " 17 OCT                     Previous Balance                         25.00",
+      " 25 OCT    25 OCT           MR DIY STORE                           16.90",
+      " 25 OCT    24 OCT           CTX CONVENIENCE                        50.00",
+      " 01 NOV    01 NOV           PBeBANK PAYMENT - THANK YOU              91.90CR",
+      "This month total credit   91.90",
+      "This month total debit   66.90",
+      "Jumlah besar untuk akaun ini / Grand total for this account   0.00",
+    ].join("\n");
+    const { rows } = parse_pbe_card_statement(text);
+    expect(rows).toHaveLength(3);
+    const by_date = [...rows].sort((a, b) => a.txn_at.localeCompare(b.txn_at));
+    expect(by_date[0]?.balance_after_major).toBe("75.00");
+    expect(by_date[1]?.balance_after_major).toBe("91.90");
+    expect(by_date[2]?.balance_after_major).toBe("0.00");
+    expect(rows.filter((r) => r.txn_type === "purchase")).toHaveLength(2);
+    expect(rows.every((r) => r.status === "new")).toBe(true);
+    expect(rows.every((r) => r.review_reasons.length === 0)).toBe(true);
+    expect(rows.find((r) => r.description.includes("MR DIY"))?.detail).toBe(
+      "Posted 25 Oct",
+    );
   });
 
   it("extracts header metadata without full card number", () => {

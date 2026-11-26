@@ -92,6 +92,8 @@ describe("pbe_card parser with pdfjs-style layout", () => {
     expect(rows.find((r) => r.txn_type === "cc_payment")?.amount_major).toBe(
       "91.90",
     );
-    expect(rows.at(-1)?.balance_after_major).toBe("0.00");
+    expect(rows.filter((r) => r.txn_type === "purchase")).toHaveLength(2);
+    const chron = [...rows].sort((a, b) => a.txn_at.localeCompare(b.txn_at));
+    expect(chron.at(-1)?.balance_after_major).toBe("0.00");
   });
 });
