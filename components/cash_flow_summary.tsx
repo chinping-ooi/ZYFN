@@ -142,9 +142,14 @@ export function CashFlowSummary({
       className={`account-summary-charts grid grid-cols-1 gap-[18px] pb-6 lg:grid-cols-2 lg:items-stretch ${className}`.trim()}
       aria-label={section_aria_label}
     >
-      <SummaryCardShell title="Total in vs Total out" className="h-full">
+      <div className="flex h-full min-h-0 flex-col">
+        <SummaryCardShell
+          title="Total in vs Total out"
+          className="h-full min-h-0 flex-1"
+          bodyClassName="justify-center"
+        >
         {flow_has_data ? (
-          <div className="flex min-h-0 w-full flex-1 flex-col justify-center gap-5">
+          <div className="flex w-full flex-col gap-5">
             <SummaryDoughnutPanel
               chart_ref={flow_chart_ref}
               values={flow_values}
@@ -175,13 +180,14 @@ export function CashFlowSummary({
             />
           </div>
         ) : (
-          <p className="text-center text-sm text-zyfn-muted">
+          <p className="m-0 text-center text-sm text-zyfn-muted">
             No money in or out in this period.
           </p>
         )}
-      </SummaryCardShell>
+        </SummaryCardShell>
+      </div>
 
-      <div className="flex h-full flex-col gap-[18px]">
+      <div className="flex h-full min-h-0 flex-col gap-[18px]">
         <SummaryCardShell title="Money in" className="min-h-[280px] flex-1">
           {in_has_data ? (
             <div className={TYPE_CARD_BODY}>

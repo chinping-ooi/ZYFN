@@ -126,10 +126,12 @@ export function SummaryCardShell({
   title,
   children,
   className = "",
+  bodyClassName = "",
 }: {
   title: string;
   children: ReactNode;
   className?: string;
+  bodyClassName?: string;
 }) {
   return (
     <article
@@ -138,7 +140,9 @@ export function SummaryCardShell({
       <div className="shrink-0 border-b border-zyfn-line px-4 py-3 md:px-[18px]">
         <h3 className="m-0 text-sm font-semibold text-[#526075]">{title}</h3>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col px-4 py-4 md:px-[18px] md:py-5">
+      <div
+        className={`flex h-full min-h-0 flex-1 flex-col px-4 py-4 md:px-[18px] md:py-5 ${bodyClassName}`.trim()}
+      >
         {children}
       </div>
     </article>
