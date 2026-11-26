@@ -26,6 +26,7 @@ export function SummaryDoughnutPanel({
   aria_label,
   tooltip_callback,
   chart_ref: external_ref,
+  className = "mx-auto",
 }: {
   values: number[];
   colors: string[];
@@ -34,6 +35,7 @@ export function SummaryDoughnutPanel({
   aria_label: string;
   tooltip_callback: (index: number) => string;
   chart_ref?: RefObject<ChartInstance<"doughnut"> | null>;
+  className?: string;
 }) {
   const internal_ref = useRef<ChartInstance<"doughnut"> | null>(null);
   const chart_ref = external_ref ?? internal_ref;
@@ -92,7 +94,7 @@ export function SummaryDoughnutPanel({
 
   return (
     <div
-      className="relative mx-auto flex shrink-0 items-center justify-center"
+      className={`relative flex shrink-0 items-center justify-center ${className}`}
       style={{ height: DONUT_PX, width: DONUT_PX }}
       aria-label={aria_label}
     >
