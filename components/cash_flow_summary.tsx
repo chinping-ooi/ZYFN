@@ -203,53 +203,65 @@ export function CashFlowSummary({
         <SummaryCardShell
           title="Overview"
           className="h-full min-h-0 flex-1"
-          bodyClassName="!pt-5"
+          bodyClassName="!pt-5 min-h-0 flex-1"
         >
         {flow_has_data ? (
-          <div className="flex w-full flex-col gap-5">
-            <SummaryDoughnutPanel
-              chart_ref={flow_chart_ref}
-              values={flow_values}
-              colors={[IN_FLOW_COLOR, OUT_FLOW_COLOR]}
-              center_caption={DONUT_CENTER_CAPTION}
-              center_bottom={net_label}
-              size_px={OVERVIEW_DONUT_PX}
-              aria_label={`In vs out donut, net ${net_label}`}
-              tooltip_callback={(index) => {
-                const row = flow.slices[index];
-                if (!row) return "";
-                const amt =
-                  amount_scale === "micro"
-                    ? `RM ${format_micro_money(row.amount_micro, money_dp)}`
-                    : format_rm(row.amount_sen);
-                return `${row.label}: ${amt} (${row.pct.toFixed(1)}%) · ${row.count} txn`;
-              }}
-            />
-            <SummaryBreakdownLegendList
-              rows={flow.slices}
-              scale={amount_scale}
-              money_dp={money_dp}
-              chart_ref={flow_chart_ref}
-              aria_label="Total in vs total out legend"
-              color_for_index={(i) => (i === 0 ? IN_FLOW_COLOR : OUT_FLOW_COLOR)}
-              bar_color_for_index={(i) =>
-                i === 0 ? IN_FLOW_COLOR : OUT_FLOW_COLOR
-              }
-            />
-            {overview_footer}
+          <div className="flex h-full min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col justify-center">
+              <div className="flex w-full flex-col gap-5">
+                <SummaryDoughnutPanel
+                  chart_ref={flow_chart_ref}
+                  values={flow_values}
+                  colors={[IN_FLOW_COLOR, OUT_FLOW_COLOR]}
+                  center_caption={DONUT_CENTER_CAPTION}
+                  center_bottom={net_label}
+                  size_px={OVERVIEW_DONUT_PX}
+                  aria_label={`In vs out donut, net ${net_label}`}
+                  tooltip_callback={(index) => {
+                    const row = flow.slices[index];
+                    if (!row) return "";
+                    const amt =
+                      amount_scale === "micro"
+                        ? `RM ${format_micro_money(row.amount_micro, money_dp)}`
+                        : format_rm(row.amount_sen);
+                    return `${row.label}: ${amt} (${row.pct.toFixed(1)}%) · ${row.count} txn`;
+                  }}
+                />
+                <SummaryBreakdownLegendList
+                  rows={flow.slices}
+                  scale={amount_scale}
+                  money_dp={money_dp}
+                  chart_ref={flow_chart_ref}
+                  aria_label="Total in vs total out legend"
+                  color_for_index={(i) => (i === 0 ? IN_FLOW_COLOR : OUT_FLOW_COLOR)}
+                  bar_color_for_index={(i) =>
+                    i === 0 ? IN_FLOW_COLOR : OUT_FLOW_COLOR
+                  }
+                />
+              </div>
+            </div>
+            {overview_footer ? (
+              <div className="mt-5 w-full shrink-0">{overview_footer}</div>
+            ) : null}
           </div>
         ) : (
-          <div className="flex w-full flex-col gap-5">
-            <SummaryPlaceholderDonut
-              center_caption={DONUT_CENTER_CAPTION}
-              center_bottom={empty_total}
-              size_px={OVERVIEW_DONUT_PX}
-              aria_label="Empty overview donut"
-            />
-            <p className="m-0 py-2 text-center text-sm text-zyfn-muted">
-              No transactions this month
-            </p>
-            {overview_footer}
+          <div className="flex h-full min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col justify-center">
+              <div className="flex w-full flex-col gap-5">
+                <SummaryPlaceholderDonut
+                  center_caption={DONUT_CENTER_CAPTION}
+                  center_bottom={empty_total}
+                  size_px={OVERVIEW_DONUT_PX}
+                  aria_label="Empty overview donut"
+                />
+                <p className="m-0 py-2 text-center text-sm text-zyfn-muted">
+                  No transactions this month
+                </p>
+              </div>
+            </div>
+            {overview_footer ? (
+              <div className="mt-5 w-full shrink-0">{overview_footer}</div>
+            ) : null}
           </div>
         )}
         </SummaryCardShell>
