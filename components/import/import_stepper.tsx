@@ -37,6 +37,13 @@ export function import_stepper_active_index(
   return index >= 0 ? index : 0;
 }
 
+/** Grid track list: circle — flex line — circle — … (edge circles hug padding). */
+export function import_stepper_grid_template_columns(step_count: number): string {
+  return Array.from({ length: step_count }, (_, index) =>
+    index === 0 ? "auto" : "minmax(1rem,1fr) auto",
+  ).join(" ");
+}
+
 const CIRCLE_REACHED = "border-zyfn-navy bg-zyfn-navy text-white";
 const CIRCLE_PENDING = "border-[#b8c2cf] bg-white text-slate-400";
 
@@ -50,64 +57,66 @@ export function ImportStepper({
   const steps = import_stepper_steps(include_mapping_step);
   const active_index = import_stepper_active_index(current, include_mapping_step);
   const active_step = steps[active_index];
+  const grid_columns = import_stepper_grid_template_columns(steps.length);
 
   return (
     <nav
       aria-label="Import progress"
       className="w-full shrink-0 rounded-[3px] border border-zyfn-line bg-white px-4 py-4"
     >
-      <ol className="flex items-start justify-between gap-1 sm:gap-2">
+      <ol
+        className="grid w-full items-center gap-y-1.5"
+        style={{ gridTemplateColumns: grid_columns }}
+      >
         {steps.map((step, index) => {
           const behind = active_index > index;
           const active = current === step.key;
           const reached = behind || active;
           const circle_class = reached ? CIRCLE_REACHED : CIRCLE_PENDING;
           const display_number = index + 1;
+          const column = 2 * index + 1;
+          const is_first = index === 0;
+          const is_last = index === steps.length - 1;
+          const justify = is_first ? "start" : is_last ? "end" : "center";
+          const label_align = is_first
+            ? "text-left"
+            : is_last
+              ? "text-right"
+              : "text-center";
 
           return (
             <li
               key={`${step.key}-${include_mapping_step}`}
-              className="flex min-w-0 flex-1 flex-col items-center"
+              className="contents"
             >
-              <div className="flex w-full items-center">
-                {index > 0 ? (
-                  <span
-                    className={`hidden h-px flex-1 sm:block ${
-                      active_index > index ? "bg-zyfn-navy/40" : "bg-[#d5dbe3]"
-                    }`}
-                    aria-hidden
-                  />
-                ) : (
-                  <span className="hidden flex-1 sm:block" aria-hidden />
-                )}
+              {index > 0 ? (
                 <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold sm:size-8 sm:text-[13px] ${circle_class}`}
-                >
-                  {behind ? (
-                    <Check className="size-4" aria-hidden />
-                  ) : (
-                    display_number
-                  )}
-                </span>
-                {index < steps.length - 1 ? (
-                  <span
-                    className={`hidden h-px flex-1 sm:block ${
-                      active_index > index ? "bg-zyfn-navy/40" : "bg-[#d5dbe3]"
-                    }`}
-                    aria-hidden
-                  />
-                ) : (
-                  <span className="hidden flex-1 sm:block" aria-hidden />
-                )}
-              </div>
+                  aria-hidden
+                  className={`hidden h-px w-full self-center sm:block ${
+                    active_index >= index ? "bg-zyfn-navy/40" : "bg-[#d5dbe3]"
+                  }`}
+                  style={{ gridColumn: 2 * index, gridRow: 1 }}
+                />
+              ) : null}
               <span
-                className={`mt-1.5 hidden text-center text-[11px] leading-tight md:block ${
+                className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold sm:size-8 sm:text-[13px] ${circle_class}`}
+                style={{ gridColumn: column, gridRow: 1, justifySelf: justify }}
+              >
+                {behind ? (
+                  <Check className="size-4" aria-hidden />
+                ) : (
+                  display_number
+                )}
+              </span>
+              <span
+                className={`hidden max-w-[6.5rem] text-[11px] leading-tight sm:max-w-[7.5rem] md:block ${label_align} ${
                   active
                     ? "font-semibold text-zyfn-navy"
                     : reached
                       ? "text-slate-600"
                       : "text-slate-400"
                 }`}
+                style={{ gridColumn: column, gridRow: 2, justifySelf: justify }}
               >
                 {step.label}
               </span>

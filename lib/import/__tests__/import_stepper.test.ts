@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   import_stepper_active_index,
+  import_stepper_grid_template_columns,
   import_stepper_steps,
 } from "@/components/import/import_stepper";
 
@@ -33,5 +34,16 @@ describe("import_stepper_active_index", () => {
 
   it("keeps Upload as step 1 on the short path", () => {
     expect(import_stepper_active_index("start", false)).toBe(0);
+  });
+});
+
+describe("import_stepper_grid_template_columns", () => {
+  it("builds edge-to-edge connectors for three and four steps", () => {
+    expect(import_stepper_grid_template_columns(3)).toBe(
+      "auto minmax(1rem,1fr) auto minmax(1rem,1fr) auto",
+    );
+    expect(import_stepper_grid_template_columns(4)).toBe(
+      "auto minmax(1rem,1fr) auto minmax(1rem,1fr) auto minmax(1rem,1fr) auto",
+    );
   });
 });
