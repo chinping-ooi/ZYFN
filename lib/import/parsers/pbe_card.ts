@@ -1,4 +1,5 @@
 import { parse_amount_cell, row_money_from_direction } from "@/lib/import/amount";
+import { pbe_savings_layout_score } from "@/lib/import/parsers/pbe_savings";
 import type { NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 
@@ -391,6 +392,7 @@ export function parse_pbe_card_statement(text: string): {
 }
 
 function detect_score(text: string): number {
+  if (pbe_savings_layout_score(text) >= 0.55) return 0.08;
   const upper = text.toUpperCase();
   let score = 0;
   if (

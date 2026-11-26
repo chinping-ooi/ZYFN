@@ -30,6 +30,10 @@ import {
   mbb_savings_is_likely_statement,
   parse_mbb_savings_statement,
 } from "@/lib/import/parsers/mbb_savings";
+import {
+  pbe_savings_is_likely_statement,
+  parse_pbe_savings_statement,
+} from "@/lib/import/parsers/pbe_savings";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
 import {
   load_column_mapping,
@@ -85,6 +89,7 @@ function suggest_account_from_pdf_text(
       : "TNG_EWALLET";
   }
   if (parser_id === "mbb_savings") return "MBB_SAVINGS";
+  if (parser_id === "pbe_savings") return "PBE_SAVINGS";
   return null;
 }
 
@@ -259,6 +264,16 @@ export function ImportWizard() {
             } else {
               set_detected_upload_accounts([]);
             }
+          } else if (pbe_savings_is_likely_statement(detection_corpus)) {
+            const pbe_sav = parse_pbe_savings_statement(text);
+            set_multi_account(false);
+            set_parsed_accounts([]);
+            if (pbe_sav.account) {
+              set_detected_upload_accounts([pbe_sav.account]);
+              set_account_ref(pbe_sav.account.account_ref);
+            } else {
+              set_detected_upload_accounts([]);
+            }
           } else {
             set_multi_account(false);
             set_parsed_accounts([]);
@@ -393,13 +408,17 @@ export function ImportWizard() {
           set_pdf_meta_cache(extracted.meta);
         }
         set_ocr_pages(ocr);
+        const detection_corpus = statement_detection_corpus(
+          text,
+          pdf_meta_cache,
+        );
         const bias_ref =
           account_ref ||
-          (pdf_meta_cache && mbb_savings_is_likely_statement(
-            statement_detection_corpus(text, pdf_meta_cache),
-          )
-            ? "MBB_SAVINGS"
-            : "MBB_VISA_1697");
+          (pdf_meta_cache && pbe_savings_is_likely_statement(detection_corpus)
+            ? "PBE_SAVINGS"
+            : pdf_meta_cache && mbb_savings_is_likely_statement(detection_corpus)
+              ? "MBB_SAVINGS"
+              : "MBB_VISA_1697");
         const {
           parser_id: pid,
           rows: parsed,

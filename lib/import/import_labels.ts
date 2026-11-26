@@ -2,6 +2,7 @@ import type { NormalizedImportRow } from "@/lib/import/types";
 
 export const PARSER_DISPLAY_NAMES: Record<string, string> = {
   pbe_card: "Public Bank credit card",
+  pbe_savings: "Public Bank savings",
   pbe: "Public Bank statement",
   maybank: "Maybank statement",
   mbb_savings: "Maybank savings",

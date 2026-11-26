@@ -15,6 +15,10 @@ import {
   parse_pbe_card_statement,
   pbe_card_parser,
 } from "@/lib/import/parsers/pbe_card";
+import {
+  pbe_savings_parser,
+  parse_pbe_savings_statement,
+} from "@/lib/import/parsers/pbe_savings";
 import { generic_statement_parser } from "@/lib/import/parsers/generic";
 import { tng_text_parser } from "@/lib/import/parsers/tng";
 import { parser_display_name } from "@/lib/import/import_labels";
@@ -25,8 +29,9 @@ import type { StatementParser } from "@/lib/import/parsers/types";
 
 const PARSERS: StatementParser[] = [
   tng_text_parser,
-  pbe_parser,
   hlb_parser,
+  pbe_savings_parser,
+  pbe_parser,
   mbb_savings_parser,
   maybank_parser,
   mbb_card_parser,
@@ -43,12 +48,22 @@ export function select_statement_parser(
   const biased = PARSERS.map((p) => {
     const result = p.detect(corpus);
     if (
-      (account_ref.includes("PBE_VISA") || account_ref.includes("PBE_MASTERCARD")) &&
+      (account_ref.includes("PBE_VISA") ||
+        account_ref.includes("PBE_MASTERCARD")) &&
       p.id === "pbe_card"
     ) {
       result.score += 0.25;
-    } else if (account_ref.includes("PBE") && p.id.startsWith("pbe")) {
-      result.score += 0.15;
+    } else if (
+      (account_ref === "PBE_SAVINGS" ||
+        account_ref.includes("PBE_SAVINGS")) &&
+      p.id === "pbe_savings"
+    ) {
+      result.score += 0.25;
+    } else if (
+      account_ref.includes("PBE") &&
+      p.id === "pbe_savings"
+    ) {
+      result.score += 0.08;
     }
     if (
       account_ref.includes("MBB") &&
@@ -119,6 +134,19 @@ export function parse_statement_text(
   }
   if (parser.id === "mbb_savings") {
     const result = parse_mbb_savings_statement(text);
+    const parse_warning =
+      result.rows.length === 0
+        ? (result.parse_warning ?? empty_parse_warning(parser.id))
+        : result.parse_warning;
+    return {
+      parser_id: parser.id,
+      rows: result.rows,
+      parse_warning,
+      parsed_accounts: result.account ? [result.account] : undefined,
+    };
+  }
+  if (parser.id === "pbe_savings") {
+    const result = parse_pbe_savings_statement(text);
     const parse_warning =
       result.rows.length === 0
         ? (result.parse_warning ?? empty_parse_warning(parser.id))

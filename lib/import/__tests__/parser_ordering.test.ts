@@ -36,6 +36,22 @@ describe("statement parser ordering", () => {
     expect(out.parse_warning).toBeNull();
   });
 
+  it("routes Public Bank savings text to pbe_savings, not pbe card", () => {
+    const text = `
+PUBLIC BANK BERHAD
+PENYATA AKAUN / STATEMENT OF ACCOUNT
+Tarikh Penyata / Statement Date   20 Nov 2026
+Balance From Last Statement 20.00
+23/10  SAMPLE DEBIT   5.00   15.00
+`;
+    const meta = { creator: "Public Bank Berhad" };
+    const parser = select_statement_parser(text, "PBE_SAVINGS", meta);
+    expect(parser.id).toBe("pbe_savings");
+    const out = parse_statement_text(text, "PBE_SAVINGS", meta);
+    expect(out.parser_id).toBe("pbe_savings");
+    expect(out.rows.length).toBe(1);
+  });
+
   it("returns a warning when maybank keyword parser matches but finds no rows", () => {
     const plain_maybank = "MAYBANK BERHAD\nRandom marketing flyer\nNo dates here";
     const out = parse_statement_text(plain_maybank, "PBE_SAVINGS");
