@@ -15,11 +15,9 @@ import { AccountTableCard } from "@/components/account_table_card";
 export function TransactionStatementView({
   data,
   view_base_path,
-  show_mbb_2_gold_link = false,
 }: {
   data: AccountStatementFromDb;
   view_base_path: string;
-  show_mbb_2_gold_link?: boolean;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const use_micro = data.amount_scale === "micro";
@@ -48,7 +46,6 @@ export function TransactionStatementView({
         <AccountPageHeader
           title="Account statement"
           view_base_path={view_base_path}
-          show_mbb_2_gold_link={show_mbb_2_gold_link}
           active_view="statement"
           controls={
             <MonthSelect

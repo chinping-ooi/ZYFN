@@ -1,9 +1,8 @@
 import { notFound, redirect } from "next/navigation";
-import { TransactionAccountSummaryRoute } from "@/components/transaction_account_summary_page";
+import { append_search_query } from "@/lib/accounts/view_paths";
 import {
   account_by_prefix_and_slug,
   accounts_for_route_prefix,
-  to_transaction_config,
 } from "@/lib/accounts/registry";
 import {
   append_month_query,
@@ -28,29 +27,23 @@ export function generateStaticParams() {
     }));
 }
 
-export default async function CreditCardAccountSummaryPage({
+export default async function CreditCardAccountLegacySummaryRedirect({
   params,
   searchParams,
 }: Props) {
   const { account: slug } = await params;
+  const search = await searchParams;
   if (CREDIT_CARD_SUMMARY_ONLY_SLUGS.has(slug)) notFound();
 
   if (MBB_2_GOLD_LEGACY_SLUGS.has(slug)) {
     const target = mbb_2_gold_legacy_summary_redirect(slug);
     if (target) {
-      redirect(append_month_query(target, await searchParams));
+      redirect(append_month_query(target, search));
     }
   }
 
   const entry = account_by_prefix_and_slug("credit-cards", slug);
   if (!entry) notFound();
 
-  return (
-    <TransactionAccountSummaryRoute
-      title={entry.title}
-      config={to_transaction_config(entry)}
-      account_slug={slug}
-      route_prefix="credit-cards"
-    />
-  );
+  redirect(append_search_query(`/credit-cards/${slug}`, search));
 }

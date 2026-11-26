@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { TransactionAccountRoute } from "@/components/transaction_account_page";
+import { TransactionAccountSummaryRoute } from "@/components/transaction_account_summary_page";
 import {
   account_by_prefix_and_slug,
   accounts_for_route_prefix,
@@ -29,7 +29,7 @@ export default async function TransactionAccountPage({ params }: Props) {
   if (!entry) notFound();
 
   return (
-    <TransactionAccountRoute
+    <TransactionAccountSummaryRoute
       title={entry.title}
       config={to_transaction_config(entry)}
       account_slug={slug}

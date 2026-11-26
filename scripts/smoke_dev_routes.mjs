@@ -16,13 +16,13 @@ const routes = [
   "/transactions/maybank",
   "/credit-cards/mbb-2-gold",
   "/credit-cards/mbb-2-gold/1697",
-  "/credit-cards/mbb-2-gold/1697/summary",
+  "/credit-cards/mbb-2-gold/statement",
   "/credit-cards/mbb-2-gold/8060",
-  "/credit-cards/mbb-2-gold/8060/summary",
+  "/credit-cards/mbb-2-gold/8060/statement",
   "/credit-cards/pbe-visa-4104",
   "/credit-cards/pbe-mastercard-6357",
   "/transactions/touch-n-go",
-  "/transactions/touch-n-go/summary",
+  "/transactions/touch-n-go/statement",
   "/fixed-deposits",
   "/fixed-deposits/maybank",
   "/fixed-deposits/public-bank",
@@ -31,7 +31,7 @@ const routes = [
 ];
 
 const must_include = {
-  "/transactions/hong-leong-bank": "Search all columns",
+  "/transactions/hong-leong-bank/statement": "Search all columns",
   "/fixed-deposits": "Deposit register",
   "/fixed-deposits/maybank": "Deposit register",
 };

@@ -72,5 +72,11 @@ describe("account navigation", () => {
     expect(
       nav_item_route_emphasis("/credit-cards/mbb-2-gold", amex),
     ).toBeNull();
+    expect(nav_item_is_active("/credit-cards/mbb-2-gold/statement", gold)).toBe(
+      true,
+    );
+    expect(
+      nav_item_is_active("/credit-cards/mbb-2-gold/1697/statement", gold),
+    ).toBe(false);
   });
 });

@@ -10,13 +10,11 @@ import { MonthSelect } from "@/components/month_select";
 export function TransactionSummaryView({
   data,
   view_base_path,
-  hide_view_tabs = false,
-  show_mbb_2_gold_link = false,
+  hide_view_toggle = false,
 }: {
   data: AccountStatementFromDb;
   view_base_path: string;
-  hide_view_tabs?: boolean;
-  show_mbb_2_gold_link?: boolean;
+  hide_view_toggle?: boolean;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const use_micro = data.amount_scale === "micro";
@@ -29,8 +27,7 @@ export function TransactionSummaryView({
       <AccountPageHeader
         title="Summary"
         view_base_path={view_base_path}
-        hide_view_tabs={hide_view_tabs}
-        show_mbb_2_gold_link={show_mbb_2_gold_link}
+        hide_view_toggle={hide_view_toggle}
         active_view="summary"
         controls={
           <MonthSelect

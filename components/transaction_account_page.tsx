@@ -18,14 +18,12 @@ export async function TransactionAccountRoute({
   account_slug,
   route_prefix,
   view_base_path,
-  show_mbb_2_gold_link = false,
 }: {
   title: string;
   config: TransactionAccountConfig;
   account_slug: string;
   route_prefix: AccountRoutePrefix;
   view_base_path?: string;
-  show_mbb_2_gold_link?: boolean;
 }) {
   const base = view_base_path ?? `/${route_prefix}/${account_slug}`;
   if (!supabase_configured()) {
@@ -70,7 +68,6 @@ export async function TransactionAccountRoute({
             <TransactionStatementView
               data={statement}
               view_base_path={base}
-              show_mbb_2_gold_link={show_mbb_2_gold_link}
             />
           )}
         </StatementViewSuspense>

@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { TransactionAccountRoute } from "@/components/transaction_account_page";
+import { TransactionAccountSummaryRoute } from "@/components/transaction_account_summary_page";
 import {
   account_by_prefix_and_slug,
   accounts_for_route_prefix,
@@ -8,7 +8,7 @@ import {
 import {
   append_month_query,
   MBB_2_GOLD_LEGACY_SLUGS,
-  mbb_2_gold_legacy_statement_redirect,
+  mbb_2_gold_legacy_summary_redirect,
 } from "@/lib/credit_cards/mbb_2_gold_routes";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ export default async function CreditCardAccountPage({
   if (CREDIT_CARD_SUMMARY_ONLY_SLUGS.has(slug)) notFound();
 
   if (MBB_2_GOLD_LEGACY_SLUGS.has(slug)) {
-    const target = mbb_2_gold_legacy_statement_redirect(slug);
+    const target = mbb_2_gold_legacy_summary_redirect(slug);
     if (target) {
       redirect(append_month_query(target, await searchParams));
     }
@@ -46,7 +46,7 @@ export default async function CreditCardAccountPage({
   if (!entry) notFound();
 
   return (
-    <TransactionAccountRoute
+    <TransactionAccountSummaryRoute
       title={entry.title}
       config={to_transaction_config(entry)}
       account_slug={slug}

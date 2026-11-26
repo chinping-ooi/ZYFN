@@ -1,3 +1,4 @@
+import { append_search_query } from "@/lib/accounts/view_paths";
 import { ACCOUNTS } from "@/lib/accounts/registry";
 import type { AccountRegistryEntry } from "@/lib/accounts/types";
 import {
@@ -29,8 +30,17 @@ export function mbb_2_gold_card_href(segment: Mbb2GoldCardSegment): string {
   return `${mbb_2_gold_combined_href()}/${segment}`;
 }
 
+/** Summary is the card base path; kept for legacy redirect callers. */
 export function mbb_2_gold_card_summary_href(segment: Mbb2GoldCardSegment): string {
-  return `${mbb_2_gold_card_href(segment)}/summary`;
+  return mbb_2_gold_card_href(segment);
+}
+
+export function mbb_2_gold_card_statement_href(segment: Mbb2GoldCardSegment): string {
+  return `${mbb_2_gold_card_href(segment)}/statement`;
+}
+
+export function mbb_2_gold_combined_statement_href(): string {
+  return `${mbb_2_gold_combined_href()}/statement`;
 }
 
 export function mbb_2_gold_legacy_statement_redirect(
@@ -38,7 +48,7 @@ export function mbb_2_gold_legacy_statement_redirect(
 ): string | undefined {
   const segment = LEGACY_SLUG_TO_SEGMENT[legacy_slug];
   if (!segment) return undefined;
-  return mbb_2_gold_card_href(segment);
+  return mbb_2_gold_card_statement_href(segment);
 }
 
 export function mbb_2_gold_legacy_summary_redirect(
@@ -53,9 +63,7 @@ export function append_month_query(
   path: string,
   searchParams: Record<string, string | string[] | undefined> | undefined,
 ): string {
-  const month = searchParams?.month;
-  if (typeof month !== "string" || month.length === 0) return path;
-  return `${path}?month=${encodeURIComponent(month)}`;
+  return append_search_query(path, searchParams);
 }
 
 export function is_mbb_2_gold_card_segment(

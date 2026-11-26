@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { TransactionAccountRoute } from "@/components/transaction_account_page";
+import { TransactionAccountSummaryRoute } from "@/components/transaction_account_summary_page";
 import { to_transaction_config } from "@/lib/accounts/registry";
 import {
   is_mbb_2_gold_card_segment,
@@ -18,7 +18,7 @@ export function generateStaticParams() {
   return MBB_2_GOLD_CARD_SEGMENTS.map((card) => ({ card }));
 }
 
-export default async function Mbb2GoldCardStatementPage({ params }: Props) {
+export default async function Mbb2GoldCardSummaryPage({ params }: Props) {
   const { card } = await params;
   if (!is_mbb_2_gold_card_segment(card)) notFound();
 
@@ -26,7 +26,7 @@ export default async function Mbb2GoldCardStatementPage({ params }: Props) {
   if (!entry) notFound();
 
   return (
-    <TransactionAccountRoute
+    <TransactionAccountSummaryRoute
       title={entry.title}
       config={to_transaction_config(entry)}
       account_slug={entry.slug}

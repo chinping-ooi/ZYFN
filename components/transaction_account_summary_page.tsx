@@ -19,16 +19,14 @@ export async function TransactionAccountSummaryRoute({
   account_slug,
   route_prefix,
   view_base_path,
-  hide_view_tabs = false,
-  show_mbb_2_gold_link = false,
+  hide_view_toggle = false,
 }: {
   title: string;
   config: TransactionAccountConfig;
   account_slug: string;
   route_prefix: AccountRoutePrefix;
   view_base_path?: string;
-  hide_view_tabs?: boolean;
-  show_mbb_2_gold_link?: boolean;
+  hide_view_toggle?: boolean;
 }) {
   const base = view_base_path ?? `/${route_prefix}/${account_slug}`;
   if (!supabase_configured()) {
@@ -79,8 +77,7 @@ export async function TransactionAccountSummaryRoute({
             <TransactionSummaryView
               data={statement}
               view_base_path={base}
-              hide_view_tabs={hide_view_tabs}
-              show_mbb_2_gold_link={show_mbb_2_gold_link}
+              hide_view_toggle={hide_view_toggle}
             />
           )}
         </StatementViewSuspense>

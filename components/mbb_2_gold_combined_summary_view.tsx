@@ -51,7 +51,6 @@ export function Mbb2GoldCombinedSummaryView({
       <AccountPageHeader
         title="Summary"
         view_base_path={mbb_2_gold_combined_href()}
-        hide_view_tabs
         active_view="summary"
         controls={
           <MonthSelect

@@ -22,6 +22,13 @@ export type NavItem = {
 };
 
 export function nav_item_is_active(pathname: string, item: NavItem): boolean {
+  if (item.children?.length) {
+    const base = item.href.replace(/\/$/, "");
+    if (pathname === base || pathname === `${base}/statement`) {
+      return true;
+    }
+    return false;
+  }
   if (item.active_match === "prefix") {
     return (
       pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -89,6 +96,7 @@ function build_credit_cards_nav_items(): NavItem[] {
   ).map((entry) => ({
     href: account_path(entry),
     label: entry.account_label,
+    active_match: "prefix" as const,
   }));
   return [mbb_2_gold, ...other];
 }
@@ -128,6 +136,7 @@ function build_account_nav_groups(): NavGroup[] {
           ).map((entry) => ({
             href: account_path(entry),
             label: entry.account_label,
+            active_match: "prefix" as const,
           })),
   }));
   groups.push({
