@@ -61,8 +61,6 @@ type Props<T extends Record<string, unknown>> = {
   loading?: boolean;
   skeleton_variant?: DataTableSkeletonVariant;
   skeleton_show_bank?: boolean;
-  /** When true, money columns render as RM *** (hide-amounts preference). */
-  mask_amounts?: boolean;
   /** TNG combined: badge on GO+ ledger rows when visible. */
   show_go_plus_badge?: boolean;
 };
@@ -85,7 +83,6 @@ export function DataTable<T extends Record<string, unknown>>({
   loading = false,
   skeleton_variant = "transaction",
   skeleton_show_bank = false,
-  mask_amounts = false,
   show_go_plus_badge = false,
 }: Props<T>) {
   void scope;
@@ -114,7 +111,7 @@ export function DataTable<T extends Record<string, unknown>>({
     let result = safe_rows.filter((row) =>
       labeled_columns.some((column) => {
         const raw = row[column.key];
-        const display = display_cell(row, column, { mask_amounts });
+        const display = display_cell(row, column);
         return `${raw ?? ""} ${display}`.toLocaleLowerCase().includes(query);
       }),
     );
@@ -124,7 +121,7 @@ export function DataTable<T extends Record<string, unknown>>({
       result = [...result].sort((a, b) => compare_rows(a, b, column, dir));
     }
     return result;
-  }, [safe_rows, labeled_columns, search, sort_key, sort_direction, mask_amounts]);
+  }, [safe_rows, labeled_columns, search, sort_key, sort_direction]);
 
   const export_source_rows = useMemo(
     () =>
@@ -280,7 +277,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     column.type ?? "",
                   );
                   const raw = row[column.key];
-                  const text = display_cell(row, column, { mask_amounts });
+                  const text = display_cell(row, column);
                   const is_go_plus_row =
                     show_go_plus_badge &&
                     column.key === "description" &&

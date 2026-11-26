@@ -39,18 +39,13 @@ export function KpiCard({
             compact_amount ? "text-xl md:text-2xl" : "text-[30px]"
           }`}
         >
-          {hide_amount &&
-          (amount_micro != null || amount_sen != null) ? (
-            <>
-              <span className="mr-1.5 text-base text-zyfn-muted">RM</span>
-              ***
-            </>
-          ) : !hide_amount && amount_micro != null ? (
+          {!hide_amount ? (
+            amount_micro != null ? (
               <>
                 <span className="mr-1.5 text-base text-zyfn-muted">RM</span>
                 {format_micro_money(amount_micro, money_dp)}
               </>
-            ) : !hide_amount && amount_sen != null ? (
+            ) : amount_sen != null ? (
               <>
                 <span
                   className={`mr-1 text-zyfn-muted ${compact_amount ? "text-sm" : "text-base"}`}
@@ -59,7 +54,8 @@ export function KpiCard({
                 </span>
                 {format_money(amount_sen)}
               </>
-            ) : null}
+            ) : null
+          ) : null}
         </div>
         {meta ? (
           <div

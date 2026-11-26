@@ -10,7 +10,6 @@ import {
 export function display_cell<T extends Record<string, unknown>>(
   row: T,
   column: DataTableColumn<T>,
-  options?: { mask_amounts?: boolean },
 ): string {
   const value = row[column.key];
   if (value === null || value === undefined) return "";
@@ -18,14 +17,12 @@ export function display_cell<T extends Record<string, unknown>>(
   switch (column.type) {
     case "money": {
       if (value === null) return "";
-      if (options?.mask_amounts) return "RM ***";
       const minor = value as MinorAmount;
       if (column.zero_as_blank && minor === 0) return "";
       return format_money(minor);
     }
     case "money_micro": {
       if (value === null) return "";
-      if (options?.mask_amounts) return "RM ***";
       const micro = value as MicroAmount;
       if (column.zero_as_blank && micro === 0) return "";
       const account_key = column.account_key ?? "account";

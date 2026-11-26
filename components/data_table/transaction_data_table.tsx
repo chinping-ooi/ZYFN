@@ -21,7 +21,6 @@ export type TransactionDataTableProps = {
   show_account_column?: boolean;
   export_all_rows?: boolean;
   resolve_export_filename?: (rows: TransactionTableRow[]) => string;
-  mask_amounts?: boolean;
   show_go_plus_badge?: boolean;
 };
 
@@ -39,7 +38,6 @@ export function TransactionDataTable({
   show_account_column = false,
   export_all_rows = false,
   resolve_export_filename,
-  mask_amounts = false,
   show_go_plus_badge = false,
 }: TransactionDataTableProps) {
   return (
@@ -60,7 +58,6 @@ export function TransactionDataTable({
       resolve_export_filename={resolve_export_filename}
       loading={loading}
       skeleton_variant="transaction"
-      mask_amounts={mask_amounts}
       show_go_plus_badge={show_go_plus_badge}
     />
   );

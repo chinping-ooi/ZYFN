@@ -82,6 +82,20 @@ describe("filter_tng_rows_for_go_plus_visibility", () => {
     const visible = filter_tng_rows_for_go_plus_visibility(rows, true);
     expect(visible).toHaveLength(3);
   });
+
+  it("toggling show_go_plus changes visible row ids", () => {
+    let show_go_plus = false;
+    let visible = filter_tng_rows_for_go_plus_visibility(rows, show_go_plus);
+    expect(visible.map((r) => r.sort_id)).toEqual([1]);
+
+    show_go_plus = true;
+    visible = filter_tng_rows_for_go_plus_visibility(rows, show_go_plus);
+    expect(visible.map((r) => r.sort_id)).toEqual([1, 2, 3]);
+
+    show_go_plus = false;
+    visible = filter_tng_rows_for_go_plus_visibility(rows, show_go_plus);
+    expect(visible.map((r) => r.sort_id)).toEqual([1]);
+  });
 });
 
 describe("combined_tng_closing_sen", () => {

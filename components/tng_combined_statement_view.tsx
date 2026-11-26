@@ -8,8 +8,7 @@ import {
 } from "@/lib/supabase/transaction_statement";
 import { filter_tng_rows_for_go_plus_visibility } from "@/lib/tng/combined_statement";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
-import { use_hide_amounts } from "@/lib/hooks/use_hide_amounts";
-import { use_show_go_plus } from "@/lib/hooks/use_show_go_plus";
+import { useShowGoPlus } from "@/lib/hooks/use_show_go_plus";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
@@ -24,8 +23,7 @@ export function TngCombinedStatementView({
   data: AccountStatementFromDb;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
-  const { amounts_hidden } = use_hide_amounts();
-  const { show_go_plus } = use_show_go_plus();
+  const { show_go_plus, set_show_go_plus } = useShowGoPlus();
 
   const visible_rows = useMemo(
     () => filter_tng_rows_for_go_plus_visibility(data.rows, show_go_plus),
@@ -63,7 +61,10 @@ export function TngCombinedStatementView({
           subtitle={`Supabase · TNG · ${statement.period_label}`}
           controls={
             <div className="flex flex-wrap items-center justify-end gap-3">
-              <ShowGoPlusCheckbox />
+              <ShowGoPlusCheckbox
+                checked={show_go_plus}
+                onChange={set_show_go_plus}
+              />
               <MonthSelect
                 label="Statement month"
                 value={month}
@@ -81,14 +82,12 @@ export function TngCombinedStatementView({
           <KpiCard
             compact_amount
             label={labels.total_in}
-            hide_amount={amounts_hidden}
             amount_micro={statement.total_in_micro}
             money_dp={4}
           />
           <KpiCard
             compact_amount
             label={labels.total_out}
-            hide_amount={amounts_hidden}
             amount_micro={statement.total_out_micro}
             money_dp={4}
           />
@@ -100,7 +99,6 @@ export function TngCombinedStatementView({
           <KpiCard
             compact_amount
             label={labels.closing}
-            hide_amount={amounts_hidden}
             amount_sen={statement.closing_sen}
           />
         </section>
@@ -114,7 +112,6 @@ export function TngCombinedStatementView({
           rows={table_rows}
           kind={data.account_kind}
           fill_height
-          mask_amounts={amounts_hidden}
           show_go_plus_badge={show_go_plus}
         />
       </AccountTableCard>
