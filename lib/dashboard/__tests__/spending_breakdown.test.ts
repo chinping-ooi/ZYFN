@@ -8,11 +8,15 @@ function row(
   out_sen: number,
   sort_id: number,
   txn_type = "debit",
-  opts?: { detail?: string; fixed_deposit_id?: number | null },
+  opts?: {
+    detail?: string;
+    description?: string;
+    fixed_deposit_id?: number | null;
+  },
 ): TransactionDbRow {
   return {
     date,
-    description: "Sample",
+    description: opts?.description ?? "Sample",
     detail: opts?.detail ?? "",
     txn_type,
     in_sen: 0,
@@ -82,6 +86,22 @@ describe("spending_breakdown_for_month", () => {
     );
     expect(breakdown.map((b) => b.label)).toEqual(["ptptn"]);
     expect(spending_total_sen(breakdown)).toBe(5_000);
+  });
+
+  it("excludes FD when only description carries the category", () => {
+    const breakdown = spending_breakdown_for_month(
+      [
+        statement([
+          row("2026-11-03T04:00:00.000Z", 200_000, 1, "debit", {
+            description: "fd_placement",
+          }),
+          row("2026-11-03T12:00:00.000Z", 1_000, 2, "ptptn"),
+        ]),
+      ],
+      "2026-11",
+    );
+    expect(breakdown.map((b) => b.label)).toEqual(["ptptn"]);
+    expect(spending_total_sen(breakdown)).toBe(1_000);
   });
 
   it("excludes rows linked by fixed_deposit_id", () => {

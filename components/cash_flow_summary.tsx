@@ -15,6 +15,7 @@ import {
   SummaryPlaceholderDonut,
 } from "@/components/summary_doughnut_panel";
 import {
+  FD_FLOW_COLOR,
   IN_FLOW_COLOR,
   OUT_FLOW_COLOR,
   SummaryBreakdownLegendList,
@@ -188,8 +189,8 @@ export function CashFlowSummary({
   );
   const money_out_total = format_flow_total(
     amount_scale,
-    statement.total_out_sen,
-    statement.total_out_micro,
+    breakdown_out.total_sen,
+    breakdown_out.total_micro,
     money_dp,
   );
 
@@ -216,7 +217,7 @@ export function CashFlowSummary({
                 <SummaryDoughnutPanel
                   chart_ref={flow_chart_ref}
                   values={flow_values}
-                  colors={[IN_FLOW_COLOR, OUT_FLOW_COLOR]}
+                  colors={[IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR]}
                   center_caption={DONUT_CENTER_CAPTION}
                   center_bottom={net_label}
                   size_px={OVERVIEW_DONUT_PX}
@@ -237,9 +238,13 @@ export function CashFlowSummary({
                   money_dp={money_dp}
                   chart_ref={flow_chart_ref}
                   aria_label="Total in vs total out legend"
-                  color_for_index={(i) => (i === 0 ? IN_FLOW_COLOR : OUT_FLOW_COLOR)}
+                  color_for_index={(i) =>
+                    [IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR][i] ??
+                    IN_FLOW_COLOR
+                  }
                   bar_color_for_index={(i) =>
-                    i === 0 ? IN_FLOW_COLOR : OUT_FLOW_COLOR
+                    [IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR][i] ??
+                    IN_FLOW_COLOR
                   }
                 />
               </div>

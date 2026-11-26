@@ -22,6 +22,7 @@ export const TYPE_SEGMENT_COLORS = [
 
 export const IN_FLOW_COLOR = "#14b8a6";
 export const OUT_FLOW_COLOR = "#f43f5e";
+export const FD_FLOW_COLOR = "#8b5cf6";
 
 function format_row_amount(
   scale: AmountScale,

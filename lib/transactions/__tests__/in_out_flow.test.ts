@@ -28,7 +28,7 @@ describe("in_out_flow_breakdown", () => {
     row({ sort_id: 3, out_sen: 2_000, out_micro: 200_000 }),
   ];
 
-  it("sen: slice amounts match statement totals and net equals in minus out", () => {
+  it("sen: net equals in minus non-FD out minus FD out", () => {
     const statement = build_transaction_statement(rows, "all", 0, 0);
     const flow = in_out_flow_breakdown(
       statement.rows,
@@ -37,15 +37,36 @@ describe("in_out_flow_breakdown", () => {
       "Total out",
     );
 
+    expect(flow.slices).toHaveLength(3);
     expect(flow.total_in_sen).toBe(statement.total_in_sen);
     expect(flow.total_out_sen).toBe(statement.total_out_sen);
-    expect(flow.slices[0].amount_sen).toBe(statement.total_in_sen);
-    expect(flow.slices[1].amount_sen).toBe(statement.total_out_sen);
+    expect(flow.total_fd_out_sen).toBe(0);
     expect(flow.net_sen).toBe(statement.total_in_sen - statement.total_out_sen);
-    expect(flow.slices[0].pct + flow.slices[1].pct).toBeCloseTo(100, 5);
+    expect(flow.slices.reduce((s, r) => s + r.pct, 0)).toBeCloseTo(100, 5);
   });
 
-  it("micro: net micro equals total in micro minus total out micro", () => {
+  it("splits FD placement out into its own slice", () => {
+    const with_fd: TransactionDbRow[] = [
+      row({ sort_id: 1, in_sen: 500_000 }),
+      row({ sort_id: 2, out_sen: 60_478, txn_type: "purchase" }),
+      row({ sort_id: 3, out_sen: 200_000, txn_type: "fd_placement" }),
+    ];
+    const statement = build_transaction_statement(with_fd, "all", 0, 0);
+    const flow = in_out_flow_breakdown(
+      statement.rows,
+      "sen",
+      "Total in",
+      "Total out",
+    );
+
+    expect(flow.total_out_sen).toBe(60_478);
+    expect(flow.total_fd_out_sen).toBe(200_000);
+    expect(flow.net_sen).toBe(500_000 - 60_478 - 200_000);
+    expect(flow.slices[2]?.label).toBe("FD");
+    expect(flow.slices[2]?.pct).toBeCloseTo((200_000 / 760_478) * 100, 1);
+  });
+
+  it("micro: net micro equals total in micro minus outs", () => {
     const statement = build_transaction_statement(rows, "all", 0, 0);
     const flow = in_out_flow_breakdown(
       statement.rows,

@@ -14,6 +14,7 @@ import { MonthSelect } from "@/components/month_select";
 import { DailySpendingChart } from "@/components/daily_spending_chart";
 import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
 import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
+import { DashboardOverviewCard } from "@/components/dashboard_overview_card";
 import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
 
 function spending_meta(change: ReturnType<typeof compute_spending_change>) {
@@ -126,6 +127,12 @@ export function DashboardView({
                   meta={<>Excludes FD · {month_label}</>}
                 />
               </div>
+              <DashboardOverviewCard
+                className="min-h-0"
+                statements={statements}
+                month={month}
+                month_label={month_label}
+              />
               <SpendingBreakdownCard
                 content_sized
                 column_fill

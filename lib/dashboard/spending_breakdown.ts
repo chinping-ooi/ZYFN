@@ -1,6 +1,7 @@
 import { cash_flow_spending_sen } from "@/lib/dashboard/cash_flow_amounts";
 import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
 import {
+  is_fd_category_text,
   is_spending_donut_fd_row,
   spending_donut_category_label,
 } from "@/lib/dashboard/spending_donut_fd";
@@ -51,16 +52,23 @@ export function spending_breakdown_for_month(
     }
   }
 
-  const total = [...buckets.values()].reduce((s, b) => s + b.amount_sen, 0);
-
-  return [...buckets.entries()]
+  const rows = [...buckets.entries()]
     .map(([id, bucket]) => ({
       id,
       label: bucket.label,
       account_type: "",
       amount_sen: bucket.amount_sen,
       count: bucket.count,
-      pct: total > 0 ? (bucket.amount_sen / total) * 100 : 0,
+      pct: 0,
+    }))
+    .filter((row) => !is_fd_category_text(row.label));
+
+  const filtered_total = rows.reduce((s, r) => s + r.amount_sen, 0);
+
+  return rows
+    .map((row) => ({
+      ...row,
+      pct: filtered_total > 0 ? (row.amount_sen / filtered_total) * 100 : 0,
     }))
     .sort((a, b) => b.amount_sen - a.amount_sen);
 }

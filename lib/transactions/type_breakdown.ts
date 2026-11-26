@@ -1,3 +1,4 @@
+import { is_fd_category_text } from "@/lib/dashboard/spending_donut_fd";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import type { AmountScale } from "@/lib/supabase/transaction_rows";
 import type { MinorAmount } from "@/lib/money";
@@ -77,7 +78,7 @@ export function txn_type_breakdown(
   );
   const total = scale === "micro" ? total_micro : total_sen;
 
-  const breakdown_rows: TxnTypeBreakdownRow[] = [...buckets.entries()]
+  let breakdown_rows: TxnTypeBreakdownRow[] = [...buckets.entries()]
     .map(([type_key, bucket]) => {
       const amount = scale === "micro" ? bucket.amount_micro : bucket.amount_sen;
       const pct = total > 0 ? (amount / total) * 100 : 0;
@@ -96,9 +97,30 @@ export function txn_type_breakdown(
       return b_amt - a_amt;
     });
 
+  breakdown_rows = breakdown_rows.filter((row) => !is_fd_category_text(row.label));
+
+  const total_sen_filtered = breakdown_rows.reduce(
+    (t, r) => t + r.amount_sen,
+    0,
+  );
+  const total_micro_filtered = breakdown_rows.reduce(
+    (t, r) => t + r.amount_micro,
+    0,
+  );
+  const total_filtered =
+    scale === "micro" ? total_micro_filtered : total_sen_filtered;
+
+  breakdown_rows = breakdown_rows.map((row) => {
+    const amount = scale === "micro" ? row.amount_micro : row.amount_sen;
+    return {
+      ...row,
+      pct: total_filtered > 0 ? (amount / total_filtered) * 100 : 0,
+    };
+  });
+
   return {
     rows: breakdown_rows,
-    total_sen,
-    total_micro,
+    total_sen: total_sen_filtered,
+    total_micro: total_micro_filtered,
   };
 }
