@@ -95,42 +95,6 @@
     }
   }
 
-  /* Below lg: document scroll — no viewport-height flex squeezing. */
-  @media (max-width: 1023px) {
-    .dashboard-main {
-      flex: none !important;
-      min-height: auto !important;
-      height: auto !important;
-      overflow: visible !important;
-    }
-
-    .dashboard-shell,
-    .dashboard-columns,
-    .dashboard-column,
-    .dashboard-column-left,
-    .dashboard-column-right {
-      flex: none;
-      min-height: auto;
-      height: auto;
-    }
-
-    .dashboard-shell .card {
-      flex: none !important;
-      min-height: auto !important;
-      height: auto !important;
-      max-height: none !important;
-      overflow: visible !important;
-    }
-
-    .dashboard-shell .spending-chart-body,
-    .dashboard-shell .spending-donut-layout,
-    .dashboard-shell .balance-rows {
-      flex: none !important;
-      min-height: auto !important;
-      overflow: visible !important;
-    }
-  }
-
   .dashboard-toolbar {
     display: flex;
     flex-wrap: wrap;
