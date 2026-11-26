@@ -10,6 +10,7 @@ export const PARSER_DISPLAY_NAMES: Record<string, string> = {
   hlb_savings: "Hong Leong savings",
   mbb_card: "Maybank credit card",
   tng_text: "TNG eWallet export",
+  tng_wallet: "Touch 'n Go eWallet",
   generic: "Generic table",
 };
 

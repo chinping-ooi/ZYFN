@@ -38,6 +38,10 @@ import {
   hlb_savings_is_likely_statement,
   parse_hlb_savings_statement,
 } from "@/lib/import/parsers/hlb_savings";
+import {
+  parse_tng_wallet_statement,
+  tng_wallet_is_likely_statement,
+} from "@/lib/import/parsers/tng_wallet";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
 import {
   load_column_mapping,
@@ -87,6 +91,7 @@ function suggest_account_from_pdf_text(
   if (meta.suggested_account_ref) return meta.suggested_account_ref;
   const bias = current_ref || IMPORTABLE[0]?.account_ref || "PBE_SAVINGS";
   const { parser_id } = parse_statement_text(text, bias, pdf_meta);
+  if (parser_id === "tng_wallet") return "TNG_EWALLET";
   if (parser_id === "tng_text") {
     return text.toUpperCase().includes("GO+")
       ? "TNG_GO_PLUS"
@@ -289,6 +294,14 @@ export function ImportWizard() {
             } else {
               set_detected_upload_accounts([]);
             }
+          } else if (tng_wallet_is_likely_statement(detection_corpus)) {
+            const tng = parse_tng_wallet_statement(text);
+            set_multi_account(tng.accounts.length > 1);
+            set_parsed_accounts(tng.accounts);
+            set_detected_upload_accounts(tng.accounts);
+            set_account_ref(
+              tng.accounts.length === 1 ? tng.accounts[0].account_ref : "",
+            );
           } else {
             set_multi_account(false);
             set_parsed_accounts([]);

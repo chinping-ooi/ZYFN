@@ -25,6 +25,10 @@ import {
 } from "@/lib/import/parsers/pbe_savings";
 import { generic_statement_parser } from "@/lib/import/parsers/generic";
 import { tng_text_parser } from "@/lib/import/parsers/tng";
+import {
+  parse_tng_wallet_statement,
+  tng_wallet_parser,
+} from "@/lib/import/parsers/tng_wallet";
 import { parser_display_name } from "@/lib/import/import_labels";
 import type { PdfDocMeta } from "@/lib/import/pdf_extract";
 import { statement_detection_corpus } from "@/lib/import/statement_detection";
@@ -32,6 +36,7 @@ import type { ImportParsedAccount } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 
 const PARSERS: StatementParser[] = [
+  tng_wallet_parser,
   tng_text_parser,
   hlb_savings_parser,
   hlb_parser,
@@ -96,7 +101,13 @@ export function select_statement_parser(
     } else if (account_ref === "HLB" && p.id === "hlb") {
       result.score += 0.1;
     }
-    if (account_ref.includes("TNG") && p.id === "tng_text") result.score += 0.3;
+    if (
+      (account_ref.includes("TNG") || account_ref.includes("TNG_EWALLET")) &&
+      p.id === "tng_wallet"
+    ) {
+      result.score += 0.3;
+    }
+    if (account_ref.includes("TNG") && p.id === "tng_text") result.score += 0.2;
     return { parser: p, ...result };
   });
   biased.sort((a, b) => b.score - a.score);
@@ -181,6 +192,20 @@ export function parse_statement_text(
       rows: result.rows,
       parse_warning,
       parsed_accounts: result.account ? [result.account] : undefined,
+    };
+  }
+  if (parser.id === "tng_wallet") {
+    const result = parse_tng_wallet_statement(text);
+    const parse_warning =
+      result.rows.length === 0
+        ? (result.parse_warning ?? empty_parse_warning(parser.id))
+        : result.parse_warning;
+    return {
+      parser_id: parser.id,
+      rows: result.rows,
+      parse_warning,
+      parsed_accounts:
+        result.accounts.length > 0 ? result.accounts : undefined,
     };
   }
   const rows = parser.parse(text);

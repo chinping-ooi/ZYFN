@@ -70,6 +70,22 @@ Balance from previous statement   10.00
     expect(out.rows.length).toBe(1);
   });
 
+  it("routes TNG wallet PDF history to tng_wallet, not tng_text", () => {
+    const text = `
+TNG WALLET TRANSACTION HISTORY
+Wallet ID 123
+TNG WALLET TRANSACTION
+1/11/2026 Success Reload 111 Quick Reload Payment (via GO+ Balance)   RM1.00   RM2.00
+GO+ TRANSACTION
+1/11/2026 Success GO+ Daily Earnings   RM0.0012   RM1.0012
+`;
+    const parser = select_statement_parser(text, "TNG_EWALLET");
+    expect(parser.id).toBe("tng_wallet");
+    const out = parse_statement_text(text, "TNG_EWALLET");
+    expect(out.parser_id).toBe("tng_wallet");
+    expect(out.rows.length).toBeGreaterThan(0);
+  });
+
   it("returns a warning when maybank keyword parser matches but finds no rows", () => {
     const plain_maybank = "MAYBANK BERHAD\nRandom marketing flyer\nNo dates here";
     const out = parse_statement_text(plain_maybank, "PBE_SAVINGS");

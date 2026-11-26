@@ -7,6 +7,9 @@ import { decimal_myr_to_sen } from "@/lib/supabase/decimal_to_sen";
 export const tng_text_parser: StatementParser = {
   id: "tng_text",
   detect(text: string) {
+    if (/TNG\s+WALLET\s+TRANSACTION\s+HISTORY/i.test(text)) {
+      return { id: "tng_text", score: 0.15 };
+    }
     const score =
       text.includes("TNG") || text.includes("GO+") || text.includes("eWallet")
         ? 0.85
