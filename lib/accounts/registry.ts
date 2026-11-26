@@ -33,6 +33,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     account_ref: "HLB",
     account_label: "Hong Leong Bank",
     account_code: "HLB",
+    account_id: 2,
     kind: "bank",
   },
   {
