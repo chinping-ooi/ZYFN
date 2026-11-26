@@ -9,7 +9,7 @@ import {
 import { filter_tng_rows_for_go_plus_visibility } from "@/lib/tng/combined_statement";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { useShowGoPlus } from "@/lib/hooks/use_show_go_plus";
-import { KpiCard } from "@/components/kpi_card";
+import { StatementSummarySection } from "@/components/statement_summary_section";
 import { MonthSelect } from "@/components/month_select";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
@@ -75,33 +75,15 @@ export function TngCombinedStatementView({
           }
         />
 
-        <section
-          className="statement-summary kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
-          aria-label="Statement summary"
-        >
-          <KpiCard
-            compact_amount
-            label={labels.total_in}
-            amount_micro={statement.total_in_micro}
-            money_dp={4}
-          />
-          <KpiCard
-            compact_amount
-            label={labels.total_out}
-            amount_micro={statement.total_out_micro}
-            money_dp={4}
-          />
-          <KpiCard
-            compact_amount
-            label="Transactions"
-            meta={`${row_count_in_view} row${row_count_in_view === 1 ? "" : "s"} in view`}
-          />
-          <KpiCard
-            compact_amount
-            label={labels.closing}
-            amount_sen={statement.closing_sen}
-          />
-        </section>
+        <StatementSummarySection
+          statement={statement}
+          total_in_label={labels.total_in}
+          total_out_label={labels.total_out}
+          closing_label={labels.closing}
+          amount_scale={data.amount_scale}
+          money_dp={4}
+          row_count_in_view={row_count_in_view}
+        />
       </div>
 
       <AccountTableCard title="Transaction activity" fill_height>
