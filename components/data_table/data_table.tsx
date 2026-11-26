@@ -11,6 +11,7 @@ import type { DataTableColumn, SortDirection } from "@/components/data_table/typ
 import {
   column_cell_class,
   column_header_class,
+  column_header_sticky_class,
 } from "@/components/data_table/column_layout";
 import { visible_table_columns } from "@/components/data_table/visible_columns";
 import { compare_rows, display_cell } from "@/components/data_table/display";
@@ -219,7 +220,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     key={column.key}
                     scope="col"
                     aria-sort={sort === "none" ? undefined : sort}
-                    className={`${LEDGER_HEAD_CELL} p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${
+                    className={`${LEDGER_HEAD_CELL} p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${column_header_sticky_class(column)} ${
                       numeric ? "text-right" : "text-left"
                     }`}
                   >
@@ -245,7 +246,7 @@ export function DataTable<T extends Record<string, unknown>>({
             {visible.map((row, index) => (
               <tr
                 key={index}
-                className="even:bg-[#fafbfc] hover:bg-[#f0f3f7] last:[&>td]:border-b-0"
+                className="group even:bg-[#fafbfc] hover:bg-[#f0f3f7] last:[&>td]:border-b-0"
               >
                 {labeled_columns.map((column) => {
                   const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(

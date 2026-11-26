@@ -11,8 +11,8 @@ describe("import_labels", () => {
   });
 
   it("maps row statuses for badges", () => {
-    expect(import_row_status_label("new")).toBe("To be added");
-    expect(import_row_status_label("duplicate")).toBe("Already saved");
-    expect(import_row_status_label("needs_review")).toBe("Please check");
+    expect(import_row_status_label("new")).toBe("New record");
+    expect(import_row_status_label("duplicate")).toBe("Existing record");
+    expect(import_row_status_label("needs_review")).toBe("Need check");
   });
 });

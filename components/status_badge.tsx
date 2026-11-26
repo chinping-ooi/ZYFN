@@ -5,9 +5,9 @@ const styles: Record<string, string> = {
   new: "bg-[#f1f7f4] text-[#35634f] border-[#bfd2c7]",
   duplicate: "bg-[#f2f3f5] text-[#626c7a] border-[#cbd0d8]",
   "needs review": "bg-[#faf6ec] text-[#805e23] border-[#decea9]",
-  "to be added": "bg-[#f1f7f4] text-[#35634f] border-[#bfd2c7]",
-  "already saved": "bg-[#f2f3f5] text-[#626c7a] border-[#cbd0d8]",
-  "please check": "bg-[#faf6ec] text-[#805e23] border-[#decea9]",
+  "new record": "bg-[#f1f7f4] text-[#276b54] border-[#bfd2c7]",
+  "existing record": "bg-[#f2f3f5] text-[#626c7a] border-[#cbd0d8]",
+  "need check": "bg-[#faf6ec] text-[#805e23] border-[#decea9]",
 };
 
 export function StatusBadge({ status }: { status: string }) {
@@ -16,7 +16,7 @@ export function StatusBadge({ status }: { status: string }) {
     styles[key] ?? "bg-[#f2f3f5] text-[#626c7a] border-[#cbd0d8]";
   return (
     <span
-      className={`inline-block rounded-[2px] border px-[7px] py-[3px] text-xs font-medium ${style}`}
+      className={`inline-block whitespace-nowrap rounded-[2px] border px-[7px] py-[3px] text-xs font-medium ${style}`}
     >
       {status}
     </span>

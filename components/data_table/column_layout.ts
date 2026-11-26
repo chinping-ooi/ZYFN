@@ -15,11 +15,9 @@ export function column_header_class<T>(
   } else if (column.key === "description") {
     /* No % width — table-fixed + rem columns must not exceed 100% (avoids phantom col). */
     parts.push("min-w-[11rem]");
-  } else if (
-    column.key === "status" ||
-    column.key === "status_label" ||
-    column.key === "import_status"
-  ) {
+  } else if (column.key === "import_status") {
+    parts.push("w-[8.75rem] min-w-[8.75rem] max-w-[8.75rem]");
+  } else if (column.key === "status" || column.key === "status_label") {
     parts.push("w-[5.5rem] max-w-[5.5rem]");
   } else if (column.key === "type") {
     parts.push("w-[8.5rem] max-w-[8.5rem]");
@@ -46,6 +44,15 @@ export function column_header_class<T>(
   return parts.join(" ");
 }
 
+export function column_header_sticky_class<T>(
+  column: DataTableColumn<T>,
+): string {
+  if (column.key === "import_status") {
+    return "sticky right-0 z-20 bg-[#edf0f4] shadow-[-6px_0_8px_-6px_rgba(35,48,68,0.12)]";
+  }
+  return "";
+}
+
 export function column_cell_class<T>(
   column: DataTableColumn<T>,
 ): string {
@@ -58,6 +65,10 @@ export function column_cell_class<T>(
     parts.push("whitespace-nowrap tabular-nums");
   } else if (column.key === "description") {
     parts.push("min-w-0 text-left align-top");
+  } else if (column.key === "import_status") {
+    parts.push(
+      "whitespace-nowrap sticky right-0 z-[1] bg-white shadow-[-6px_0_8px_-6px_rgba(35,48,68,0.12)] group-even:bg-[#fafbfc] group-hover:bg-[#f0f3f7]",
+    );
   } else if (column.type === "status" || column.key === "days_left") {
     parts.push("whitespace-nowrap");
   } else {

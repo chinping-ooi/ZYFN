@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileSpreadsheet, Upload, X } from "lucide-react";
 import { ACCOUNTS, account_path } from "@/lib/accounts/registry";
 import {
+  IMPORT_STATUS_CHIP_LABELS,
   parser_display_name,
 } from "@/lib/import/import_labels";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
@@ -508,9 +509,18 @@ export function ImportWizard() {
                   Review transactions
                 </h2>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <StatChip label="To be added" value={counts.new_count} />
-                  <StatChip label="Already saved" value={counts.dup} />
-                  <StatChip label="Please check" value={counts.review} />
+                  <StatChip
+                    label={IMPORT_STATUS_CHIP_LABELS.new}
+                    value={counts.new_count}
+                  />
+                  <StatChip
+                    label={IMPORT_STATUS_CHIP_LABELS.duplicate}
+                    value={counts.dup}
+                  />
+                  <StatChip
+                    label={IMPORT_STATUS_CHIP_LABELS.needs_review}
+                    value={counts.review}
+                  />
                   {parser_id ? (
                     <StatChip
                       label="Format"

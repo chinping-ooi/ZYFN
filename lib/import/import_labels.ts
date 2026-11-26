@@ -17,10 +17,16 @@ export function parser_display_name(parser_id: string): string {
   );
 }
 
+export const IMPORT_STATUS_CHIP_LABELS = {
+  new: "New record",
+  duplicate: "Existing record",
+  needs_review: "Need check",
+} as const;
+
 export function import_row_status_label(
   status: NormalizedImportRow["status"],
 ): string {
-  if (status === "duplicate") return "Already saved";
-  if (status === "needs_review") return "Please check";
-  return "To be added";
+  if (status === "duplicate") return IMPORT_STATUS_CHIP_LABELS.duplicate;
+  if (status === "needs_review") return IMPORT_STATUS_CHIP_LABELS.needs_review;
+  return IMPORT_STATUS_CHIP_LABELS.new;
 }
