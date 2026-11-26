@@ -17,23 +17,14 @@ export function FixedDepositPageSkeleton({
       </div>
 
       <section
-        className="mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
+        className="statement-summary kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
         aria-busy="true"
         aria-label="Loading fixed deposit summary"
       >
-        <article className="rounded-[3px] border border-zyfn-line bg-white px-5 py-4">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="mt-2 h-8 w-32" />
-        </article>
-        <article className="rounded-[3px] border border-zyfn-line bg-white px-5 py-4">
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="mt-2 h-6 w-40" />
-        </article>
-        <article className="rounded-[3px] border border-zyfn-line bg-white px-5 py-4">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="mt-2 h-4 w-44" />
-        </article>
-        <KpiCardSkeleton />
+        <KpiCardSkeleton compact_amount />
+        <KpiCardSkeleton compact_amount />
+        <KpiCardSkeleton compact_amount />
+        <KpiCardSkeleton compact_amount />
       </section>
 
       <AccountTableCard
