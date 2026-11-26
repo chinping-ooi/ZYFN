@@ -270,19 +270,15 @@ function SpendingDonutPanel({
 
 export function SpendingBreakdownCard({
   rows,
-  month_label,
   className = "",
   content_sized = false,
   column_fill = false,
 }: {
   rows: SpendingAccountRow[];
-  /** Reserved for callers; subtitle removed from the card header. */
-  month_label: string;
   className?: string;
   content_sized?: boolean;
   column_fill?: boolean;
 }) {
-  void month_label;
   const total_sen = spending_total_sen(rows);
 
   const shell_parts = [

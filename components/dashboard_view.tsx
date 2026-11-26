@@ -131,7 +131,6 @@ export function DashboardView({
                 column_fill
                 className="min-h-0 flex-1"
                 rows={spending_rows.length > 0 ? spending_rows : []}
-                month_label={month_label}
               />
             </div>
             <div className="dashboard-column dashboard-column-right">
