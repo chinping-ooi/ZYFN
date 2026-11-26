@@ -1,0 +1,46 @@
+import { describe, expect, it } from "vitest";
+import { parse_statement_text, select_statement_parser } from "@/lib/import/parsers";
+import { statement_detection_corpus } from "@/lib/import/statement_detection";
+
+const MAYBANK_SAVINGS_PDFJS_SNIPPET = `
+Maybank Islamic
+URUSNIAGA AKAUN ACCOUNT TRANSACTIONS
+ENTRY DATE  VALUE DATE  STATEMENT BALANCE
+TARIKH PENYATA 31/10/26
+BEGINNING BALANCE 500.00
+03/10  PAYMENT FR A/C  12.00-  488.00
+ENDING BALANCE 488.00
+`;
+
+describe("statement parser ordering", () => {
+  it("routes Maybank current-account text to mbb_savings, not generic maybank", () => {
+    const meta = {
+      title: "Current Account Statement",
+      author: "Maybank2u.com",
+      creator: "Maybank2u.com",
+    };
+    const corpus = statement_detection_corpus(
+      MAYBANK_SAVINGS_PDFJS_SNIPPET,
+      meta,
+    );
+    const parser = select_statement_parser(corpus, "PBE_SAVINGS", meta);
+    expect(parser.id).toBe("mbb_savings");
+
+    const out = parse_statement_text(
+      MAYBANK_SAVINGS_PDFJS_SNIPPET,
+      "PBE_SAVINGS",
+      meta,
+    );
+    expect(out.parser_id).toBe("mbb_savings");
+    expect(out.rows.length).toBeGreaterThan(0);
+    expect(out.parse_warning).toBeNull();
+  });
+
+  it("returns a warning when maybank keyword parser matches but finds no rows", () => {
+    const plain_maybank = "MAYBANK BERHAD\nRandom marketing flyer\nNo dates here";
+    const out = parse_statement_text(plain_maybank, "PBE_SAVINGS");
+    expect(out.parser_id).toBe("maybank");
+    expect(out.rows).toHaveLength(0);
+    expect(out.parse_warning).toMatch(/Maybank statement matched/);
+  });
+});

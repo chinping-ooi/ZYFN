@@ -41,7 +41,11 @@ import type {
   NormalizedImportRow,
   SpreadsheetColumnMapping,
 } from "@/lib/import/types";
-import { extract_pdf_text_local } from "@/lib/import/pdf_extract";
+import {
+  extract_pdf_text_local,
+  type PdfDocMeta,
+} from "@/lib/import/pdf_extract";
+import { statement_detection_corpus } from "@/lib/import/statement_detection";
 import { AccountTableCard } from "@/components/account_table_card";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import { ColumnMappingForm } from "@/components/import/column_mapping_form";
@@ -69,11 +73,12 @@ function kind_from_filename(name: string): ImportSourceKind | null {
 function suggest_account_from_pdf_text(
   text: string,
   current_ref: string,
+  pdf_meta?: PdfDocMeta | null,
 ): string | null {
   const meta = extract_pbe_card_meta(text);
   if (meta.suggested_account_ref) return meta.suggested_account_ref;
   const bias = current_ref || IMPORTABLE[0]?.account_ref || "PBE_SAVINGS";
-  const { parser_id } = parse_statement_text(text, bias);
+  const { parser_id } = parse_statement_text(text, bias, pdf_meta);
   if (parser_id === "tng_text") {
     return text.toUpperCase().includes("GO+")
       ? "TNG_GO_PLUS"
@@ -122,6 +127,7 @@ export function ImportWizard() {
   const [file, set_file] = useState<File | null>(null);
   const [source_kind, set_source_kind] = useState<ImportSourceKind | null>(null);
   const [pdf_text_cache, set_pdf_text_cache] = useState<string | null>(null);
+  const [pdf_meta_cache, set_pdf_meta_cache] = useState<PdfDocMeta | null>(null);
   const [headers, set_headers] = useState<string[]>([]);
   const [mapping, set_mapping] = useState<SpreadsheetColumnMapping | null>(null);
   const [rows, set_rows] = useState<NormalizedImportRow[]>([]);
@@ -214,6 +220,7 @@ export function ImportWizard() {
       set_file(f);
       set_source_kind(kind);
       set_pdf_text_cache(null);
+      set_pdf_meta_cache(null);
       set_parse_warning(null);
       set_error(null);
       if (kind === "excel" || kind === "csv") {
@@ -226,9 +233,12 @@ export function ImportWizard() {
         set_detecting(true);
         try {
           const buffer = await f.arrayBuffer();
-          const { text, ocr_pages: ocr } = await extract_pdf_text_local(buffer);
+          const { text, ocr_pages: ocr, meta } =
+            await extract_pdf_text_local(buffer);
           set_pdf_text_cache(text);
+          set_pdf_meta_cache(meta);
           set_ocr_pages(ocr);
+          const detection_corpus = statement_detection_corpus(text, meta);
           const mbb = parse_mbb_card_statement(text);
           if (mbb.accounts.length > 0) {
             set_multi_account(true);
@@ -239,7 +249,7 @@ export function ImportWizard() {
             } else {
               set_account_ref("");
             }
-          } else if (mbb_savings_is_likely_statement(text)) {
+          } else if (mbb_savings_is_likely_statement(detection_corpus)) {
             const savings = parse_mbb_savings_statement(text);
             set_multi_account(false);
             set_parsed_accounts([]);
@@ -252,7 +262,11 @@ export function ImportWizard() {
           } else {
             set_multi_account(false);
             set_parsed_accounts([]);
-            const suggested = suggest_account_from_pdf_text(text, account_ref);
+            const suggested = suggest_account_from_pdf_text(
+              text,
+              account_ref,
+              meta,
+            );
             if (suggested) {
               const entry = IMPORTABLE.find((a) => a.account_ref === suggested);
               if (entry?.account_id != null) {
@@ -376,15 +390,22 @@ export function ImportWizard() {
           text = extracted.text;
           ocr = extracted.ocr_pages;
           set_pdf_text_cache(text);
+          set_pdf_meta_cache(extracted.meta);
         }
         set_ocr_pages(ocr);
-        const bias_ref = account_ref || "MBB_VISA_1697";
+        const bias_ref =
+          account_ref ||
+          (pdf_meta_cache && mbb_savings_is_likely_statement(
+            statement_detection_corpus(text, pdf_meta_cache),
+          )
+            ? "MBB_SAVINGS"
+            : "MBB_VISA_1697");
         const {
           parser_id: pid,
           rows: parsed,
           parse_warning: warn,
           parsed_accounts: detected,
-        } = parse_statement_text(text, bias_ref);
+        } = parse_statement_text(text, bias_ref, pdf_meta_cache);
         set_parser_id(pid);
         set_parse_warning(warn);
         if (detected && detected.length > 0) {
@@ -420,6 +441,7 @@ export function ImportWizard() {
     account_id,
     run_dedupe,
     pdf_text_cache,
+    pdf_meta_cache,
     ocr_pages,
   ]);
 
@@ -577,6 +599,7 @@ export function ImportWizard() {
     set_step("start");
     set_file(null);
     set_pdf_text_cache(null);
+    set_pdf_meta_cache(null);
     set_account_ref("");
     set_rows([]);
     set_result(null);
@@ -599,6 +622,7 @@ export function ImportWizard() {
     set_file(null);
     set_source_kind(null);
     set_pdf_text_cache(null);
+    set_pdf_meta_cache(null);
     set_parse_warning(null);
     set_detecting(false);
     set_error(null);

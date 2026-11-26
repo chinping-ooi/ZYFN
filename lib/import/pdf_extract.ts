@@ -4,9 +4,15 @@
  */
 import { group_text_items_into_lines, type PdfLayoutItem } from "@/lib/import/pdf_layout";
 
+export type PdfDocMeta = {
+  title?: string;
+  author?: string;
+  creator?: string;
+};
+
 export async function extract_pdf_text_local(
   buffer: ArrayBuffer,
-): Promise<{ text: string; ocr_pages: number }> {
+): Promise<{ text: string; ocr_pages: number; meta: PdfDocMeta }> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
@@ -14,6 +20,13 @@ export async function extract_pdf_text_local(
   ).toString();
 
   const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+  const metadata = await doc.getMetadata().catch(() => null);
+  const info = metadata?.info as Record<string, string> | undefined;
+  const meta: PdfDocMeta = {
+    title: info?.Title,
+    author: info?.Author,
+    creator: info?.Creator,
+  };
   let ocr_pages = 0;
   const parts: string[] = [];
 
@@ -56,5 +69,5 @@ export async function extract_pdf_text_local(
     if (data.text?.trim()) parts.push(data.text.trim());
   }
 
-  return { text: parts.join("\n"), ocr_pages };
+  return { text: parts.join("\n"), ocr_pages, meta };
 }

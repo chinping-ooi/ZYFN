@@ -1,4 +1,5 @@
 import { generic_statement_parser } from "@/lib/import/parsers/generic";
+import { mbb_savings_layout_score } from "@/lib/import/parsers/mbb_savings";
 import type { StatementParser } from "@/lib/import/parsers/types";
 
 function keyword_parser(
@@ -9,6 +10,9 @@ function keyword_parser(
   return {
     id,
     detect(text: string) {
+      if (id === "maybank" && mbb_savings_layout_score(text) >= 0.5) {
+        return { id, score: 0.05 };
+      }
       const upper = text.toUpperCase();
       const keyword_hit = keywords.some((k) => upper.includes(k.toUpperCase()));
       const base_score = base.detect(text).score;
