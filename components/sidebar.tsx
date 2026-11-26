@@ -18,6 +18,7 @@ import {
   DASHBOARD_HREF,
   FIXED_DEPOSITS_HREF,
   IMPORT_HREF,
+  WALLET_HREF,
   type NavItem,
 } from "@/lib/navigation";
 import {
@@ -202,6 +203,8 @@ function SidebarPanel({
   const fixed_deposits_active =
     pathname === FIXED_DEPOSITS_HREF ||
     pathname.startsWith(`${FIXED_DEPOSITS_HREF}/`);
+  const wallet_active =
+    pathname === WALLET_HREF || pathname.startsWith(`${WALLET_HREF}/`);
 
   return (
     <>
@@ -268,6 +271,25 @@ function SidebarPanel({
           ) : null}
           <PiggyBank className="size-4 shrink-0 text-slate-300" aria-hidden />
           <span>Fixed deposits</span>
+        </Link>
+        <Link
+          href={WALLET_HREF}
+          onClick={on_navigate}
+          className={`${NAV_LINK_BASE} mt-1 gap-2.5 px-3.5 py-1.5 ${
+            wallet_active
+              ? "active bg-white/10 font-medium text-white"
+              : "text-slate-400 hover:bg-white/5 hover:text-white"
+          }`}
+          aria-current={wallet_active ? "page" : undefined}
+        >
+          {wallet_active ? (
+            <span
+              className="pointer-events-none absolute top-1 bottom-1 left-0 w-0.5 rounded-full bg-sky-400"
+              aria-hidden
+            />
+          ) : null}
+          <Wallet className="size-4 shrink-0 text-slate-300" aria-hidden />
+          <span>Wallet</span>
         </Link>
         {nav_groups.map((group) => (
           <NavGroupSection

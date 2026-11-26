@@ -14,14 +14,20 @@ import type { TransactionTableRow } from "@/components/data_table/transaction_co
 import { AccountPageHeader } from "@/components/account_page_header";
 import { AccountTableCard } from "@/components/account_table_card";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
+import { WalletAccountToggle } from "@/components/wallet_account_toggle";
 
 export function TngCombinedStatementView({
   data,
   account_slug,
+  view_base_path,
+  wallet_toggle = false,
 }: {
   data: AccountStatementFromDb;
   account_slug: string;
+  view_base_path?: string;
+  wallet_toggle?: boolean;
 }) {
+  const base_path = view_base_path ?? `/transactions/${account_slug}`;
   const labels = statement_kpi_labels(data.account_kind);
   const { show_go_plus, set_show_go_plus } = useShowGoPlus();
 
@@ -52,7 +58,7 @@ export function TngCombinedStatementView({
       <div className="shrink-0">
         <AccountPageHeader
           title="Account statement"
-          view_base_path={`/transactions/${account_slug}`}
+          view_base_path={base_path}
           active_view="statement"
           controls={
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -66,6 +72,7 @@ export function TngCombinedStatementView({
                 options={month_options}
                 onChange={(v) => set_month(v as typeof month)}
               />
+              {wallet_toggle ? <WalletAccountToggle /> : null}
             </div>
           }
         />

@@ -102,11 +102,7 @@ export type NavGroup = {
   defaultOpen?: boolean;
 };
 
-const NAV_GROUP_ORDER: NavGroupKey[] = [
-  "Transactions",
-  "Credit cards",
-  "Wallets",
-];
+const NAV_GROUP_ORDER: NavGroupKey[] = ["Transactions", "Credit cards"];
 
 function build_account_nav_groups(): NavGroup[] {
   const groups: NavGroup[] = NAV_GROUP_ORDER.map((title) => ({
@@ -135,6 +131,8 @@ export const DASHBOARD_HREF = "/";
 export const IMPORT_HREF = "/import";
 
 export const FIXED_DEPOSITS_HREF = "/fixed-deposits";
+
+export { WALLET_HREF } from "@/lib/wallets/routes";
 
 /** Default sidebar groups. */
 export const NAV_GROUPS: NavGroup[] = build_account_nav_groups();

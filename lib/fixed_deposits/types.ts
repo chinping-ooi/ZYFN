@@ -35,5 +35,7 @@ export type FixedDepositSummary = {
   matured_count: number;
   next_maturity_date: string | null;
   next_maturity_receipt: string | null;
+  next_maturity_principal_major: number | null;
+  next_maturity_days_left: number | string | null;
   total_interest_earned_major: number;
 };

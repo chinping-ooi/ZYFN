@@ -10,6 +10,8 @@ export const MOCK_FD_SUMMARY: FixedDepositSummary = {
   matured_count: 1,
   next_maturity_date: "2027-01-15",
   next_maturity_receipt: "FD-2026-001",
+  next_maturity_principal_major: 50000,
+  next_maturity_days_left: 45,
   total_interest_earned_major: 4200,
 };
 

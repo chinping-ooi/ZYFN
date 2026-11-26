@@ -20,6 +20,7 @@ export async function TransactionAccountSummaryRoute({
   route_prefix,
   view_base_path,
   hide_view_toggle = false,
+  wallet_toggle = false,
 }: {
   title: string;
   config: TransactionAccountConfig;
@@ -27,6 +28,7 @@ export async function TransactionAccountSummaryRoute({
   route_prefix: AccountRoutePrefix;
   view_base_path?: string;
   hide_view_toggle?: boolean;
+  wallet_toggle?: boolean;
 }) {
   const base = view_base_path ?? `/${route_prefix}/${account_slug}`;
   if (!supabase_configured()) {
@@ -72,12 +74,15 @@ export async function TransactionAccountSummaryRoute({
             <TngCombinedSummaryView
               data={statement}
               account_slug={account_slug}
+              view_base_path={base}
+              wallet_toggle={wallet_toggle}
             />
           ) : (
             <TransactionSummaryView
               data={statement}
               view_base_path={base}
               hide_view_toggle={hide_view_toggle}
+              wallet_toggle={wallet_toggle}
             />
           )}
         </StatementViewSuspense>

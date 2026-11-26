@@ -9,6 +9,7 @@ export function KpiCard({
   money_dp = 2,
   meta,
   hide_amount,
+  primary_value,
   compact_amount,
   snug = false,
 }: {
@@ -18,6 +19,8 @@ export function KpiCard({
   money_dp?: 2 | 4;
   meta?: ReactNode;
   hide_amount?: boolean;
+  /** Large non-currency value in the amount row (compact_amount sizing). */
+  primary_value?: string;
   /** Statement summary uses 24px amounts per UI reference. */
   compact_amount?: boolean;
   /** Dashboard KPIs: natural height, tight meta under amount. */
@@ -39,7 +42,9 @@ export function KpiCard({
             compact_amount ? "text-xl md:text-2xl" : "text-[30px]"
           }`}
         >
-          {!hide_amount ? (
+          {primary_value != null ? (
+            primary_value
+          ) : !hide_amount ? (
             amount_micro != null ? (
               <>
                 <span className="mr-1.5 text-base text-zyfn-muted">RM</span>

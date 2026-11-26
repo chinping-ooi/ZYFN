@@ -10,14 +10,20 @@ import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { MonthSelect } from "@/components/month_select";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
+import { WalletAccountToggle } from "@/components/wallet_account_toggle";
 
 export function TngCombinedSummaryView({
   data,
   account_slug,
+  view_base_path,
+  wallet_toggle = false,
 }: {
   data: AccountStatementFromDb;
   account_slug: string;
+  view_base_path?: string;
+  wallet_toggle?: boolean;
 }) {
+  const base_path = view_base_path ?? `/transactions/${account_slug}`;
   const labels = statement_kpi_labels(data.account_kind);
   const { show_go_plus, set_show_go_plus } = useShowGoPlus();
 
@@ -32,7 +38,7 @@ export function TngCombinedSummaryView({
     <div className="min-h-0">
       <AccountPageHeader
         title="Summary"
-        view_base_path={`/transactions/${account_slug}`}
+        view_base_path={base_path}
         active_view="summary"
         controls={
           <div className="flex flex-wrap items-center justify-end gap-3">
@@ -46,6 +52,7 @@ export function TngCombinedSummaryView({
               options={month_options}
               onChange={(v) => set_month(v as typeof month)}
             />
+            {wallet_toggle ? <WalletAccountToggle /> : null}
           </div>
         }
       />

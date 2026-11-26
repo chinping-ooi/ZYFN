@@ -6,15 +6,18 @@ import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { MonthSelect } from "@/components/month_select";
+import { WalletAccountToggle } from "@/components/wallet_account_toggle";
 
 export function TransactionSummaryView({
   data,
   view_base_path,
   hide_view_toggle = false,
+  wallet_toggle = false,
 }: {
   data: AccountStatementFromDb;
   view_base_path: string;
   hide_view_toggle?: boolean;
+  wallet_toggle?: boolean;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const use_micro = data.amount_scale === "micro";
@@ -30,12 +33,15 @@ export function TransactionSummaryView({
         hide_view_toggle={hide_view_toggle}
         active_view="summary"
         controls={
-          <MonthSelect
-            label="Statement month"
-            value={month}
-            options={month_options}
-            onChange={(v) => set_month(v as typeof month)}
-          />
+          <>
+            <MonthSelect
+              label="Statement month"
+              value={month}
+              options={month_options}
+              onChange={(v) => set_month(v as typeof month)}
+            />
+            {wallet_toggle ? <WalletAccountToggle /> : null}
+          </>
         }
       />
       <CashFlowSummary

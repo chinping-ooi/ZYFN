@@ -7,6 +7,7 @@ import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { KpiCard } from "@/components/kpi_card";
 import { MonthSelect } from "@/components/month_select";
+import { WalletAccountToggle } from "@/components/wallet_account_toggle";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
 import { AccountPageHeader } from "@/components/account_page_header";
@@ -15,9 +16,11 @@ import { AccountTableCard } from "@/components/account_table_card";
 export function TransactionStatementView({
   data,
   view_base_path,
+  wallet_toggle = false,
 }: {
   data: AccountStatementFromDb;
   view_base_path: string;
+  wallet_toggle?: boolean;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const use_micro = data.amount_scale === "micro";
@@ -48,12 +51,15 @@ export function TransactionStatementView({
           view_base_path={view_base_path}
           active_view="statement"
           controls={
-            <MonthSelect
-              label="Statement month"
-              value={month}
-              options={month_options}
-              onChange={(v) => set_month(v as typeof month)}
-            />
+            <>
+              <MonthSelect
+                label="Statement month"
+                value={month}
+                options={month_options}
+                onChange={(v) => set_month(v as typeof month)}
+              />
+              {wallet_toggle ? <WalletAccountToggle /> : null}
+            </>
           }
         />
 

@@ -18,12 +18,14 @@ export async function TransactionAccountRoute({
   account_slug,
   route_prefix,
   view_base_path,
+  wallet_toggle = false,
 }: {
   title: string;
   config: TransactionAccountConfig;
   account_slug: string;
   route_prefix: AccountRoutePrefix;
   view_base_path?: string;
+  wallet_toggle?: boolean;
 }) {
   const base = view_base_path ?? `/${route_prefix}/${account_slug}`;
   if (!supabase_configured()) {
@@ -63,11 +65,14 @@ export async function TransactionAccountRoute({
             <TngCombinedStatementView
               data={statement}
               account_slug={account_slug}
+              view_base_path={base}
+              wallet_toggle={wallet_toggle}
             />
           ) : (
             <TransactionStatementView
               data={statement}
               view_base_path={base}
+              wallet_toggle={wallet_toggle}
             />
           )}
         </StatementViewSuspense>

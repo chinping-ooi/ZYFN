@@ -33,14 +33,12 @@ function to_table_row(row: FixedDepositRecord): FixedDepositTableRow {
   };
 }
 
-function sort_by_maturity(
+function sort_by_start_date_desc(
   rows: FixedDepositRecord[],
 ): FixedDepositRecord[] {
-  return [...rows].sort((a, b) =>
-    a.maturity_date.localeCompare(b.maturity_date),
-  );
+  return [...rows].sort((a, b) => b.start_date.localeCompare(a.start_date));
 }
 
 export function to_table_rows(rows: FixedDepositRecord[]): FixedDepositTableRow[] {
-  return sort_by_maturity(rows).map(to_table_row);
+  return sort_by_start_date_desc(rows).map(to_table_row);
 }
