@@ -18,6 +18,8 @@ export type TransactionDataTableProps = {
   loading?: boolean;
   /** Import preview only — appends Status column via shared column builder. */
   show_import_status?: boolean;
+  export_all_rows?: boolean;
+  resolve_export_filename?: (rows: TransactionTableRow[]) => string;
 };
 
 /** Single table implementation for all institution transaction pages. */
@@ -31,6 +33,8 @@ export function TransactionDataTable({
   export_account_label,
   loading,
   show_import_status = false,
+  export_all_rows = false,
+  resolve_export_filename,
 }: TransactionDataTableProps) {
   return (
     <DataTable<TransactionTableRow>
@@ -45,6 +49,8 @@ export function TransactionDataTable({
       fill_height={fill_height}
       inset={!fill_height}
       export_account_label={export_account_label}
+      export_all_rows={export_all_rows}
+      resolve_export_filename={resolve_export_filename}
       loading={loading}
       skeleton_variant="transaction"
     />

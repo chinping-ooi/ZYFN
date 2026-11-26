@@ -16,6 +16,7 @@ import {
 import { visible_table_columns } from "@/components/data_table/visible_columns";
 import { compare_rows, display_cell } from "@/components/data_table/display";
 import { ExportDialog } from "@/components/data_table/export_dialog";
+import { resolve_table_export_rows } from "@/lib/data_table/export_source_rows";
 import {
   DataTableSkeleton,
   type DataTableSkeletonVariant,
@@ -51,6 +52,12 @@ type Props<T extends Record<string, unknown>> = {
   fill_height?: boolean;
   /** Slug source for Excel filename (defaults to `label`). */
   export_account_label?: string;
+  /** When set with `export_all_rows`, export uses this set instead of `rows`. */
+  export_rows?: T[];
+  /** Export every loaded row (ignores search filter and pagination). */
+  export_all_rows?: boolean;
+  /** Optional filename for `export_all_rows` (defaults to date-ranged statement name). */
+  resolve_export_filename?: (rows: T[]) => string;
   loading?: boolean;
   skeleton_variant?: DataTableSkeletonVariant;
   skeleton_show_bank?: boolean;
@@ -68,6 +75,9 @@ export function DataTable<T extends Record<string, unknown>>({
   table_layout = "fixed",
   fill_height = false,
   export_account_label,
+  export_rows,
+  export_all_rows = false,
+  resolve_export_filename,
   loading = false,
   skeleton_variant = "transaction",
   skeleton_show_bank = false,
@@ -109,6 +119,17 @@ export function DataTable<T extends Record<string, unknown>>({
     }
     return result;
   }, [safe_rows, labeled_columns, search, sort_key, sort_direction]);
+
+  const export_source_rows = useMemo(
+    () =>
+      resolve_table_export_rows({
+        export_all_rows,
+        export_rows,
+        safe_rows,
+        filtered,
+      }),
+    [export_all_rows, export_rows, safe_rows, filtered],
+  );
 
   const page_count =
     page_size === "all"
@@ -381,8 +402,10 @@ export function DataTable<T extends Record<string, unknown>>({
         onClose={() => set_export_open(false)}
         label={resolved_export_label}
         columns={labeled_columns}
-        rows={filtered}
+        rows={export_source_rows}
         date_key={resolved_date_key}
+        export_all_rows={export_all_rows}
+        resolve_export_filename={resolve_export_filename}
       />
     </div>
   );

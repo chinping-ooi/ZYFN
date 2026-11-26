@@ -16,3 +16,13 @@ export function build_export_filename(
   );
   return `zyfn_${slug || "export"}_${start}_to_${end}.xlsx`;
 }
+
+/** Import review preview — all parsed rows, no statement date range in the name. */
+export function build_import_preview_export_filename(
+  account_label: string,
+  exported_on: Date = new Date(),
+): string {
+  const slug = account_label_slug(account_label.trim());
+  const yyyymmdd = exported_on.toISOString().slice(0, 10).replace(/-/g, "");
+  return `import_preview_${slug || "account"}_${yyyymmdd}.xlsx`;
+}

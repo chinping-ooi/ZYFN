@@ -27,6 +27,8 @@ function column_width<T>(col: DataTableColumn<T>): number {
   if (col.key === "principal_sen" || col.key === "interest_earned_sen") return 14;
   if (col.key === "receipt_no") return 14;
   if (col.key === "status_label" || col.type === "status") return 12;
+  if (col.key === "import_status") return 16;
+  if (col.key === "status_hint") return 36;
   return 14;
 }
 

@@ -8,8 +8,8 @@ describe("import preview ledger columns", () => {
     const with_status = transaction_columns("bank", { import_status: true }).map(
       (c) => c.key,
     );
-    expect(with_status).toEqual([...base, "import_status"]);
-    expect(with_status).toHaveLength(8);
+    expect(with_status).toEqual([...base, "import_status", "status_hint"]);
+    expect(with_status).toHaveLength(9);
   });
 
   it("uses credit-card money labels with Status", () => {
@@ -23,6 +23,7 @@ describe("import preview ledger columns", () => {
       "Debit",
       "Owed",
       "Status",
+      "Status reason",
     ]);
   });
 

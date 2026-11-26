@@ -3,7 +3,9 @@
 import { useCallback, useMemo, useState } from "react";
 import type { DataTableColumn } from "@/components/data_table/types";
 import { TableSelect } from "@/components/data_table/table_select";
-import { build_export_filename } from "@/lib/export_filename";
+import {
+  build_export_filename as build_statement_export_filename,
+} from "@/lib/export_filename";
 import {
   build_and_download_xlsx,
   export_date_range,
@@ -16,6 +18,8 @@ type Props<T extends Record<string, unknown>> = {
   columns: DataTableColumn<T>[];
   rows: T[];
   date_key: keyof T & string;
+  export_all_rows?: boolean;
+  resolve_export_filename?: (rows: T[]) => string;
 };
 
 export function ExportDialog<T extends Record<string, unknown>>({
@@ -25,6 +29,8 @@ export function ExportDialog<T extends Record<string, unknown>>({
   columns,
   rows,
   date_key,
+  export_all_rows = false,
+  resolve_export_filename,
 }: Props<T>) {
   const anchor = useMemo(() => {
     const dates = rows
@@ -64,38 +70,51 @@ export function ExportDialog<T extends Record<string, unknown>>({
     set_error("");
     set_exporting(true);
     try {
-      const period_anchor =
-        period === "week"
-          ? week_date
-          : period === "year"
-            ? year_value + "-06-01"
-            : period === "month"
-              ? anchor_value + "-01"
-              : custom_end;
-      const [start, end] = export_date_range(
-        period,
-        period_anchor,
-        custom_start,
-        custom_end,
-      );
-      if (!start || !end || start > end) {
-        throw new Error(
-          "Choose a valid date range with From on or before Through.",
+      let export_rows = rows;
+      let filename: string;
+      if (export_all_rows) {
+        if (!rows.length) {
+          throw new Error("No records to export.");
+        }
+        const dates = rows
+          .map((row) => String(row[date_key] ?? ""))
+          .filter(Boolean)
+          .sort();
+        const start = dates[0] ?? "";
+        const end = dates.at(-1) ?? start;
+        filename =
+          resolve_export_filename?.(rows) ??
+          build_statement_export_filename(label, start, end);
+      } else {
+        const period_anchor =
+          period === "week"
+            ? week_date
+            : period === "year"
+              ? year_value + "-06-01"
+              : period === "month"
+                ? anchor_value + "-01"
+                : custom_end;
+        const [start, end] = export_date_range(
+          period,
+          period_anchor,
+          custom_start,
+          custom_end,
         );
+        if (!start || !end || start > end) {
+          throw new Error(
+            "Choose a valid date range with From on or before Through.",
+          );
+        }
+        export_rows = rows.filter((row) => {
+          const date = String(row[date_key] ?? "");
+          return date && date >= start && date <= end;
+        });
+        if (!export_rows.length) {
+          throw new Error("No matching records in this date range.");
+        }
+        filename = build_statement_export_filename(label, start, end);
       }
-      const filtered = rows.filter((row) => {
-        const date = String(row[date_key] ?? "");
-        return date && date >= start && date <= end;
-      });
-      if (!filtered.length) {
-        throw new Error("No matching records in this date range.");
-      }
-      await build_and_download_xlsx(
-        build_export_filename(label, start, end),
-        label,
-        columns,
-        filtered,
-      );
+      await build_and_download_xlsx(filename, label, columns, export_rows);
       reset();
       onClose();
     } catch (err) {
@@ -115,10 +134,11 @@ export function ExportDialog<T extends Record<string, unknown>>({
         <form className="flex flex-col gap-4" onSubmit={submit}>
           <h3 className="m-0 text-lg font-semibold">Export records</h3>
           <p className="m-0 text-[13px] text-zyfn-muted">
-            Excel file includes matching records loaded in this table across all
-            pages. Date field: {date_column?.label ?? "unavailable"}. Weeks run
-            Monday through Sunday.
+            {export_all_rows
+              ? `Excel file includes all ${rows.length} parsed row${rows.length === 1 ? "" : "s"} (every page, ignoring table search).`
+              : `Excel file includes matching records loaded in this table across all pages. Date field: ${date_column?.label ?? "unavailable"}. Weeks run Monday through Sunday.`}
           </p>
+          {export_all_rows ? null : (
           <label className="flex flex-col gap-1.5 text-sm">
             Period
             <TableSelect
@@ -132,7 +152,8 @@ export function ExportDialog<T extends Record<string, unknown>>({
               <option value="custom">Custom range</option>
             </TableSelect>
           </label>
-          {period === "custom" ? (
+          )}
+          {!export_all_rows && period === "custom" ? (
             <div className="grid grid-cols-2 gap-3.5">
               <label className="flex flex-col gap-1.5 text-sm">
                 From
@@ -156,7 +177,7 @@ export function ExportDialog<T extends Record<string, unknown>>({
                 />
               </label>
             </div>
-          ) : period === "week" ? (
+          ) : !export_all_rows && period === "week" ? (
             <label className="flex flex-col gap-1.5 text-sm">
               Date within week
               <input
@@ -167,7 +188,7 @@ export function ExportDialog<T extends Record<string, unknown>>({
                 required
               />
             </label>
-          ) : period === "year" ? (
+          ) : !export_all_rows && period === "year" ? (
             <label className="flex flex-col gap-1.5 text-sm">
               Year
               <input
@@ -180,7 +201,7 @@ export function ExportDialog<T extends Record<string, unknown>>({
                 required
               />
             </label>
-          ) : (
+          ) : !export_all_rows ? (
             <label className="flex flex-col gap-1.5 text-sm">
               Month
               <input
@@ -191,7 +212,7 @@ export function ExportDialog<T extends Record<string, unknown>>({
                 required
               />
             </label>
-          )}
+          ) : null}
           {error ? (
             <p className="m-0 text-[13px] text-zyfn-red" role="alert">
               {error}

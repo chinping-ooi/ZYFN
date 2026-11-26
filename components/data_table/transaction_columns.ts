@@ -83,6 +83,11 @@ const IMPORT_STATUS_COL: DataTableColumn<TransactionTableRow> = {
   type: "status",
 };
 
+const IMPORT_STATUS_REASON_COL: DataTableColumn<TransactionTableRow> = {
+  key: "status_hint",
+  label: "Status reason",
+};
+
 export type TransactionColumnsOptions = {
   /** Import preview: append dedupe/review status after the standard ledger columns. */
   import_status?: boolean;
@@ -98,7 +103,7 @@ export function transaction_columns(
 
   const cols = [DATE_COL, TYPE_COL, DETAIL_COL, DESCRIPTION_COL, ...money_cols];
   if (options?.import_status) {
-    return [...cols, IMPORT_STATUS_COL];
+    return [...cols, IMPORT_STATUS_COL, IMPORT_STATUS_REASON_COL];
   }
   return cols;
 }

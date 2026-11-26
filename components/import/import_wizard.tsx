@@ -9,6 +9,7 @@ import {
   parser_display_name,
 } from "@/lib/import/import_labels";
 import { IMPORT_STATUS_SURFACE } from "@/lib/import/import_status_surface";
+import { build_import_preview_export_filename } from "@/lib/export_filename";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
 import { parse_statement_text } from "@/lib/import/parsers";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
@@ -595,6 +596,10 @@ export function ImportWizard() {
                 rows={preview_rows}
                 kind={account.kind}
                 show_import_status
+                export_all_rows
+                resolve_export_filename={() =>
+                  build_import_preview_export_filename(account.account_label)
+                }
                 fill_height
                 export_account_label={account.account_label}
                 empty_period_message="No parsed rows to display."
