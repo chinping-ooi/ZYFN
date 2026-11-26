@@ -65,8 +65,6 @@
     --dash-gap: 16px;
     gap: var(--dash-gap);
     padding: var(--dash-gap) !important;
-    overflow-y: auto;
-    overflow-x: clip;
   }
 
   @media (min-width: 1024px) and (min-height: 600px) {

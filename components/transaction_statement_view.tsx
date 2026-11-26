@@ -44,7 +44,7 @@ export function TransactionStatementView({
     month === "all" ? data.row_count : table_rows.length;
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-col lg:h-full lg:overflow-hidden">
+    <div className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden">
       <div className="min-w-0 shrink-0">
         <AccountPageHeader
           title="Account statement"

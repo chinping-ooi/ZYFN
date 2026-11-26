@@ -718,7 +718,7 @@ export function ImportWizard() {
   const file_input_id = "import-statement-file";
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-col gap-3 lg:h-full lg:overflow-hidden">
+    <div className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden gap-3">
       <ImportStepper
         current={step}
         include_mapping_step={include_mapping_step}

@@ -49,11 +49,13 @@ export function AppShell({
           <WorkspaceProfileMenu />
         </header>
         <main
-          className={`content mx-auto flex w-full min-w-0 max-w-[1560px] flex-1 flex-col min-h-0 overflow-y-auto overflow-x-clip lg:overflow-x-hidden ${
+          className={`content mx-auto flex w-full min-w-0 max-w-[1560px] flex-1 flex-col ${
             dashboard_grid
-              ? "dashboard-main"
-              : `px-4 lg:px-8 ${viewport_lock ? "py-3 lg:py-3" : "py-4 lg:py-6"} ${
-                  viewport_lock ? "lg:overflow-y-hidden" : ""
+              ? "dashboard-main min-h-0 overflow-x-hidden"
+              : `px-4 lg:px-8 ${viewport_lock ? "py-3 lg:py-3" : "py-4 lg:py-6"} min-h-0 overflow-x-hidden ${
+                  viewport_lock
+                    ? "overflow-y-auto lg:overflow-y-hidden lg:overflow-x-hidden"
+                    : "overflow-y-auto"
                 }`
           }`}
         >
