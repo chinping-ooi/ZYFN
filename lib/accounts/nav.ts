@@ -102,7 +102,7 @@ export type NavGroup = {
   defaultOpen?: boolean;
 };
 
-const NAV_GROUP_ORDER: NavGroupKey[] = ["Transactions", "Credit cards"];
+const NAV_GROUP_ORDER: NavGroupKey[] = ["Bank savings", "Credit cards"];
 
 function build_account_nav_groups(): NavGroup[] {
   const groups: NavGroup[] = NAV_GROUP_ORDER.map((title) => ({

@@ -35,7 +35,7 @@ type SidebarProps = {
 };
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
-  Transactions: Landmark,
+  "Bank savings": Landmark,
   "Credit cards": CreditCard,
   Wallets: Wallet,
 };

@@ -54,7 +54,7 @@ export function dashboard_account_balances(
   return [
     {
       id: "pbe_savings",
-      name: "Public Bank Savings",
+      name: "Public Bank",
       sub_label: "Savings account",
       balance_sen: pbe ? latest_balance_sen(pbe) : 0,
     },
@@ -66,7 +66,7 @@ export function dashboard_account_balances(
     },
     {
       id: "mbb_savings",
-      name: "Maybank Savings",
+      name: "Maybank",
       sub_label: "Savings account",
       balance_sen: mbb ? latest_balance_sen(mbb) : 0,
     },

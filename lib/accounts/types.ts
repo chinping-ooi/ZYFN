@@ -6,7 +6,7 @@ export type TransactionAccountKind =
   | "tng_combined"
   | "mbb_2_gold_combined";
 
-export type NavGroupKey = "Transactions" | "Credit cards" | "Wallets";
+export type NavGroupKey = "Bank savings" | "Credit cards" | "Wallets";
 
 export type AccountRoutePrefix = "transactions" | "credit-cards";
 

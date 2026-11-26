@@ -69,7 +69,7 @@ export const MOCK_STATEMENTS: AccountStatementFromDb[] = [
   {
     kind: "data",
     account_ref: "PBE_SAVINGS",
-    account_label: "Public Bank Savings",
+    account_label: "Public Bank",
     account_kind: "bank",
     amount_scale: "sen",
     source: "supabase",
@@ -101,7 +101,7 @@ export const MOCK_STATEMENTS: AccountStatementFromDb[] = [
   {
     kind: "data",
     account_ref: "MBB_SAVINGS",
-    account_label: "Maybank Savings",
+    account_label: "Maybank",
     account_kind: "bank",
     amount_scale: "sen",
     source: "supabase",
