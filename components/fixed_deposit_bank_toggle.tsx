@@ -10,7 +10,7 @@ import {
 } from "@/lib/fixed_deposits/banks";
 
 const SEGMENT =
-  "inline-flex shrink-0 flex-wrap rounded-[3px] border border-zyfn-line bg-white p-0.5";
+  "inline-flex max-w-full shrink-0 flex-wrap rounded-[3px] border border-zyfn-line bg-white p-0.5";
 const BTN =
   "inline-flex h-8 items-center rounded-[2px] px-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60";
 const BTN_ACTIVE = "bg-zyfn-navy text-white";

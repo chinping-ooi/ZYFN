@@ -76,7 +76,7 @@ export function FixedDepositPageView({
         title={title}
         subtitle={subtitle}
         controls={
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <>
             <FixedDepositBankToggle bank_codes={load.bank_codes} />
             <MonthSelect
               label="Statement month"
@@ -84,7 +84,7 @@ export function FixedDepositPageView({
               options={month_options}
               onChange={(v) => set_month(v as typeof month)}
             />
-          </div>
+          </>
         }
       />
 

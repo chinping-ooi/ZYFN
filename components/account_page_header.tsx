@@ -17,9 +17,9 @@ export function AccountPageHeader({
   hide_view_toggle?: boolean;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <h2 className="m-0 min-w-0 text-[17px] font-semibold">{title}</h2>
-      <div className="flex flex-wrap items-center justify-end gap-3">
+    <div className="page-header mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <h2 className="m-0 min-w-0 shrink-0 text-[17px] font-semibold">{title}</h2>
+      <div className="page-header-controls">
         {controls}
         {hide_view_toggle ? null : (
           <AccountViewToggle

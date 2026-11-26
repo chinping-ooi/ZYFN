@@ -64,7 +64,7 @@ export function ImportStepper({
       aria-label="Import progress"
       className="w-full shrink-0 rounded-[3px] border border-zyfn-line bg-white px-4 py-4"
     >
-      <div className="px-6 md:px-14">
+      <div className="px-1 sm:px-6 lg:px-10">
         <ol
           className="grid w-full items-center gap-y-1.5"
           style={{ gridTemplateColumns: grid_columns }}

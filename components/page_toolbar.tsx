@@ -14,17 +14,19 @@ export function PageToolbar({
 }) {
   return (
     <div
-      className={`flex flex-wrap items-center justify-between gap-3 ${
+      className={`page-toolbar flex flex-wrap items-start justify-between gap-3 ${
         dense ? "mb-2 lg:mb-1.5" : "mb-5"
       }`}
     >
-      <div>
+      <div className="page-toolbar-title">
         <h2 className="m-0 text-[17px] font-semibold">{title}</h2>
         {subtitle ? (
           <p className="m-0 mt-[3px] text-[13px] text-zyfn-muted">{subtitle}</p>
         ) : null}
       </div>
-      {controls}
+      {controls ? (
+        <div className="page-toolbar-controls">{controls}</div>
+      ) : null}
     </div>
   );
 }

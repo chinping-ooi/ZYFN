@@ -18,7 +18,7 @@ export function FixedDepositPageSkeleton({
       </div>
 
       <section
-        className="statement-summary kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
+        className="statement-summary kpis mb-5 grid gap-[18px]"
         aria-busy="true"
         aria-label="Loading fixed deposit summary"
       >

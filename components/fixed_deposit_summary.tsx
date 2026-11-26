@@ -27,7 +27,7 @@ export function FixedDepositSummaryCards({
 }) {
   return (
     <section
-      className="statement-summary kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
+      className="statement-summary kpis mb-5 grid gap-[18px]"
       aria-label="Fixed deposit summary"
     >
       <KpiCard

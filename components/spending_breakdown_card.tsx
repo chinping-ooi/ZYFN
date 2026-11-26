@@ -143,7 +143,7 @@ function SpendingDonutPanel({
           </div>
         </div>
         <ul
-          className="legend m-0 w-fit max-w-[320px] shrink-0 list-none p-0"
+          className="legend m-0 w-full max-w-full shrink-0 list-none p-0 sm:w-fit sm:max-w-[320px]"
           aria-label="Account spending legend"
         >
           {rows.map((row, i) => (
