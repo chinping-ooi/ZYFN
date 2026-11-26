@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
+import { is_spending_donut_fd_row } from "@/lib/dashboard/spending_donut_fd";
 import { txn_type_breakdown } from "@/lib/transactions/type_breakdown";
 
 function row(
@@ -77,6 +78,20 @@ describe("txn_type_breakdown", () => {
 
     expect(breakdown_in.total_micro).toBe(statement.total_in_micro);
     expect(breakdown_out.total_micro).toBe(statement.total_out_micro);
+  });
+
+  it("excludes FD txn types from spending breakdown totals", () => {
+    const fd_rows: TransactionDbRow[] = [
+      row({ sort_id: 1, txn_type: "fd_placement", out_sen: 200_000 }),
+      row({ sort_id: 2, txn_type: "purchase", out_sen: 60_478 }),
+      row({ sort_id: 3, txn_type: "rental", out_sen: 100_000 }),
+    ];
+    const statement = build_transaction_statement(fd_rows, "all", 0, 0);
+    const breakdown_out = txn_type_breakdown(statement.rows, "out", "sen", {
+      exclude_row: is_spending_donut_fd_row,
+    });
+    expect(breakdown_out.rows.map((r) => r.label)).not.toContain("fd_placement");
+    expect(breakdown_out.total_sen).toBe(160_478);
   });
 
   it("groups empty txn_type as Unclassified", () => {

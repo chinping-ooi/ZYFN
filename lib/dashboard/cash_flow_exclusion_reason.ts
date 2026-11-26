@@ -1,4 +1,5 @@
 import type { CashFlowExclusionInput } from "@/lib/dashboard/cash_flow_exclusion";
+import { is_fd_category_text } from "@/lib/dashboard/spending_donut_fd";
 import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 
 export type CashFlowExclusionContext = {
@@ -24,8 +25,7 @@ export function cash_flow_exclusion_reason(
 ): string | null {
   const type = normalise_type(row.txn_type);
 
-  if (type.startsWith("fd_")) return "fixed_deposit_txn_type";
-  if (type === "fd_placement" || type === "fd_withdrawal") return "fixed_deposit_txn_type";
+  if (is_fd_category_text(row.txn_type)) return "fixed_deposit_txn_type";
   if (has_fixed_deposit_link(row.fixed_deposit_id)) return "fixed_deposit_id";
 
   if (has_pair_ref(row.pair_ref)) return "pair_ref";

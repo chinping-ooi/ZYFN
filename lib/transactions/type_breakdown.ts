@@ -23,11 +23,16 @@ function type_label(txn_type: string): string {
   return trimmed.length > 0 ? trimmed : "Unclassified";
 }
 
+export type TxnTypeBreakdownOptions = {
+  exclude_row?: (row: TransactionDbRow) => boolean;
+};
+
 /** Group in-view ledger rows by txn_type for one flow direction. */
 export function txn_type_breakdown(
   rows: TransactionDbRow[],
   direction: "in" | "out",
   scale: AmountScale,
+  options?: TxnTypeBreakdownOptions,
 ): TxnTypeBreakdown {
   const buckets = new Map<
     string,
@@ -40,6 +45,7 @@ export function txn_type_breakdown(
   >();
 
   for (const row of rows) {
+    if (options?.exclude_row?.(row)) continue;
     const amount_sen = direction === "in" ? row.in_sen : row.out_sen;
     const amount_micro = direction === "in" ? row.in_micro : row.out_micro;
     const amount = scale === "micro" ? amount_micro : amount_sen;

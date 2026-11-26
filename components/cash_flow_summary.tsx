@@ -5,6 +5,7 @@ import type { Chart as ChartInstance } from "chart.js";
 import type { AmountScale } from "@/lib/supabase/transaction_rows";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
+import { is_spending_donut_fd_row } from "@/lib/dashboard/spending_donut_fd";
 import { txn_type_breakdown } from "@/lib/transactions/type_breakdown";
 import { in_out_flow_breakdown } from "@/lib/transactions/in_out_flow";
 import { format_rm } from "@/lib/money";
@@ -156,7 +157,10 @@ export function CashFlowSummary({
     [statement.rows, amount_scale],
   );
   const breakdown_out = useMemo(
-    () => txn_type_breakdown(statement.rows, "out", amount_scale),
+    () =>
+      txn_type_breakdown(statement.rows, "out", amount_scale, {
+        exclude_row: is_spending_donut_fd_row,
+      }),
     [statement.rows, amount_scale],
   );
 
