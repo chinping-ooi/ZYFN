@@ -58,10 +58,13 @@ function format_net(
 }
 
 const TYPE_CARD_BODY =
-  "grid min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:items-start md:gap-5";
+  "grid min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-5 md:items-start md:gap-x-6 md:gap-y-4";
 
 const TYPE_CARD_DONUT_CELL =
-  "flex min-w-0 items-center justify-center";
+  "col-span-1 flex min-w-0 items-center justify-center md:col-span-2";
+
+const TYPE_CARD_LEGEND_CELL =
+  "col-span-1 min-w-0 md:col-span-3 md:pl-1 md:pr-3 md:pt-0.5";
 
 /** Three-card summary: net in vs out donut, money in / money out type breakdowns. */
 export function CashFlowSummary({
@@ -211,7 +214,7 @@ export function CashFlowSummary({
                 }}
                 />
               </div>
-              <div className="min-w-0">
+              <div className={TYPE_CARD_LEGEND_CELL}>
                 <SummaryBreakdownLegendList
                   rows={breakdown_in.rows}
                   scale={amount_scale}
@@ -251,7 +254,7 @@ export function CashFlowSummary({
                 }}
                 />
               </div>
-              <div className="min-w-0">
+              <div className={TYPE_CARD_LEGEND_CELL}>
                 <SummaryBreakdownLegendList
                   rows={breakdown_out.rows}
                   scale={amount_scale}
