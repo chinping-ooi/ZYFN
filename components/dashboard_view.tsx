@@ -128,15 +128,14 @@ export function DashboardView({
                 />
               </div>
               <DashboardOverviewCard
-                className="min-h-0"
+                className="shrink-0"
                 statements={statements}
                 month={month}
                 month_label={month_label}
               />
               <SpendingBreakdownCard
                 content_sized
-                column_fill
-                className="min-h-0"
+                className="shrink-0"
                 rows={spending_rows.length > 0 ? spending_rows : []}
                 month_label={month_label}
               />

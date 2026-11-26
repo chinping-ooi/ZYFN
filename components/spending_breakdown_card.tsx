@@ -96,8 +96,8 @@ export function SpendingDonutSideBySideLayout({
   legend: ReactNode;
 }) {
   return (
-    <div className="spending-donut-layout flex min-h-0 w-full flex-1 flex-col items-center justify-center">
-      <div className="mx-auto flex w-fit max-w-full flex-col items-center justify-center gap-8 lg:flex-row lg:items-center">
+    <div className="spending-donut-layout flex w-full shrink-0 flex-col items-center py-1">
+      <div className="mx-auto flex w-fit max-w-full flex-col items-center gap-8 lg:flex-row lg:items-center">
         {donut}
         {legend}
       </div>
@@ -281,17 +281,16 @@ export function SpendingBreakdownCard({
     "flex",
     "w-full",
     "flex-col",
-    "overflow-hidden",
     "rounded-[3px]",
     "border",
     "border-zyfn-line",
     "bg-white",
   ];
 
-  if (column_fill && content_sized) {
+  if (content_sized) {
+    shell_parts.push("h-fit", "shrink-0");
+  } else if (column_fill) {
     shell_parts.push("min-h-0", "lg:flex-1", "lg:h-auto");
-  } else if (content_sized) {
-    shell_parts.push("h-fit");
   } else {
     shell_parts.push("h-full", "min-h-0");
   }
@@ -299,7 +298,7 @@ export function SpendingBreakdownCard({
   const body_parts = [
     "spending-chart-body",
     "flex",
-    "min-h-0",
+    "shrink-0",
     "flex-col",
     "px-4",
     "pb-3",
@@ -307,7 +306,7 @@ export function SpendingBreakdownCard({
     "md:px-5",
     "md:pb-4",
   ];
-  if (column_fill && content_sized) {
+  if (column_fill && !content_sized) {
     body_parts.push("lg:flex-1", "lg:min-h-0", "lg:overflow-hidden");
   }
 
@@ -325,7 +324,7 @@ export function SpendingBreakdownCard({
         </p>
       ) : (
         <>
-          <div className={`${body_parts.join(" ")} flex min-h-0 flex-1 flex-col`}>
+          <div className={body_parts.join(" ")}>
             <SpendingDonutPanel rows={rows} total_sen={total_sen} />
           </div>
           <SpendingChartCardFooter
