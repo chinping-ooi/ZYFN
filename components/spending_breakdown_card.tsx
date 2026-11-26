@@ -282,6 +282,7 @@ export function SpendingBreakdownCard({
   content_sized?: boolean;
   column_fill?: boolean;
 }) {
+  void month_label;
   const total_sen = spending_total_sen(rows);
 
   const shell_parts = [
