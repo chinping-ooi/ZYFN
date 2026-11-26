@@ -28,6 +28,15 @@ export type NormalizedImportRow = {
   balance_sen: number;
   status: ImportRowStatus;
   review_reasons: string[];
+  /** Multi-card PDF imports (e.g. Maybank combined statement). */
+  account_id?: number;
+  account_ref?: string;
+};
+
+export type ImportParsedAccount = {
+  account_id: number;
+  account_ref: string;
+  account_label: string;
 };
 
 export type ImportParseInput = {

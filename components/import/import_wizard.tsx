@@ -3,7 +3,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
-import { ACCOUNTS, account_path } from "@/lib/accounts/registry";
+import {
+  ACCOUNTS,
+  account_config_by_ref,
+  account_path,
+} from "@/lib/accounts/registry";
+import {
+  group_import_rows_by_account,
+  import_account_summaries,
+} from "@/lib/import/group_rows_by_account";
+import type { ImportParsedAccount } from "@/lib/import/types";
 import {
   IMPORT_STATUS_CHIP_LABELS,
   parser_display_name,
@@ -12,6 +21,7 @@ import { IMPORT_STATUS_SURFACE } from "@/lib/import/import_status_surface";
 import { build_import_preview_export_filename } from "@/lib/export_filename";
 import { parse_csv_text, parse_excel_buffer } from "@/lib/import/excel";
 import { parse_statement_text } from "@/lib/import/parsers";
+import { parse_mbb_card_statement } from "@/lib/import/parsers/mbb_card";
 import { extract_pbe_card_meta } from "@/lib/import/parsers/pbe_card";
 import {
   load_column_mapping,
@@ -115,6 +125,13 @@ export function ImportWizard() {
   const [error, set_error] = useState<string | null>(null);
   const [result, set_result] = useState<ImportConfirmResult | null>(null);
   const [confirm_open, set_confirm_open] = useState(false);
+  const [multi_account, set_multi_account] = useState(false);
+  const [parsed_accounts, set_parsed_accounts] = useState<ImportParsedAccount[]>(
+    [],
+  );
+  const [done_by_account, set_done_by_account] = useState<
+    Array<{ account_label: string; inserted: number; skipped_duplicates: number }>
+  >([]);
   const auto_parse_key_ref = useRef<string | null>(null);
 
   const account = useMemo(
@@ -139,6 +156,25 @@ export function ImportWizard() {
     return { new_count, dup, review };
   }, [rows]);
 
+  const account_summaries = useMemo(() => {
+    if (!multi_account || parsed_accounts.length === 0) return [];
+    return import_account_summaries(rows, parsed_accounts);
+  }, [multi_account, parsed_accounts, rows]);
+
+  const preview_kind = useMemo(() => {
+    if (multi_account && parsed_accounts[0]) {
+      return (
+        account_config_by_ref(parsed_accounts[0].account_ref)?.kind ??
+        "credit_card"
+      );
+    }
+    return account?.kind ?? "credit_card";
+  }, [multi_account, parsed_accounts, account?.kind]);
+
+  const show_preview_table = Boolean(
+    (multi_account && rows.length > 0) || account,
+  );
+
   const assign_file = useCallback(
     async (f: File) => {
       const kind = kind_from_filename(f.name);
@@ -159,8 +195,19 @@ export function ImportWizard() {
           const { text, ocr_pages: ocr } = await extract_pdf_text_local(buffer);
           set_pdf_text_cache(text);
           set_ocr_pages(ocr);
-          const suggested = suggest_account_from_pdf_text(text, account_ref);
-          if (suggested) set_account_ref(suggested);
+          const mbb = parse_mbb_card_statement(text);
+          if (mbb.accounts.length > 0) {
+            set_multi_account(true);
+            set_parsed_accounts(mbb.accounts);
+            if (mbb.accounts.length === 1) {
+              set_account_ref(mbb.accounts[0].account_ref);
+            }
+          } else {
+            set_multi_account(false);
+            set_parsed_accounts([]);
+            const suggested = suggest_account_from_pdf_text(text, account_ref);
+            if (suggested) set_account_ref(suggested);
+          }
         } catch {
           /* user can still parse after choosing account */
         } finally {
@@ -173,6 +220,32 @@ export function ImportWizard() {
 
   const run_dedupe = useCallback(
     async (parsed: NormalizedImportRow[]) => {
+      const with_account_ids = parsed.some((r) => r.account_id != null);
+      if (with_account_ids) {
+        const groups = group_import_rows_by_account(parsed);
+        const merged: NormalizedImportRow[] = [];
+        for (const [id, group] of groups) {
+          const ref = group[0]?.account_ref ?? "";
+          const res = await fetch("/api/import/dedupe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              account_id: id,
+              account_ref: ref,
+              rows: group,
+            }),
+          });
+          const body = (await res.json()) as {
+            rows?: NormalizedImportRow[];
+            error?: string;
+          };
+          if (!res.ok) throw new Error(body.error ?? "Dedupe failed");
+          merged.push(...(body.rows ?? []));
+        }
+        set_rows(merged);
+        set_step("preview");
+        return;
+      }
       if (account_id == null) return;
       const res = await fetch("/api/import/dedupe", {
         method: "POST",
@@ -195,7 +268,8 @@ export function ImportWizard() {
   );
 
   const parse_file = useCallback(async () => {
-    if (!file || !account || !source_kind || account_id == null) return;
+    if (!file || !source_kind) return;
+    if (!multi_account && (!account || account_id == null)) return;
     set_busy(true);
     set_error(null);
     set_parse_warning(null);
@@ -241,15 +315,27 @@ export function ImportWizard() {
           set_pdf_text_cache(text);
         }
         set_ocr_pages(ocr);
+        const bias_ref = account_ref || "MBB_VISA_1697";
         const {
           parser_id: pid,
           rows: parsed,
           parse_warning: warn,
-        } = parse_statement_text(text, account_ref);
+          parsed_accounts: detected,
+        } = parse_statement_text(text, bias_ref);
         set_parser_id(pid);
         set_parse_warning(warn);
+        if (detected && detected.length > 0) {
+          set_multi_account(true);
+          set_parsed_accounts(detected);
+          if (detected.length === 1) {
+            set_account_ref(detected[0].account_ref);
+          }
+        } else {
+          set_multi_account(false);
+          set_parsed_accounts([]);
+        }
         const kind: ImportSourceKind =
-          account.kind.startsWith("tng") && pid === "tng_text"
+          account?.kind.startsWith("tng") && pid === "tng_text"
             ? "tng_text"
             : "pdf";
         set_source_kind(kind);
@@ -265,6 +351,7 @@ export function ImportWizard() {
   }, [
     file,
     account,
+    multi_account,
     source_kind,
     account_ref,
     account_id,
@@ -275,9 +362,10 @@ export function ImportWizard() {
 
   useEffect(() => {
     if (step !== "start") return;
-    if (!file || account_id == null || !account_ref || !source_kind) return;
+    if (!file || !source_kind) return;
+    if (!multi_account && (account_id == null || !account_ref)) return;
     if (upload_locked) return;
-    const key = `${account_ref}\0${file.name}\0${file.size}\0${file.lastModified}`;
+    const key = `${multi_account ? "multi" : account_ref}\0${file.name}\0${file.size}\0${file.lastModified}`;
     if (auto_parse_key_ref.current === key) return;
     auto_parse_key_ref.current = key;
     void parse_file();
@@ -288,6 +376,7 @@ export function ImportWizard() {
     account_ref,
     source_kind,
     upload_locked,
+    multi_account,
     parse_file,
   ]);
 
@@ -321,20 +410,83 @@ export function ImportWizard() {
   }, [file, mapping, source_kind, account_ref, run_dedupe]);
 
   const confirm_import = useCallback(async () => {
-    if (!account?.account_id || !file || !source_kind) return;
+    if (!file || !source_kind) return;
+    if (!multi_account && !account?.account_id) return;
     set_busy(true);
     set_error(null);
     try {
-      const payload = rows.map((row) => ({
-        temp_id: row.temp_id,
-        txn_at: row.txn_at,
-        description: row.description,
-        detail: row.detail,
-        txn_type: row.txn_type,
-        direction: row.direction,
-        amount_major: row.amount_major,
-        balance_after_major: row.balance_after_major,
-      }));
+      const to_payload = (subset: NormalizedImportRow[]) =>
+        subset
+          .filter((row) => row.status === "new")
+          .map((row) => ({
+            temp_id: row.temp_id,
+            txn_at: row.txn_at,
+            description: row.description,
+            detail: row.detail,
+            txn_type: row.txn_type,
+            direction: row.direction,
+            amount_major: row.amount_major,
+            balance_after_major: row.balance_after_major,
+          }));
+
+      if (multi_account) {
+        const groups = group_import_rows_by_account(rows);
+        const outcomes: Array<{
+          account_label: string;
+          inserted: number;
+          skipped_duplicates: number;
+        }> = [];
+        let inserted_total = 0;
+        let skipped_total = 0;
+        for (const [id, group] of groups) {
+          const ref = group[0]?.account_ref ?? "";
+          const label =
+            account_config_by_ref(ref)?.account_label ?? ref ?? String(id);
+          const payload = to_payload(group);
+          if (!payload.length) {
+            outcomes.push({
+              account_label: label,
+              inserted: 0,
+              skipped_duplicates: group.filter((r) => r.status === "duplicate")
+                .length,
+            });
+            continue;
+          }
+          const res = await fetch("/api/import/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              account_id: id,
+              account_ref: ref,
+              source_filename: file.name,
+              source_kind,
+              rows: payload,
+            }),
+          });
+          const body = (await res.json()) as ImportConfirmResult & {
+            error?: string;
+          };
+          if (!res.ok) throw new Error(body.error ?? `Import failed for ${label}`);
+          inserted_total += body.inserted;
+          skipped_total += body.skipped_duplicates;
+          outcomes.push({
+            account_label: label,
+            inserted: body.inserted,
+            skipped_duplicates: body.skipped_duplicates,
+          });
+        }
+        set_done_by_account(outcomes);
+        set_result({
+          inserted: inserted_total,
+          skipped_duplicates: skipped_total,
+          batch_id: null,
+        });
+        set_step("done");
+        return;
+      }
+
+      if (!account?.account_id) return;
+      const payload = to_payload(rows);
       const res = await fetch("/api/import/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -348,6 +500,7 @@ export function ImportWizard() {
       });
       const body = (await res.json()) as ImportConfirmResult & { error?: string };
       if (!res.ok) throw new Error(body.error ?? "Import failed");
+      set_done_by_account([]);
       set_result(body);
       set_step("done");
     } catch (err) {
@@ -355,7 +508,7 @@ export function ImportWizard() {
     } finally {
       set_busy(false);
     }
-  }, [account, file, source_kind, rows, account_ref]);
+  }, [account, file, source_kind, rows, account_ref, multi_account]);
 
   const reset_wizard = () => {
     set_step("start");
@@ -370,6 +523,9 @@ export function ImportWizard() {
     set_mapping_skipped(false);
     set_error(null);
     set_confirm_open(false);
+    set_multi_account(false);
+    set_parsed_accounts([]);
+    set_done_by_account([]);
     auto_parse_key_ref.current = null;
   };
 
@@ -381,6 +537,8 @@ export function ImportWizard() {
     set_parse_warning(null);
     set_detecting(false);
     set_error(null);
+    set_multi_account(false);
+    set_parsed_accounts([]);
   }, []);
 
   const on_drop = (e: React.DragEvent) => {
@@ -410,29 +568,46 @@ export function ImportWizard() {
           </p>
           <div className="mt-4 flex flex-col gap-4">
               <div>
-                <label
-                  htmlFor="import-account"
-                  className="text-[13px] font-medium text-slate-700"
-                >
-                  Account
-                </label>
-                <select
-                  id="import-account"
-                  className="mt-2 h-10 w-full rounded-[3px] border border-zyfn-line px-3 text-[13px]"
-                  value={account_ref}
-                  disabled={upload_locked && step === "start"}
-                  onChange={(e) => set_account_ref(e.target.value)}
-                >
-                  <option value="">Select account…</option>
-                  {IMPORTABLE.map((a) => (
-                    <option key={a.account_ref} value={a.account_ref}>
-                      {a.account_label}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1.5 text-xs text-zyfn-muted">
-                  New rows are inserted for this account only.
-                </p>
+                {multi_account && parsed_accounts.length > 0 ? (
+                  <div>
+                    <span className="text-[13px] font-medium text-slate-700">
+                      Accounts
+                    </span>
+                    <p className="mt-2 text-[13px] text-slate-700">
+                      {parsed_accounts.map((a) => a.account_label).join(" · ")}
+                    </p>
+                    <p className="mt-1.5 text-xs text-zyfn-muted">
+                      Maybank combined statement — rows route to each card
+                      account.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <label
+                      htmlFor="import-account"
+                      className="text-[13px] font-medium text-slate-700"
+                    >
+                      Account
+                    </label>
+                    <select
+                      id="import-account"
+                      className="mt-2 h-10 w-full rounded-[3px] border border-zyfn-line px-3 text-[13px]"
+                      value={account_ref}
+                      disabled={upload_locked && step === "start"}
+                      onChange={(e) => set_account_ref(e.target.value)}
+                    >
+                      <option value="">Select account…</option>
+                      {IMPORTABLE.map((a) => (
+                        <option key={a.account_ref} value={a.account_ref}>
+                          {a.account_label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1.5 text-xs text-zyfn-muted">
+                      New rows are inserted for this account only.
+                    </p>
+                  </>
+                )}
               </div>
               <div>
                 <span
@@ -509,7 +684,9 @@ export function ImportWizard() {
                       </p>
                       <p className="truncate text-[11px] leading-tight text-zyfn-muted">
                         {format_file_size(file.size)}
-                        {!account_ref ? " · Select an account to continue" : ""}
+                        {!account_ref && !multi_account
+                          ? " · Select an account to continue"
+                          : ""}
                       </p>
                     </div>
                     {account ? (
@@ -602,21 +779,43 @@ export function ImportWizard() {
                   Review transactions
                 </h2>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <StatChip
-                    label={IMPORT_STATUS_CHIP_LABELS.new}
-                    value={counts.new_count}
-                    status_key="new"
-                  />
-                  <StatChip
-                    label={IMPORT_STATUS_CHIP_LABELS.duplicate}
-                    value={counts.dup}
-                    status_key="duplicate"
-                  />
-                  <StatChip
-                    label={IMPORT_STATUS_CHIP_LABELS.needs_review}
-                    value={counts.review}
-                    status_key="needs_review"
-                  />
+                  {multi_account && account_summaries.length > 0 ? (
+                    account_summaries.map((summary) => (
+                      <span
+                        key={summary.account_ref}
+                        className="inline-flex flex-wrap items-center gap-1 rounded-[3px] border border-[#dce1e7] bg-[#f8f9fb] px-2 py-0.5 text-[11px] text-slate-700"
+                      >
+                        <span className="font-medium text-zyfn-navy">
+                          {summary.account_label}
+                        </span>
+                        <span className="text-slate-500">New {summary.new_count}</span>
+                        <span className="text-slate-500">
+                          Existing {summary.duplicate_count}
+                        </span>
+                        <span className="text-slate-500">
+                          Need check {summary.review_count}
+                        </span>
+                      </span>
+                    ))
+                  ) : (
+                    <>
+                      <StatChip
+                        label={IMPORT_STATUS_CHIP_LABELS.new}
+                        value={counts.new_count}
+                        status_key="new"
+                      />
+                      <StatChip
+                        label={IMPORT_STATUS_CHIP_LABELS.duplicate}
+                        value={counts.dup}
+                        status_key="duplicate"
+                      />
+                      <StatChip
+                        label={IMPORT_STATUS_CHIP_LABELS.needs_review}
+                        value={counts.review}
+                        status_key="needs_review"
+                      />
+                    </>
+                  )}
                   {parser_id ? (
                     <StatChip
                       label="Format"
@@ -661,20 +860,33 @@ export function ImportWizard() {
               </p>
             ) : null}
           </section>
-          {account ? (
+          {show_preview_table ? (
             <AccountTableCard title="Parsed rows" fill_height>
               <TransactionDataTable
                 label="Import preview"
-                scope={`import-${account_ref}`}
+                scope={
+                  multi_account
+                    ? "import-mbb-combined"
+                    : `import-${account_ref}`
+                }
                 rows={preview_rows}
-                kind={account.kind}
+                kind={preview_kind}
                 show_import_status
+                show_account_column={multi_account}
                 export_all_rows
                 resolve_export_filename={() =>
-                  build_import_preview_export_filename(account.account_label)
+                  build_import_preview_export_filename(
+                    multi_account
+                      ? "maybank_credit_cards"
+                      : (account?.account_label ?? "import"),
+                  )
                 }
                 fill_height
-                export_account_label={account.account_label}
+                export_account_label={
+                  multi_account
+                    ? "Maybank credit cards"
+                    : account?.account_label
+                }
                 empty_period_message="No parsed rows to display."
               />
             </AccountTableCard>
@@ -682,13 +894,33 @@ export function ImportWizard() {
         </>
       ) : null}
 
-      {step === "done" && result && account ? (
+      {step === "done" && result && (multi_account || account) ? (
         <section className={CARD_SHELL}>
-          <p className="text-[15px] font-medium text-zyfn-navy">
-            Saved {result.inserted} transaction
-            {result.inserted === 1 ? "" : "s"} to {account.account_label}
-          </p>
-          {result.skipped_duplicates > 0 ? (
+          {multi_account && done_by_account.length > 0 ? (
+            <>
+              <p className="text-[15px] font-medium text-zyfn-navy">
+                Saved {result.inserted} transaction
+                {result.inserted === 1 ? "" : "s"} across{" "}
+                {done_by_account.length} accounts
+              </p>
+              <ul className="mt-2 space-y-1 text-[13px] text-slate-700">
+                {done_by_account.map((item) => (
+                  <li key={item.account_label}>
+                    {item.account_label}: {item.inserted} saved
+                    {item.skipped_duplicates > 0
+                      ? ` · ${item.skipped_duplicates} existing`
+                      : ""}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-[15px] font-medium text-zyfn-navy">
+              Saved {result.inserted} transaction
+              {result.inserted === 1 ? "" : "s"} to {account?.account_label}
+            </p>
+          )}
+          {result.skipped_duplicates > 0 && !multi_account ? (
             <p className="mt-1 text-[13px] text-zyfn-muted">
               {result.skipped_duplicates} row
               {result.skipped_duplicates === 1 ? "" : "s"} were already saved
@@ -699,12 +931,30 @@ export function ImportWizard() {
             <p className="mt-2 text-[13px] text-amber-800">{result.error}</p>
           ) : null}
           <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-zyfn-line pt-4">
-            <Link
-              href={account_path(account)}
-              className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white"
-            >
-              View account
-            </Link>
+            {multi_account
+              ? parsed_accounts.map((parsed) => {
+                  const entry = IMPORTABLE.find(
+                    (a) => a.account_ref === parsed.account_ref,
+                  );
+                  if (!entry) return null;
+                  return (
+                    <Link
+                      key={parsed.account_ref}
+                      href={account_path(entry)}
+                      className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white"
+                    >
+                      {parsed.account_label}
+                    </Link>
+                  );
+                })
+              : account ? (
+                  <Link
+                    href={account_path(account)}
+                    className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-4 py-2 text-[13px] font-medium text-white"
+                  >
+                    View account
+                  </Link>
+                ) : null}
             <button
               type="button"
               className="rounded-[3px] border border-zyfn-line px-4 py-2 text-[13px] hover:bg-slate-50"
@@ -716,7 +966,7 @@ export function ImportWizard() {
         </section>
       ) : null}
 
-      {confirm_open && account ? (
+      {confirm_open && (multi_account ? parsed_accounts.length > 0 : account) ? (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-[#132238]/44 p-4"
           role="presentation"
@@ -735,11 +985,26 @@ export function ImportWizard() {
             >
               Save transactions?
             </h2>
-            <p className="mt-2 text-[13px] text-slate-700">
-              Add {counts.new_count} transaction
-              {counts.new_count === 1 ? "" : "s"} to {account.account_label}?
-              Existing records will not be changed.
-            </p>
+            {multi_account && account_summaries.length > 0 ? (
+              <ul className="mt-2 space-y-1.5 text-[13px] text-slate-700">
+                {account_summaries.map((summary) => (
+                  <li key={summary.account_ref}>
+                    Add {summary.new_count} transaction
+                    {summary.new_count === 1 ? "" : "s"} to{" "}
+                    {summary.account_label}
+                  </li>
+                ))}
+                <li className="text-zyfn-muted">
+                  Existing records will not be changed.
+                </li>
+              </ul>
+            ) : (
+              <p className="mt-2 text-[13px] text-slate-700">
+                Add {counts.new_count} transaction
+                {counts.new_count === 1 ? "" : "s"} to {account?.account_label}?
+                Existing records will not be changed.
+              </p>
+            )}
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"

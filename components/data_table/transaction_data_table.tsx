@@ -18,6 +18,7 @@ export type TransactionDataTableProps = {
   loading?: boolean;
   /** Import preview only — appends Status column via shared column builder. */
   show_import_status?: boolean;
+  show_account_column?: boolean;
   export_all_rows?: boolean;
   resolve_export_filename?: (rows: TransactionTableRow[]) => string;
 };
@@ -33,6 +34,7 @@ export function TransactionDataTable({
   export_account_label,
   loading,
   show_import_status = false,
+  show_account_column = false,
   export_all_rows = false,
   resolve_export_filename,
 }: TransactionDataTableProps) {
@@ -42,6 +44,7 @@ export function TransactionDataTable({
       scope={scope}
       columns={transaction_columns(kind, {
         import_status: show_import_status,
+        account_label: show_account_column,
       })}
       rows={rows}
       date_key="date"

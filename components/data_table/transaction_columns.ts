@@ -88,9 +88,16 @@ const IMPORT_STATUS_REASON_COL: DataTableColumn<TransactionTableRow> = {
   label: "Status reason",
 };
 
+const ACCOUNT_LABEL_COL: DataTableColumn<TransactionTableRow> = {
+  key: "account_label",
+  label: "Account",
+};
+
 export type TransactionColumnsOptions = {
   /** Import preview: append dedupe/review status after the standard ledger columns. */
   import_status?: boolean;
+  /** Combined multi-card import preview. */
+  account_label?: boolean;
 };
 
 /** Shared column layout for every Supabase account statement table. */
@@ -102,6 +109,9 @@ export function transaction_columns(
     kind === "tng_go_plus" ? go_plus_money_columns() : sen_money_columns(kind);
 
   const cols = [DATE_COL, TYPE_COL, DETAIL_COL, DESCRIPTION_COL, ...money_cols];
+  if (options?.account_label) {
+    cols.splice(1, 0, ACCOUNT_LABEL_COL);
+  }
   if (options?.import_status) {
     return [...cols, IMPORT_STATUS_COL, IMPORT_STATUS_REASON_COL];
   }

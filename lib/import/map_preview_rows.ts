@@ -1,4 +1,5 @@
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
+import { account_config_by_ref } from "@/lib/accounts/registry";
 import { import_row_status_label } from "@/lib/import/import_labels";
 import type { NormalizedImportRow } from "@/lib/import/types";
 
@@ -20,5 +21,9 @@ export function map_import_rows_to_statement_rows(
     sort_id: index,
     import_status: import_row_status_label(row.status),
     status_hint: row.review_reasons.join("; "),
+    account_label: row.account_ref
+      ? (account_config_by_ref(row.account_ref)?.account_label ??
+        row.account_ref)
+      : "",
   }));
 }

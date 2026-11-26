@@ -24,8 +24,3 @@ function keyword_parser(
 export const pbe_parser = keyword_parser("pbe", ["PUBLIC BANK", "PBE"]);
 export const maybank_parser = keyword_parser("maybank", ["MAYBANK", "MBB"]);
 export const hlb_parser = keyword_parser("hlb", ["HONG LEONG", "HLB"]);
-export const mbb_card_parser = keyword_parser("mbb_card", [
-  "MAYBANK",
-  "VISA",
-  "AMEX",
-]);

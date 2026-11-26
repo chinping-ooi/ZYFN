@@ -64,10 +64,11 @@ export function ImportStepper({
       aria-label="Import progress"
       className="w-full shrink-0 rounded-[3px] border border-zyfn-line bg-white px-4 py-4"
     >
-      <ol
-        className="grid w-full items-center gap-y-1.5"
-        style={{ gridTemplateColumns: grid_columns }}
-      >
+      <div className="px-6 md:px-14">
+        <ol
+          className="grid w-full items-center gap-y-1.5"
+          style={{ gridTemplateColumns: grid_columns }}
+        >
         {steps.map((step, index) => {
           const behind = active_index > index;
           const active = current === step.key;
@@ -123,7 +124,8 @@ export function ImportStepper({
             </li>
           );
         })}
-      </ol>
+        </ol>
+      </div>
       <p className="mt-2 text-center text-xs text-slate-600 sm:hidden">
         Step {active_index + 1}: {active_step?.label ?? ""}
       </p>
