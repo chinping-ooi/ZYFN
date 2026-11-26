@@ -5,6 +5,7 @@ import {
   nav_item_has_active_descendant,
   nav_item_is_active,
   nav_item_is_marked,
+  nav_item_route_emphasis,
 } from "@/lib/accounts/nav";
 
 describe("account navigation", () => {
@@ -42,27 +43,34 @@ describe("account navigation", () => {
     );
   });
 
-  it("marks MBB 2 Gold active when a nested card is open", () => {
+  it("distinguishes full active on MBB 2 Gold vs ancestor when a nested card is open", () => {
     const cards = NAV_GROUPS.find((g) => g.title === "Credit cards");
     const gold = cards!.items.find((i) => i.label === "MBB 2 Gold")!;
-    const child = gold.children![0]!;
+    const amex = gold.children!.find((c) => c.href.includes("8060"))!;
+
     expect(
-      nav_item_is_active(
-        "/credit-cards/mbb-2-gold/1697/summary",
-        child,
-      ),
+      nav_item_is_active("/credit-cards/mbb-2-gold/8060", amex),
     ).toBe(true);
-    expect(nav_item_is_marked("/credit-cards/mbb-2-gold/1697/summary", gold)).toBe(
-      true,
+    expect(nav_item_route_emphasis("/credit-cards/mbb-2-gold/8060", amex)).toBe(
+      "active",
     );
     expect(
-      nav_item_has_active_descendant(
-        "/credit-cards/mbb-2-gold/1697/summary",
-        gold,
-      ),
-    ).toBe(true);
+      nav_item_is_active("/credit-cards/mbb-2-gold/8060", gold),
+    ).toBe(false);
+    expect(nav_item_route_emphasis("/credit-cards/mbb-2-gold/8060", gold)).toBe(
+      "ancestor",
+    );
+    expect(nav_item_is_marked("/credit-cards/mbb-2-gold/8060", gold)).toBe(true);
     expect(
-      nav_item_is_marked("/credit-cards/mbb-2-gold", gold),
+      nav_item_has_active_descendant("/credit-cards/mbb-2-gold/8060", gold),
     ).toBe(true);
+
+    expect(nav_item_is_active("/credit-cards/mbb-2-gold", gold)).toBe(true);
+    expect(nav_item_route_emphasis("/credit-cards/mbb-2-gold", gold)).toBe(
+      "active",
+    );
+    expect(
+      nav_item_route_emphasis("/credit-cards/mbb-2-gold", amex),
+    ).toBeNull();
   });
 });

@@ -46,6 +46,16 @@ export function nav_item_is_marked(pathname: string, item: NavItem): boolean {
   );
 }
 
+/** Sidebar row emphasis: full active chrome only on the exact route. */
+export function nav_item_route_emphasis(
+  pathname: string,
+  item: NavItem,
+): "active" | "ancestor" | null {
+  if (nav_item_is_active(pathname, item)) return "active";
+  if (nav_item_has_active_descendant(pathname, item)) return "ancestor";
+  return null;
+}
+
 export function flatten_nav_hrefs(items: NavItem[]): string[] {
   const hrefs: string[] = [];
   for (const item of items) {

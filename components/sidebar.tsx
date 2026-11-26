@@ -19,7 +19,11 @@ import {
   IMPORT_HREF,
   type NavItem,
 } from "@/lib/navigation";
-import { nav_item_is_active, nav_item_is_marked } from "@/lib/accounts/nav";
+import {
+  nav_item_is_active,
+  nav_item_is_marked,
+  nav_item_route_emphasis,
+} from "@/lib/accounts/nav";
 
 const MOBILE_DRAWER_ID = "mobile-sidebar";
 
@@ -39,7 +43,12 @@ const GROUP_SUMMARY_CLASS =
   "nav-group flex list-none cursor-pointer items-center justify-between rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold text-slate-300 hover:bg-zyfn-sidebar-hover hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 [&::-webkit-details-marker]:hidden";
 
 const NAV_LINK_BASE =
-  "nav-item relative flex min-h-8 max-h-[34px] items-center rounded-[3px] text-[13px] no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60";
+  "nav-item relative flex min-h-8 max-h-[34px] w-full items-center rounded-[3px] text-[13px] no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60";
+
+const NAV_LINK_LEVEL_2 = "mb-px py-1.5 pr-3 pl-3 last:mb-0";
+
+const NAV_NEST_LEVEL_3 =
+  "mb-0.5 ml-3 border-l border-slate-700/80 pb-0.5 pl-3 pt-0.5";
 
 function SidebarNavLink({
   item,
@@ -47,27 +56,34 @@ function SidebarNavLink({
   on_navigate,
   className = "",
   aria_current = true,
+  level = 2,
 }: {
   item: NavItem;
   pathname: string;
   on_navigate: () => void;
   className?: string;
   aria_current?: boolean;
+  level?: 2 | 3;
 }) {
-  const active = nav_item_is_active(pathname, item);
-  const marked = nav_item_is_marked(pathname, item);
+  const emphasis = nav_item_route_emphasis(pathname, item);
+  const active = emphasis === "active";
+  const ancestor = emphasis === "ancestor";
+  const padding =
+    level === 3 ? "mb-px py-1.5 pr-3 pl-3 last:mb-0" : NAV_LINK_LEVEL_2;
   return (
     <Link
       href={item.href}
       onClick={on_navigate}
-      className={`${NAV_LINK_BASE} mb-px py-1.5 pr-3 pl-3 last:mb-0 ${className} ${
-        marked
+      className={`${NAV_LINK_BASE} ${padding} ${className} ${
+        active
           ? "active bg-white/10 font-medium text-white"
-          : "font-normal text-slate-400 hover:bg-white/5 hover:text-white"
+          : ancestor
+            ? "font-medium text-slate-100 hover:text-white"
+            : "font-normal text-slate-400 hover:bg-white/5 hover:text-white"
       }`}
-      aria-current={aria_current && active ? "page" : undefined}
+      aria-current={aria_current && nav_item_is_active(pathname, item) ? "page" : undefined}
     >
-      {marked ? (
+      {active ? (
         <span
           className="pointer-events-none absolute top-1 bottom-1 -left-px w-0.5 bg-sky-400"
           aria-hidden
@@ -100,28 +116,25 @@ function SidebarNavBranch({
   }
 
   return (
-    <div className="mb-px">
+    <>
       <SidebarNavLink
         item={item}
         pathname={pathname}
         on_navigate={on_navigate}
-        aria_current
+        level={2}
       />
-      <div
-        className="mb-0.5 ml-3 border-l border-slate-700/80 pb-0.5 pl-2 pt-0.5"
-        aria-label="MBB 2 Gold cards"
-      >
+      <div className={NAV_NEST_LEVEL_3} aria-label="MBB 2 Gold cards">
         {item.children!.map((child) => (
           <SidebarNavLink
             key={child.href}
             item={child}
             pathname={pathname}
             on_navigate={on_navigate}
-            className="pl-2 text-[12px]"
+            level={3}
           />
         ))}
       </div>
-    </div>
+    </>
   );
 }
 
