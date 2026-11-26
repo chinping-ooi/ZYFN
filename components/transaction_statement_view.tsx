@@ -44,8 +44,8 @@ export function TransactionStatementView({
     month === "all" ? data.row_count : table_rows.length;
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden">
-      <div className="min-w-0 shrink-0">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="shrink-0">
         <AccountPageHeader
           title="Account statement"
           view_base_path={view_base_path}
@@ -69,7 +69,7 @@ export function TransactionStatementView({
         />
 
         <section
-          className="statement-summary kpis mb-5 grid gap-[18px]"
+          className="statement-summary kpis mb-5 grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4"
           aria-label="Statement summary"
         >
           <KpiCard

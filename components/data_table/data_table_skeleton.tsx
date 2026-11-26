@@ -64,7 +64,7 @@ export function DataTableSkeleton({
         </div>
       </div>
       <div
-        className={`min-h-0 max-w-full overflow-x-auto overflow-y-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
+        className={`min-h-0 overflow-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
           fill_height ? "flex-1" : "max-h-[min(70vh,560px)]"
         }`}
       >

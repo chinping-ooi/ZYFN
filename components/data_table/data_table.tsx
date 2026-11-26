@@ -202,7 +202,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div
-      className={`flex w-full min-w-0 max-w-full flex-col ${
+      className={`flex w-full flex-col ${
         fill_height ? "min-h-0 flex-1" : "min-h-0"
       }`}
     >
@@ -212,7 +212,7 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
       ) : null}
       <div
-        className={`min-h-0 max-w-full overflow-x-auto overflow-y-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
+        className={`min-h-0 overflow-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
           fill_height
             ? "flex-1"
             : "max-h-[min(70vh,560px)]"

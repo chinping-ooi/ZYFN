@@ -26,7 +26,7 @@ export function TransactionSummaryView({
   const { month, set_month, month_options } = useStatementMonth(data.rows);
 
   return (
-    <div className="min-h-0 min-w-0 w-full max-w-full">
+    <div className="min-h-0">
       <AccountPageHeader
         title="Summary"
         view_base_path={view_base_path}

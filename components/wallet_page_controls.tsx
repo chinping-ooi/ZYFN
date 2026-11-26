@@ -13,7 +13,7 @@ export function WalletPageControls({
   on_month_change: (value: string) => void;
 }) {
   return (
-    <div className="page-toolbar-controls !w-full sm:!w-auto">
+    <div className="flex flex-wrap items-center justify-end gap-3">
       <WalletAccountToggle />
       <MonthSelect
         label="Statement month"

@@ -98,7 +98,7 @@ export function DashboardView({
   };
 
   return (
-    <div className="dashboard-shell min-w-0 w-full max-w-full lg:flex-1">
+    <div className="dashboard-shell lg:flex-1">
       <header className="dashboard-toolbar">
         <div className="min-w-0">
           <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>

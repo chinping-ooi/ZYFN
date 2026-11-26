@@ -51,14 +51,14 @@ function SummaryTypeCardSkeleton({ title }: { title: string }) {
       className="min-h-[280px] flex-1"
       bodyClassName="!px-6 md:!px-6 !pt-5"
     >
-      <div className="grid min-h-0 w-full grid-cols-1 gap-4 lg:grid-cols-5 lg:items-start lg:gap-x-6 lg:gap-y-4">
-        <div className="col-span-1 flex w-full min-w-0 items-start justify-center lg:col-span-2">
+      <div className="grid min-h-0 w-full grid-cols-1 gap-4 md:grid-cols-5 md:items-start md:gap-x-6 md:gap-y-4">
+        <div className="col-span-1 flex w-full min-w-0 items-start justify-center md:col-span-2">
           <Skeleton
             className="shrink-0 rounded-full"
             style={{ width: TYPE_DONUT_PX, height: TYPE_DONUT_PX }}
           />
         </div>
-        <div className="col-span-1 flex min-w-0 items-start justify-start lg:col-span-3">
+        <div className="col-span-1 flex min-w-0 items-start justify-start md:col-span-3">
           <div className="flex w-full min-w-0 max-w-md min-h-[220px] items-center">
             <SummaryLegendRowsSkeleton count={3} layout="type_card" />
           </div>

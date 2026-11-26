@@ -28,7 +28,7 @@ export function AccountTableCard({
     >
       <CardHead title={title} table_shell align="center" />
       <div
-        className={`flex min-h-0 min-w-0 flex-col ${fill_height ? "min-h-0 flex-1" : ""} px-3 pb-4 sm:px-5`}
+        className={`flex min-h-0 flex-col ${fill_height ? "min-h-0 flex-1" : ""} px-5 pb-4`}
       >
         {loading ? (
           <DataTableSkeleton
