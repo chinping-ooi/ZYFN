@@ -24,6 +24,9 @@ export const IN_FLOW_COLOR = "#14b8a6";
 export const OUT_FLOW_COLOR = "#f43f5e";
 export const FD_FLOW_COLOR = "#8b5cf6";
 
+/** Overview in/out/FD donut legend only (horizontal, wraps). */
+export const OVERVIEW_LEGEND_LAYOUT = "overview_horizontal" as const;
+
 function format_row_amount(
   scale: AmountScale,
   row: TxnTypeBreakdownRow,
@@ -68,10 +71,50 @@ export function SummaryBreakdownLegendList({
   /** Accepted for API stability; single-line legend does not use bar colours. */
   bar_color_for_index?: (index: number) => string;
   className?: string;
-  /** Tighter right columns for Income/Spending cards. */
-  layout?: "default" | "type_card";
+  /** `overview_horizontal` is for Overview donut only; `type_card` for Income/Spending. */
+  layout?: "default" | "type_card" | typeof OVERVIEW_LEGEND_LAYOUT;
 }) {
   const dot_color = color_for_index ?? ((i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length]);
+
+  if (layout === OVERVIEW_LEGEND_LAYOUT) {
+    return (
+      <ul
+        className={`m-0 flex w-full min-w-0 list-none flex-wrap items-stretch justify-center gap-x-5 gap-y-3 p-0 ${className}`.trim()}
+        aria-label={aria_label}
+      >
+        {rows.map((row, i) => (
+          <li
+            key={row.type_key}
+            className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-0.5 text-sm"
+            onMouseEnter={() =>
+              chart_ref ? highlight_slice(chart_ref, i) : undefined
+            }
+            onMouseLeave={() =>
+              chart_ref ? highlight_slice(chart_ref, null) : undefined
+            }
+          >
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: dot_color(i) }}
+              aria-hidden
+            />
+            <span
+              className="shrink-0 font-medium whitespace-nowrap text-zyfn-ink"
+              title={row.label}
+            >
+              {row.label}
+            </span>
+            <span className="shrink-0 text-[13px] font-semibold tabular-nums text-zyfn-ink">
+              {format_row_amount(scale, row, money_dp)}
+            </span>
+            <span className="shrink-0 text-[12px] tabular-nums text-zyfn-muted">
+              {row.pct.toFixed(1)}%
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
     <ul
