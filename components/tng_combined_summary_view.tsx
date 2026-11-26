@@ -32,8 +32,7 @@ export function TngCombinedSummaryView({
     <div className="min-h-0">
       <AccountPageHeader
         title="Summary"
-        route_prefix="transactions"
-        account_slug={account_slug}
+        view_base_path={`/transactions/${account_slug}`}
         active_view="summary"
         controls={
           <div className="flex flex-wrap items-center justify-end gap-3">

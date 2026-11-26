@@ -30,6 +30,4 @@ export type AccountRegistryEntry = {
   account_code?: string;
   /** When false, hidden from sidebar (import/data still use the entry). */
   show_in_nav?: boolean;
-  /** Summary-only virtual account (no statement route). */
-  summary_only?: boolean;
 };

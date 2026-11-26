@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useNavGroups } from "@/components/nav_groups_provider";
-import { DASHBOARD_HREF, IMPORT_HREF } from "@/lib/navigation";
+import { DASHBOARD_HREF, IMPORT_HREF, type NavItem } from "@/lib/navigation";
 
 const MOBILE_DRAWER_ID = "mobile-sidebar";
 
@@ -43,7 +43,7 @@ function NavGroupSection({
   on_navigate,
 }: {
   title: string;
-  items: { href: string; label: string }[];
+  items: NavItem[];
   pathname: string;
   on_navigate: () => void;
 }) {
@@ -70,7 +70,11 @@ function NavGroupSection({
       </summary>
       <div className="nav-children ml-[22px] border-l border-slate-700 pb-0.5 pt-0.5">
         {items.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            item.active_match === "prefix"
+              ? pathname === item.href ||
+                pathname.startsWith(`${item.href}/`)
+              : pathname === item.href;
           return (
             <Link
               key={item.href}

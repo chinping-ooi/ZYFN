@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import type { AccountRoutePrefix } from "@/lib/accounts/types";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
@@ -15,12 +14,12 @@ import { AccountTableCard } from "@/components/account_table_card";
 
 export function TransactionStatementView({
   data,
-  route_prefix,
-  account_slug,
+  view_base_path,
+  show_mbb_2_gold_link = false,
 }: {
   data: AccountStatementFromDb;
-  route_prefix: AccountRoutePrefix;
-  account_slug: string;
+  view_base_path: string;
+  show_mbb_2_gold_link?: boolean;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const use_micro = data.amount_scale === "micro";
@@ -48,8 +47,8 @@ export function TransactionStatementView({
       <div className="shrink-0">
         <AccountPageHeader
           title="Account statement"
-          route_prefix={route_prefix}
-          account_slug={account_slug}
+          view_base_path={view_base_path}
+          show_mbb_2_gold_link={show_mbb_2_gold_link}
           active_view="statement"
           controls={
             <MonthSelect

@@ -45,6 +45,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     account_label: "MBB Visa 1697",
     account_id: 8,
     kind: "credit_card",
+    show_in_nav: false,
   },
   {
     slug: "mbb-amex-8060",
@@ -55,6 +56,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     account_label: "MBB Amex 8060",
     account_id: 9,
     kind: "credit_card",
+    show_in_nav: false,
   },
   {
     slug: "mbb-2-gold",
@@ -64,7 +66,7 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
     account_ref: "MBB_2_GOLD",
     account_label: "MBB 2 Gold",
     kind: "mbb_2_gold_combined",
-    summary_only: true,
+    show_in_nav: false,
   },
   {
     slug: "pbe-visa-4104",
@@ -121,8 +123,14 @@ export const ACCOUNTS: AccountRegistryEntry[] = [
 ];
 
 export function account_path(entry: AccountRegistryEntry): string {
-  if (entry.summary_only) {
-    return `/${entry.route_prefix}/${entry.slug}/summary`;
+  if (entry.account_ref === "MBB_VISA_1697") {
+    return `/credit-cards/mbb-2-gold/1697`;
+  }
+  if (entry.account_ref === "MBB_AMEX_8060") {
+    return `/credit-cards/mbb-2-gold/8060`;
+  }
+  if (entry.kind === "mbb_2_gold_combined") {
+    return `/credit-cards/mbb-2-gold`;
   }
   return `/${entry.route_prefix}/${entry.slug}`;
 }
@@ -160,14 +168,8 @@ export const DASHBOARD_ACCOUNTS: TransactionAccountConfig[] =
 
 export function accounts_for_route_prefix(
   prefix: AccountRoutePrefix,
-  options?: { include_summary_only?: boolean },
 ): AccountRegistryEntry[] {
-  const include_summary_only = options?.include_summary_only ?? true;
-  return ACCOUNTS.filter(
-    (entry) =>
-      entry.route_prefix === prefix &&
-      (include_summary_only || !entry.summary_only),
-  );
+  return ACCOUNTS.filter((entry) => entry.route_prefix === prefix);
 }
 
 export function account_by_prefix_and_slug(

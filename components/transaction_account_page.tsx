@@ -17,12 +17,17 @@ export async function TransactionAccountRoute({
   config,
   account_slug,
   route_prefix,
+  view_base_path,
+  show_mbb_2_gold_link = false,
 }: {
   title: string;
   config: TransactionAccountConfig;
   account_slug: string;
   route_prefix: AccountRoutePrefix;
+  view_base_path?: string;
+  show_mbb_2_gold_link?: boolean;
 }) {
+  const base = view_base_path ?? `/${route_prefix}/${account_slug}`;
   if (!supabase_configured()) {
     return (
       <TransactionAppShell title={title}>
@@ -64,8 +69,8 @@ export async function TransactionAccountRoute({
           ) : (
             <TransactionStatementView
               data={statement}
-              route_prefix={route_prefix}
-              account_slug={account_slug}
+              view_base_path={base}
+              show_mbb_2_gold_link={show_mbb_2_gold_link}
             />
           )}
         </StatementViewSuspense>

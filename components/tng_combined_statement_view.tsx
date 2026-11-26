@@ -52,8 +52,7 @@ export function TngCombinedStatementView({
       <div className="shrink-0">
         <AccountPageHeader
           title="Account statement"
-          route_prefix="transactions"
-          account_slug={account_slug}
+          view_base_path={`/transactions/${account_slug}`}
           active_view="statement"
           controls={
             <div className="flex flex-wrap items-center justify-end gap-3">

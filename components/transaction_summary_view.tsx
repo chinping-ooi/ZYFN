@@ -1,6 +1,5 @@
 "use client";
 
-import type { AccountRoutePrefix } from "@/lib/accounts/types";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
@@ -10,12 +9,14 @@ import { MonthSelect } from "@/components/month_select";
 
 export function TransactionSummaryView({
   data,
-  route_prefix,
-  account_slug,
+  view_base_path,
+  hide_view_tabs = false,
+  show_mbb_2_gold_link = false,
 }: {
   data: AccountStatementFromDb;
-  route_prefix: AccountRoutePrefix;
-  account_slug: string;
+  view_base_path: string;
+  hide_view_tabs?: boolean;
+  show_mbb_2_gold_link?: boolean;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const use_micro = data.amount_scale === "micro";
@@ -27,8 +28,9 @@ export function TransactionSummaryView({
     <div className="min-h-0">
       <AccountPageHeader
         title="Summary"
-        route_prefix={route_prefix}
-        account_slug={account_slug}
+        view_base_path={view_base_path}
+        hide_view_tabs={hide_view_tabs}
+        show_mbb_2_gold_link={show_mbb_2_gold_link}
         active_view="summary"
         controls={
           <MonthSelect
