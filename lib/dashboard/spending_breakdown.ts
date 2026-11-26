@@ -1,5 +1,6 @@
 import { cash_flow_spending_sen } from "@/lib/dashboard/cash_flow_amounts";
 import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
+import { is_fixed_deposit_daily_chart_row } from "@/lib/dashboard/daily_spending";
 import type { MonthKey } from "@/lib/dashboard/metrics";
 import { kl_month_key } from "@/lib/datetime/kl_month_key";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
@@ -41,6 +42,7 @@ export function spending_breakdown_for_month(
 
     for (const row of statement.rows) {
       if (kl_month_key(row.date) !== month) continue;
+      if (is_fixed_deposit_daily_chart_row(row)) continue;
       if (is_cash_flow_excluded(row, { account_kind: statement.account_kind }))
         continue;
       const spent = cash_flow_spending_sen(row, statement.account_kind, use_micro);
