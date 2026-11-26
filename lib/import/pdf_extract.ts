@@ -2,7 +2,8 @@
  * Browser-only PDF text extraction. Uses pdfjs-dist; optional tesseract.js OCR
  * when a page has no text layer. No third-party network APIs.
  */
-import { group_text_items_into_lines, type PdfLayoutItem } from "@/lib/import/pdf_layout";
+import { group_text_items_into_lines } from "@/lib/import/pdf_layout";
+import { layout_items_from_viewport } from "@/lib/import/pdf_text_coords";
 
 export type PdfDocMeta = {
   title?: string;
@@ -32,18 +33,25 @@ export async function extract_pdf_text_local(
 
   for (let page_num = 1; page_num <= doc.numPages; page_num++) {
     const page = await doc.getPage(page_num);
+    const text_viewport = page.getViewport({ scale: 1 });
     const content = await page.getTextContent();
-    const layout_items: PdfLayoutItem[] = [];
+    const pdf_items: Array<{
+      str: string;
+      transform: number[];
+      width?: number;
+    }> = [];
     for (const item of content.items) {
       if (!("str" in item) || !item.str) continue;
-      const transform = item.transform;
-      layout_items.push({
+      pdf_items.push({
         str: item.str,
-        x: transform[4],
-        y: transform[5],
+        transform: item.transform,
         width: typeof item.width === "number" ? item.width : undefined,
       });
     }
+    const layout_items = layout_items_from_viewport(
+      pdf_items,
+      text_viewport.transform,
+    );
     const page_lines = group_text_items_into_lines(layout_items);
     const page_text = page_lines.join("\n").trim();
     if (page_text.length > 20) {

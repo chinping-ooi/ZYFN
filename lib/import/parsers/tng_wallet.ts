@@ -67,21 +67,51 @@ export function normalize_tng_wallet_pdf_line(line: string): string {
   return collapse_spaces(spaced);
 }
 
+function collapsed_upper(text: string): string {
+  return text.toUpperCase().replace(/\s+/g, " ");
+}
+
 function detect_score(text: string): number {
   const upper = text.toUpperCase();
+  const flat = collapsed_upper(text);
   let score = 0;
-  if (/TNG\s+WALLET\s+TRANSACTION\s+HISTORY/.test(upper)) score += 0.38;
+  if (/TNG\s+WALLET\s+TRANSACTION\s+HISTORY/.test(upper) ||
+    flat.includes("TNG WALLET TRANSACTION HISTORY")) {
+    score += 0.38;
+  }
   if (
-    /TNG\s+WALLET\s+TRANSACTION/.test(upper) &&
-    /GO\+\s+TRANSACTION/.test(upper)
+    (/TNG\s+WALLET\s+TRANSACTION/.test(upper) &&
+      /GO\+\s+TRANSACTION/.test(upper)) ||
+    (flat.includes("TNG WALLET TRANSACTION") && flat.includes("GO+ TRANSACTION"))
   ) {
     score += 0.32;
   }
-  if (/WALLET\s+ID/.test(upper)) score += 0.08;
-  if (/TRANSACTION\s+PERIOD/.test(upper)) score += 0.06;
-  if (/REGISTERED\s+NAME/.test(upper)) score += 0.04;
-  if (RECORD_START.test(text)) score += 0.1;
+  if (/WALLET\s+ID/.test(upper) || flat.includes("WALLET ID")) score += 0.08;
+  if (/TRANSACTION\s+PERIOD/.test(upper) || flat.includes("TRANSACTION PERIOD")) {
+    score += 0.06;
+  }
+  if (/REGISTERED\s+NAME/.test(upper) || flat.includes("REGISTERED NAME")) {
+    score += 0.04;
+  }
+  if (RECORD_START.test(text) || RECORD_START.test(flat)) score += 0.1;
+  if (
+    flat.includes("AMOUNT (RM)") &&
+    flat.includes("WALLET BALANCE")
+  ) {
+    score += 0.06;
+  }
   return Math.min(score, 0.99);
+}
+
+/** Weak keyword signal when layout is broken but content is still present. */
+export function tng_wallet_has_keyword_hints(text: string): boolean {
+  const flat = collapsed_upper(text);
+  return (
+    flat.includes("TNG WALLET") &&
+    (flat.includes("TRANSACTION HISTORY") ||
+      flat.includes("GO+ TRANSACTION") ||
+      flat.includes("WALLET ID"))
+  );
 }
 
 export function tng_wallet_layout_score(text: string): number {
@@ -582,9 +612,14 @@ export const tng_wallet_parser: StatementParser = {
   id: "tng_wallet",
   detect(text: string) {
     const score = detect_score(text);
-    const is_history = /TNG\s+WALLET\s+TRANSACTION\s+HISTORY/i.test(text);
+    const is_history =
+      /TNG\s+WALLET\s+TRANSACTION\s+HISTORY/i.test(text) ||
+      collapsed_upper(text).includes("TNG WALLET TRANSACTION HISTORY");
     if (is_history && score < 0.48) {
-      return { id: "tng_wallet", score: 0.5 };
+      return { id: "tng_wallet", score: 0.55 };
+    }
+    if (tng_wallet_has_keyword_hints(text) && score < 0.48) {
+      return { id: "tng_wallet", score: 0.52 };
     }
     return { id: "tng_wallet", score };
   },

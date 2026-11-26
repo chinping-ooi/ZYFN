@@ -7,35 +7,63 @@ export type PdfLayoutItem = {
   width?: number;
 };
 
-const Y_TOLERANCE = 2.5;
+const LINE_TOLERANCE = 2.5;
+
+export type LineGroupAxis = "x" | "y";
+
+export function line_group_axis_for_rotation(rotation_deg: number): LineGroupAxis {
+  const norm = ((rotation_deg % 360) + 360) % 360;
+  return norm === 90 || norm === 270 ? "x" : "y";
+}
 
 export function group_text_items_into_lines(
   items: PdfLayoutItem[],
-  y_tolerance = Y_TOLERANCE,
+  tolerance = LINE_TOLERANCE,
+  axis: LineGroupAxis = "y",
 ): string[] {
   if (items.length === 0) return [];
 
   const sorted = [...items].sort((a, b) => {
-    const y_diff = b.y - a.y;
-    if (Math.abs(y_diff) > y_tolerance) return y_diff;
-    return a.x - b.x;
+    if (axis === "y") {
+      const y_diff = b.y - a.y;
+      if (Math.abs(y_diff) > tolerance) return y_diff;
+      return a.x - b.x;
+    }
+    const x_diff = a.x - b.x;
+    if (Math.abs(x_diff) > tolerance) return x_diff;
+    return b.y - a.y;
   });
 
   const groups: PdfLayoutItem[][] = [];
   for (const item of sorted) {
     const last = groups.at(-1);
-    if (!last || Math.abs(last[0].y - item.y) > y_tolerance) {
+    const same_line =
+      axis === "y"
+        ? last && Math.abs(last[0].y - item.y) <= tolerance
+        : last && Math.abs(last[0].x - item.x) <= tolerance;
+    if (!last || !same_line) {
       groups.push([item]);
     } else {
       last.push(item);
     }
   }
 
-  return groups.map((group) => join_line_tokens(group));
+  return groups.map((group) => join_line_tokens(group, axis));
 }
 
-export function join_line_tokens(tokens: PdfLayoutItem[]): string {
-  const ordered = [...tokens].sort((a, b) => a.x - b.x);
+export function join_line_tokens(
+  tokens: PdfLayoutItem[],
+  axis: LineGroupAxis = "y",
+): string {
+  const ordered = [...tokens].sort((a, b) =>
+    axis === "y" ? a.x - b.x : b.y - a.y,
+  );
+  if (axis === "x") {
+    return ordered
+      .map((token) => token.str.trim())
+      .filter(Boolean)
+      .join(" ");
+  }
   let out = "";
   let prev_end = 0;
   for (const token of ordered) {

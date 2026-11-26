@@ -57,6 +57,7 @@ import {
   extract_pdf_text_local,
   type PdfDocMeta,
 } from "@/lib/import/pdf_extract";
+import { pdf_upload_detection_warning } from "@/lib/import/pdf_upload_detection";
 import { statement_detection_corpus } from "@/lib/import/statement_detection";
 import { AccountTableCard } from "@/components/account_table_card";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
@@ -148,6 +149,9 @@ export function ImportWizard() {
   const [rows, set_rows] = useState<NormalizedImportRow[]>([]);
   const [parser_id, set_parser_id] = useState<string | null>(null);
   const [parse_warning, set_parse_warning] = useState<string | null>(null);
+  const [upload_detection_warning, set_upload_detection_warning] = useState<
+    string | null
+  >(null);
   const [ocr_pages, set_ocr_pages] = useState(0);
   const [mapping_skipped, set_mapping_skipped] = useState(false);
   const [busy, set_busy] = useState(false);
@@ -237,6 +241,7 @@ export function ImportWizard() {
       set_pdf_text_cache(null);
       set_pdf_meta_cache(null);
       set_parse_warning(null);
+      set_upload_detection_warning(null);
       set_error(null);
       if (kind === "excel" || kind === "csv") {
         set_multi_account(false);
@@ -254,11 +259,13 @@ export function ImportWizard() {
           set_pdf_meta_cache(meta);
           set_ocr_pages(ocr);
           const detection_corpus = statement_detection_corpus(text, meta);
+          let detected_account_count = 0;
           const mbb = parse_mbb_card_statement(text);
           if (mbb.accounts.length > 0) {
             set_multi_account(true);
             set_parsed_accounts(mbb.accounts);
             set_detected_upload_accounts(mbb.accounts);
+            detected_account_count = mbb.accounts.length;
             if (mbb.accounts.length === 1) {
               set_account_ref(mbb.accounts[0].account_ref);
             } else {
@@ -270,6 +277,7 @@ export function ImportWizard() {
             set_parsed_accounts([]);
             if (savings.account) {
               set_detected_upload_accounts([savings.account]);
+              detected_account_count = 1;
               set_account_ref(savings.account.account_ref);
             } else {
               set_detected_upload_accounts([]);
@@ -280,6 +288,7 @@ export function ImportWizard() {
             set_parsed_accounts([]);
             if (hlb.account) {
               set_detected_upload_accounts([hlb.account]);
+              detected_account_count = 1;
               set_account_ref(hlb.account.account_ref);
             } else {
               set_detected_upload_accounts([]);
@@ -290,15 +299,17 @@ export function ImportWizard() {
             set_parsed_accounts([]);
             if (pbe_sav.account) {
               set_detected_upload_accounts([pbe_sav.account]);
+              detected_account_count = 1;
               set_account_ref(pbe_sav.account.account_ref);
             } else {
               set_detected_upload_accounts([]);
             }
-          } else if (tng_wallet_is_likely_statement(detection_corpus)) {
+          } else if (tng_wallet_is_likely_statement(text)) {
             const tng = parse_tng_wallet_statement(text);
             set_multi_account(tng.accounts.length > 1);
             set_parsed_accounts(tng.accounts);
             set_detected_upload_accounts(tng.accounts);
+            detected_account_count = tng.accounts.length;
             set_account_ref(
               tng.accounts.length === 1 ? tng.accounts[0].account_ref : "",
             );
@@ -313,13 +324,13 @@ export function ImportWizard() {
             if (suggested) {
               const entry = IMPORTABLE.find((a) => a.account_ref === suggested);
               if (entry?.account_id != null) {
-                set_detected_upload_accounts([
-                  {
-                    account_id: entry.account_id,
-                    account_ref: entry.account_ref,
-                    account_label: entry.account_label,
-                  },
-                ]);
+                const chip = {
+                  account_id: entry.account_id,
+                  account_ref: entry.account_ref,
+                  account_label: entry.account_label,
+                };
+                set_detected_upload_accounts([chip]);
+                detected_account_count = 1;
                 set_account_ref(suggested);
               } else {
                 set_detected_upload_accounts([]);
@@ -328,8 +339,20 @@ export function ImportWizard() {
               set_detected_upload_accounts([]);
             }
           }
+          set_upload_detection_warning(
+            pdf_upload_detection_warning(text, {
+              detected_account_count,
+              ocr_pages: ocr,
+            }),
+          );
         } catch {
-          /* user can still parse after choosing account */
+          set_upload_detection_warning(
+            pdf_upload_detection_warning("", {
+              detected_account_count: 0,
+              ocr_pages: 0,
+              extraction_failed: true,
+            }),
+          );
         } finally {
           set_detecting(false);
         }
@@ -656,6 +679,7 @@ export function ImportWizard() {
     set_source_kind(null);
     set_parser_id(null);
     set_parse_warning(null);
+    set_upload_detection_warning(null);
     set_mapping_skipped(false);
     set_error(null);
     set_confirm_open(false);
@@ -674,6 +698,7 @@ export function ImportWizard() {
     set_pdf_text_cache(null);
     set_pdf_meta_cache(null);
     set_parse_warning(null);
+    set_upload_detection_warning(null);
     set_detecting(false);
     set_error(null);
     set_multi_account(false);
@@ -831,7 +856,7 @@ export function ImportWizard() {
             Upload statement
           </h2>
           <p className="mt-1 text-[13px] text-zyfn-muted">
-            Insert-only import; PDFs may auto-detect PBE card accounts.
+            Insert-only import; PDFs can auto-detect the bank or wallet account.
           </p>
           <div className="mt-4 flex flex-col gap-4">
               {show_detected_upload_accounts || show_upload_account_select ? (
@@ -888,6 +913,14 @@ export function ImportWizard() {
                     </>
                   )}
                 </div>
+              ) : null}
+              {upload_detection_warning ? (
+                <p
+                  className="text-[13px] text-amber-800"
+                  role="alert"
+                >
+                  {upload_detection_warning}
+                </p>
               ) : null}
               <div>
                 <span
