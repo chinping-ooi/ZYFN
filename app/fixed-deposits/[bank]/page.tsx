@@ -1,39 +1,25 @@
-import { notFound } from "next/navigation";
-import { AppShell } from "@/components/app_shell";
-import { FixedDepositPageView } from "@/components/fixed_deposit_page_view";
-import {
-  bank_code_to_label,
-  slug_to_bank_code,
-} from "@/lib/fixed_deposits/banks";
-import { load_fixed_deposits } from "@/lib/fixed_deposits/load";
-import { latest_fixed_deposit_date } from "@/lib/last_updated";
+import { notFound, redirect } from "next/navigation";
+import { append_search_query } from "@/lib/accounts/view_paths";
+import { slug_to_bank_code } from "@/lib/fixed_deposits/banks";
 
 export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ bank: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function FixedDepositsBankPage({ params }: Props) {
+export default async function FixedDepositsBankLegacyRedirect({
+  params,
+  searchParams,
+}: Props) {
   const { bank: slug } = await params;
-  const code = slug_to_bank_code(slug);
-  if (!code) notFound();
+  if (!slug_to_bank_code(slug)) notFound();
 
-  const load = await load_fixed_deposits(code);
-  const label = bank_code_to_label(code);
-
-  return (
-    <AppShell
-      title={`${label} · Fixed deposits`}
-      last_updated={latest_fixed_deposit_date(load.rows)}
-    >
-      <FixedDepositPageView
-        title={`${label} fixed deposits`}
-        subtitle={`Filtered by bank code ${code}`}
-        load={load}
-        table_scope={`fd-${slug}`}
-        show_bank_column={false}
-      />
-    </AppShell>
+  redirect(
+    append_search_query("/fixed-deposits", {
+      ...(await searchParams),
+      bank: slug,
+    }),
   );
 }

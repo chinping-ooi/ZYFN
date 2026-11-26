@@ -16,6 +16,7 @@ import {
 import { useNavGroups } from "@/components/nav_groups_provider";
 import {
   DASHBOARD_HREF,
+  FIXED_DEPOSITS_HREF,
   IMPORT_HREF,
   type NavItem,
 } from "@/lib/navigation";
@@ -36,7 +37,6 @@ const GROUP_ICONS: Record<string, LucideIcon> = {
   Transactions: Landmark,
   "Credit cards": CreditCard,
   Wallets: Wallet,
-  "Fixed deposits": PiggyBank,
 };
 
 const GROUP_SUMMARY_CLASS =
@@ -199,6 +199,9 @@ function SidebarPanel({
 }) {
   const dashboard_active = pathname === DASHBOARD_HREF;
   const import_active = pathname === IMPORT_HREF;
+  const fixed_deposits_active =
+    pathname === FIXED_DEPOSITS_HREF ||
+    pathname.startsWith(`${FIXED_DEPOSITS_HREF}/`);
 
   return (
     <>
@@ -246,6 +249,25 @@ function SidebarPanel({
           ) : null}
           <Upload className="size-4 shrink-0 text-slate-300" aria-hidden />
           <span>Import</span>
+        </Link>
+        <Link
+          href={FIXED_DEPOSITS_HREF}
+          onClick={on_navigate}
+          className={`${NAV_LINK_BASE} mt-1 gap-2.5 px-3.5 py-1.5 ${
+            fixed_deposits_active
+              ? "active bg-white/10 font-medium text-white"
+              : "text-slate-400 hover:bg-white/5 hover:text-white"
+          }`}
+          aria-current={fixed_deposits_active ? "page" : undefined}
+        >
+          {fixed_deposits_active ? (
+            <span
+              className="pointer-events-none absolute top-1 bottom-1 left-0 w-0.5 rounded-full bg-sky-400"
+              aria-hidden
+            />
+          ) : null}
+          <PiggyBank className="size-4 shrink-0 text-slate-300" aria-hidden />
+          <span>Fixed deposits</span>
         </Link>
         {nav_groups.map((group) => (
           <NavGroupSection

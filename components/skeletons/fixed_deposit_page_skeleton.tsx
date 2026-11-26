@@ -14,6 +14,7 @@ export function FixedDepositPageSkeleton({
           <Skeleton className="h-[21px] w-[12rem]" />
           <Skeleton className="mt-[6px] h-[13px] w-[min(100%,16rem)]" />
         </div>
+        <Skeleton className="h-9 w-[min(100%,22rem)] shrink-0" />
       </div>
 
       <section

@@ -6,18 +6,14 @@ import { merge_nav_groups, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
 const NavGroupsContext = createContext<NavGroup[]>(NAV_GROUPS);
 
 export function NavGroupsProvider({
-  bank_codes,
+  bank_codes: _bank_codes,
   children,
 }: {
   bank_codes: string[];
   children: React.ReactNode;
 }) {
-  const bank_key = bank_codes.join("\0");
-  const groups = useMemo(
-    () => merge_nav_groups(NAV_GROUPS, bank_codes),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable via join
-    [bank_key],
-  );
+  void _bank_codes;
+  const groups = useMemo(() => merge_nav_groups(NAV_GROUPS), []);
   return (
     <NavGroupsContext.Provider value={groups}>
       {children}

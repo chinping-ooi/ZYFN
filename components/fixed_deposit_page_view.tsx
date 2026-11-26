@@ -1,29 +1,42 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { FixedDepositSummaryCards } from "@/components/fixed_deposit_summary";
 import { FixedDepositDataTable } from "@/components/data_table/fixed_deposit_data_table";
 import type { FixedDepositDataRow } from "@/components/data_table/fixed_deposit_columns";
 import type { FixedDepositLoadResult } from "@/lib/fixed_deposits/types";
 import { summarize_fixed_deposits } from "@/lib/fixed_deposits/summary";
 import { to_table_rows } from "@/lib/fixed_deposits/transform";
+import {
+  bank_code_to_label,
+  slug_to_bank_code,
+} from "@/lib/fixed_deposits/banks";
 import { PageToolbar } from "@/components/page_toolbar";
 import { AccountTableCard } from "@/components/account_table_card";
+import { FixedDepositBankToggle } from "@/components/fixed_deposit_bank_toggle";
+
+function filter_rows_by_bank_slug(
+  rows: FixedDepositLoadResult["rows"],
+  bank_slug: string | null,
+) {
+  if (!bank_slug) return rows;
+  const code = slug_to_bank_code(bank_slug);
+  if (!code) return rows;
+  return rows.filter((row) => row.bank_code === code);
+}
 
 export function FixedDepositPageView({
-  title,
-  subtitle,
   load,
-  table_scope,
-  show_bank_column,
 }: {
-  title: string;
-  subtitle: string;
   load: FixedDepositLoadResult;
-  table_scope: string;
-  show_bank_column: boolean;
 }) {
-  const summary = summarize_fixed_deposits(load.rows);
-  const table_rows = to_table_rows(load.rows) as FixedDepositDataRow[];
+  const searchParams = useSearchParams();
+  const bank_slug = searchParams.get("bank")?.trim() || null;
+  const bank_code = bank_slug ? slug_to_bank_code(bank_slug) : null;
+
+  const visible_rows = filter_rows_by_bank_slug(load.rows, bank_slug);
+  const summary = summarize_fixed_deposits(visible_rows);
+  const table_rows = to_table_rows(visible_rows) as FixedDepositDataRow[];
 
   const source_note =
     load.source === "unconfigured"
@@ -32,9 +45,26 @@ export function FixedDepositPageView({
         ? "Supabase returned no rows."
         : "Loaded from Supabase.";
 
+  const title = bank_code
+    ? `${bank_code_to_label(bank_code)} fixed deposits`
+    : "All fixed deposits";
+
+  const subtitle = bank_code
+    ? `Filtered by bank code ${bank_code} · ${source_note}`
+    : `Active and matured placements across banks · ${source_note}`;
+
+  const table_scope = bank_slug ? `fd-${bank_slug}` : "fd-all";
+  const show_bank_column = !bank_code;
+
   return (
     <>
-      <PageToolbar title={title} subtitle={`${subtitle} · ${source_note}`} />
+      <PageToolbar
+        title={title}
+        subtitle={subtitle}
+        controls={
+          <FixedDepositBankToggle bank_codes={load.bank_codes} />
+        }
+      />
 
       {load.configured && load.empty_from_supabase ? (
         <aside
