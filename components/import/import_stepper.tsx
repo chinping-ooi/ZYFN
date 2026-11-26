@@ -28,10 +28,8 @@ function step_index(step: ImportWizardStep): number {
   return ORDER.indexOf(step);
 }
 
-const CIRCLE_REACHED =
-  "border-slate-300 bg-slate-200 text-slate-600";
-const CIRCLE_PENDING =
-  "border-[#b8c2cf] bg-white text-slate-400";
+const CIRCLE_REACHED = "border-zyfn-navy bg-zyfn-navy text-white";
+const CIRCLE_PENDING = "border-[#b8c2cf] bg-white text-slate-400";
 
 export function ImportStepper({
   current,
@@ -79,7 +77,7 @@ export function ImportStepper({
                   className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold sm:size-8 sm:text-[13px] ${circle_class}`}
                 >
                   {behind ? (
-                    <Check className="size-4 text-slate-600" aria-hidden />
+                    <Check className="size-4" aria-hidden />
                   ) : (
                     step.number
                   )}
@@ -98,7 +96,7 @@ export function ImportStepper({
               <span
                 className={`mt-1.5 hidden text-center text-[11px] leading-tight md:block ${
                   active
-                    ? "font-semibold text-slate-700"
+                    ? "font-semibold text-zyfn-navy"
                     : reached
                       ? "text-slate-600"
                       : "text-slate-400"
