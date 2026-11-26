@@ -57,10 +57,11 @@ function format_net(
   return `${sign}${format_rm(Math.abs(net_sen))}`;
 }
 
-const SIDE_BY_SIDE_DONUT = "mx-auto md:mx-0";
-
 const TYPE_CARD_BODY =
-  "flex min-h-0 w-full flex-1 flex-col gap-4 md:flex-row md:items-start md:gap-5";
+  "grid min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:items-start md:gap-5";
+
+const TYPE_CARD_DONUT_CELL =
+  "flex min-w-0 items-center justify-center";
 
 /** Three-card summary: net in vs out donut, money in / money out type breakdowns. */
 export function CashFlowSummary({
@@ -154,7 +155,6 @@ export function CashFlowSummary({
               chart_ref={flow_chart_ref}
               values={flow_values}
               colors={[IN_FLOW_COLOR, OUT_FLOW_COLOR]}
-              center_top="Net"
               center_bottom={net_label}
               aria_label={`In vs out donut, net ${net_label}`}
               tooltip_callback={(index) => {
@@ -191,15 +191,14 @@ export function CashFlowSummary({
         <SummaryCardShell title="Money in" className="min-h-[280px] flex-1">
           {in_has_data ? (
             <div className={TYPE_CARD_BODY}>
-              <SummaryDoughnutPanel
-                className={SIDE_BY_SIDE_DONUT}
-                chart_ref={money_in_chart_ref}
-                values={in_values}
-                colors={breakdown_in.rows.map(
-                  (_, i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length],
-                )}
-                center_top="Money in"
-                center_bottom={money_in_total}
+              <div className={TYPE_CARD_DONUT_CELL}>
+                <SummaryDoughnutPanel
+                  chart_ref={money_in_chart_ref}
+                  values={in_values}
+                  colors={breakdown_in.rows.map(
+                    (_, i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length],
+                  )}
+                  center_bottom={money_in_total}
                 aria_label={`Money in donut, total ${money_in_total}`}
                 tooltip_callback={(index) => {
                   const row = breakdown_in.rows[index];
@@ -210,14 +209,17 @@ export function CashFlowSummary({
                       : format_rm(row.amount_sen);
                   return `${row.label}: ${amt} (${row.pct.toFixed(1)}%) · ${row.count} txn`;
                 }}
-              />
-              <SummaryBreakdownLegendList
-                rows={breakdown_in.rows}
-                scale={amount_scale}
-                money_dp={money_dp}
-                chart_ref={money_in_chart_ref}
-                aria_label="Money in by transaction type"
-              />
+                />
+              </div>
+              <div className="min-w-0">
+                <SummaryBreakdownLegendList
+                  rows={breakdown_in.rows}
+                  scale={amount_scale}
+                  money_dp={money_dp}
+                  chart_ref={money_in_chart_ref}
+                  aria_label="Money in by transaction type"
+                />
+              </div>
             </div>
           ) : (
             <p className="text-center text-sm text-zyfn-muted">
@@ -229,15 +231,14 @@ export function CashFlowSummary({
         <SummaryCardShell title="Money out" className="min-h-[280px] flex-1">
           {out_has_data ? (
             <div className={TYPE_CARD_BODY}>
-              <SummaryDoughnutPanel
-                className={SIDE_BY_SIDE_DONUT}
-                chart_ref={money_out_chart_ref}
-                values={out_values}
-                colors={breakdown_out.rows.map(
-                  (_, i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length],
-                )}
-                center_top=""
-                center_bottom={money_out_total}
+              <div className={TYPE_CARD_DONUT_CELL}>
+                <SummaryDoughnutPanel
+                  chart_ref={money_out_chart_ref}
+                  values={out_values}
+                  colors={breakdown_out.rows.map(
+                    (_, i) => TYPE_SEGMENT_COLORS[i % TYPE_SEGMENT_COLORS.length],
+                  )}
+                  center_bottom={money_out_total}
                 aria_label={`Money out donut, total ${money_out_total}`}
                 tooltip_callback={(index) => {
                   const row = breakdown_out.rows[index];
@@ -248,14 +249,17 @@ export function CashFlowSummary({
                       : format_rm(row.amount_sen);
                   return `${row.label}: ${amt} (${row.pct.toFixed(1)}%) · ${row.count} txn`;
                 }}
-              />
-              <SummaryBreakdownLegendList
-                rows={breakdown_out.rows}
-                scale={amount_scale}
-                money_dp={money_dp}
-                chart_ref={money_out_chart_ref}
-                aria_label="Money out by transaction type"
-              />
+                />
+              </div>
+              <div className="min-w-0">
+                <SummaryBreakdownLegendList
+                  rows={breakdown_out.rows}
+                  scale={amount_scale}
+                  money_dp={money_dp}
+                  chart_ref={money_out_chart_ref}
+                  aria_label="Money out by transaction type"
+                />
+              </div>
             </div>
           ) : (
             <p className="text-center text-sm text-zyfn-muted">

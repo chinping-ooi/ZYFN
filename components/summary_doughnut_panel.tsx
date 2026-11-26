@@ -21,7 +21,6 @@ const DONUT_PX = 220;
 export function SummaryDoughnutPanel({
   values,
   colors,
-  center_top,
   center_bottom,
   aria_label,
   tooltip_callback,
@@ -30,7 +29,6 @@ export function SummaryDoughnutPanel({
 }: {
   values: number[];
   colors: string[];
-  center_top: string;
   center_bottom: string;
   aria_label: string;
   tooltip_callback: (index: number) => string;
@@ -105,14 +103,9 @@ export function SummaryDoughnutPanel({
         plugins={[ZYFN_SUPPRESS_ARC_LABELS_PLUGIN]}
       />
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="flex max-w-[62%] flex-col items-center text-center leading-tight">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-zyfn-muted">
-            {center_top}
-          </span>
-          <span className="mt-0.5 text-lg font-medium tabular-nums text-zyfn-ink md:text-xl">
-            {center_bottom}
-          </span>
-        </div>
+        <span className="max-w-[62%] text-center text-lg font-medium tabular-nums leading-tight text-zyfn-ink md:text-xl">
+          {center_bottom}
+        </span>
       </div>
     </div>
   );
