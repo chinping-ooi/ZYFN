@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import type { DataTableColumn } from "@/components/data_table/types";
+import { display_cell } from "@/components/data_table/display";
 import { minor_to_major, type MinorAmount } from "@/lib/money";
 import { MICRO_PER_RM, type MicroAmount } from "@/lib/tng/money_micro";
 
@@ -8,6 +9,8 @@ const BORDER_COLOR = "FFE2E8F0";
 const MONEY_FORMAT = "#,##0.00";
 const MONEY_MICRO_FORMAT = "#,##0.0000";
 const DATE_FORMAT = "dd mmm yyyy";
+const MAX_COLUMN_WIDTH = 60;
+const MIN_COLUMN_WIDTH = 8;
 
 const THIN_BORDER: Partial<ExcelJS.Borders> = {
   top: { style: "thin", color: { argb: BORDER_COLOR } },
@@ -16,7 +19,7 @@ const THIN_BORDER: Partial<ExcelJS.Borders> = {
   right: { style: "thin", color: { argb: BORDER_COLOR } },
 };
 
-function column_width<T>(col: DataTableColumn<T>): number {
+function column_width_floor<T>(col: DataTableColumn<T>): number {
   if (col.type === "date" || col.key === "date" || col.key === "start_date" || col.key === "maturity_date") {
     return 12;
   }
@@ -27,8 +30,8 @@ function column_width<T>(col: DataTableColumn<T>): number {
   if (col.key === "principal_sen" || col.key === "interest_earned_sen") return 14;
   if (col.key === "receipt_no") return 14;
   if (col.key === "status_label" || col.type === "status") return 12;
-  if (col.key === "import_status") return 16;
-  if (col.key === "status_hint") return 36;
+  if (col.key === "import_status") return 17;
+  if (col.key === "status_hint") return 50;
   return 14;
 }
 
@@ -37,18 +40,38 @@ function sheet_title(label: string): string {
   return (clean || "Export").slice(0, 31);
 }
 
-function parse_row_date(
+/**
+ * Calendar date for Excel serials — YYYY-MM-DD and UI date columns use the
+ * printed day (no UTC−8 shift). Shared by statement and import preview exports.
+ */
+export function parse_calendar_date_for_xlsx(
   raw: unknown,
   time_zone?: string,
 ): Date | null {
   if (raw == null || raw === "") return null;
   const text = String(raw);
-  const instant = text.includes("T")
-    ? new Date(text)
-    : new Date(`${text}T00:00:00Z`);
+  const iso = text.slice(0, 10);
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (parts && !text.includes("T")) {
+    const year = Number(parts[1]);
+    const month = Number(parts[2]);
+    const day = Number(parts[3]);
+    void time_zone;
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+  }
+  const instant = new Date(text);
   if (Number.isNaN(instant.getTime())) return null;
-  if (time_zone === "Asia/Kuala_Lumpur" && !text.includes("T")) {
-    return new Date(`${text}T00:00:00+08:00`);
+  if (time_zone) {
+    const formatted = new Intl.DateTimeFormat("en-CA", {
+      timeZone: time_zone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(instant);
+    const year = Number(formatted.find((p) => p.type === "year")?.value);
+    const month = Number(formatted.find((p) => p.type === "month")?.value);
+    const day = Number(formatted.find((p) => p.type === "day")?.value);
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
   }
   return instant;
 }
@@ -71,6 +94,32 @@ function money_micro_cell_value(
   const micro = raw as MicroAmount;
   if (column.zero_as_blank && micro === 0) return null;
   return micro / MICRO_PER_RM;
+}
+
+function export_cell_display_text<T extends Record<string, unknown>>(
+  row: T,
+  column: DataTableColumn<T>,
+): string {
+  return display_cell(row, column);
+}
+
+/** Widths in Excel character units, capped at {@link MAX_COLUMN_WIDTH}. */
+export function compute_export_column_widths<T extends Record<string, unknown>>(
+  columns: DataTableColumn<T>[],
+  rows: T[],
+): number[] {
+  return columns.map((col) => {
+    let max_len = col.label.length;
+    const floor = column_width_floor(col);
+    for (const row of rows) {
+      const text = export_cell_display_text(row, col);
+      max_len = Math.max(max_len, text.length);
+    }
+    return Math.min(
+      MAX_COLUMN_WIDTH,
+      Math.max(MIN_COLUMN_WIDTH, floor, max_len + 1),
+    );
+  });
 }
 
 export function export_date_range(
@@ -114,7 +163,7 @@ export async function build_and_download_xlsx<T extends Record<string, unknown>>
 
   sheet.columns = columns.map((col) => ({
     key: col.key,
-    width: column_width(col),
+    width: column_width_floor(col),
   }));
 
   const header = sheet.addRow(columns.map((col) => col.label));
@@ -138,7 +187,7 @@ export async function build_and_download_xlsx<T extends Record<string, unknown>>
       cell.border = THIN_BORDER;
 
       if (col.type === "date") {
-        const parsed = parse_row_date(raw, col.time_zone);
+        const parsed = parse_calendar_date_for_xlsx(raw, col.time_zone);
         if (parsed) {
           cell.value = parsed;
           cell.numFmt = DATE_FORMAT;
@@ -187,6 +236,11 @@ export async function build_and_download_xlsx<T extends Record<string, unknown>>
       cell.value = String(raw);
     });
   }
+
+  const widths = compute_export_column_widths(columns, rows);
+  widths.forEach((width, index) => {
+    sheet.getColumn(index + 1).width = width;
+  });
 
   sheet.views = [{ state: "frozen", ySplit: 1, topLeftCell: "A2", activeCell: "A2" }];
   if (rows.length > 0) {
