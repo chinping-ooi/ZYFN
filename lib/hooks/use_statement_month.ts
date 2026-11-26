@@ -18,8 +18,13 @@ export function useStatementMonth(rows: TransactionDbRow[]) {
     [rows],
   );
 
+  const available_month_keys = useMemo(
+    () => base_options.map((o) => o.value).filter((v) => v !== "all"),
+    [base_options],
+  );
+
   const [month, set_month] = useState<string | "all">(() =>
-    resolve_statement_month_from_query(query_month),
+    resolve_statement_month_from_query(query_month, available_month_keys),
   );
 
   const month_options = useMemo(

@@ -5,6 +5,7 @@ import {
 import { is_cash_flow_excluded } from "@/lib/dashboard/cash_flow_exclusion";
 import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 import { kl_month_key } from "@/lib/datetime/kl_month_key";
+import { resolve_default_month_key } from "@/lib/datetime/default_statement_month";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
 import type { MinorAmount } from "@/lib/money";
@@ -82,9 +83,12 @@ export function build_dashboard_metrics(
       spending_sen: values.spending_sen,
     }));
 
-  const months = monthly.map((m) => ({ value: m.month, label: m.label }));
-  const default_month =
-    months.at(-1)?.value ?? new Date().toISOString().slice(0, 7);
+  const months = monthly
+    .map((m) => ({ value: m.month, label: m.label }))
+    .sort((a, b) => b.value.localeCompare(a.value));
+  const default_month = resolve_default_month_key(
+    months.map((m) => m.value),
+  );
 
   const accounts: DashboardMetrics["accounts"] = statements.map((s) => {
     const use_micro = s.amount_scale === "micro";

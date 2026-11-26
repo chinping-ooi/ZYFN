@@ -32,12 +32,28 @@ export function statement_month_key_label(month_key: string): string {
   }).format(new Date(`${month_key}-01T12:00:00+08:00`));
 }
 
+/** Default selected month: previous KL month, else newest key in `available`. */
+export function resolve_default_month_key(
+  available: string[],
+  as_of: Date = new Date(),
+): string {
+  const preferred = default_statement_month_key(as_of);
+  if (available.length === 0) return preferred;
+  if (available.includes(preferred)) return preferred;
+  const sorted = [...available].sort((a, b) => b.localeCompare(a));
+  return sorted[0] ?? preferred;
+}
+
 export function resolve_statement_month_from_query(
   query_month: string | null,
+  available_month_keys?: string[],
 ): string | "all" {
   if (query_month === "all") return "all";
   if (query_month && is_statement_month_key(query_month)) return query_month;
-  return default_statement_month_key();
+  const keys =
+    available_month_keys?.filter((k) => k !== "all" && is_statement_month_key(k)) ??
+    [];
+  return resolve_default_month_key(keys);
 }
 
 export function ensure_month_in_options(
