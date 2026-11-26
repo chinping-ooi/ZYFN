@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, type ReactNode } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -26,8 +26,107 @@ const SEGMENT_COLORS = [
   "#0ea5e9",
 ];
 
-const DONUT_PX = 250;
+export const SPENDING_DONUT_PX = 250;
 const MIN_SLICE_PCT = 3;
+
+export type SpendingDonutLegendRow = Pick<
+  SpendingAccountRow,
+  "id" | "label" | "amount_sen" | "pct"
+>;
+
+export function SpendingDonutLegendList({
+  rows,
+  segment_colors,
+  on_row_hover,
+  aria_label,
+}: {
+  rows: SpendingDonutLegendRow[];
+  segment_colors: string[];
+  on_row_hover?: (index: number | null) => void;
+  aria_label: string;
+}) {
+  return (
+    <ul
+      className="legend m-0 w-fit max-w-[320px] shrink-0 list-none p-0"
+      aria-label={aria_label}
+    >
+      {rows.map((row, i) => (
+        <li
+          key={row.id}
+          className="grid min-h-9 grid-cols-[auto_6rem_3rem] items-center gap-4 border-b border-slate-100 text-sm last:border-b-0 hover:bg-slate-50"
+          onMouseEnter={() => on_row_hover?.(i)}
+          onMouseLeave={() => on_row_hover?.(null)}
+          onFocus={() => on_row_hover?.(i)}
+          onBlur={() => on_row_hover?.(null)}
+        >
+          <span className="inline-flex min-w-0 items-center gap-2">
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{
+                backgroundColor:
+                  segment_colors[i % segment_colors.length] ??
+                  SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+              }}
+              aria-hidden
+            />
+            <span
+              className="truncate font-medium whitespace-nowrap text-zyfn-ink"
+              title={row.label}
+            >
+              {row.label}
+            </span>
+          </span>
+          <span className="text-right font-semibold tabular-nums text-zyfn-ink">
+            {format_rm(row.amount_sen)}
+          </span>
+          <span className="text-right tabular-nums text-zyfn-muted">
+            {row.pct.toFixed(1)}%
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function SpendingDonutSideBySideLayout({
+  donut,
+  legend,
+}: {
+  donut: ReactNode;
+  legend: ReactNode;
+}) {
+  return (
+    <div className="spending-donut-layout flex min-h-0 w-full flex-1 flex-col items-center justify-center">
+      <div className="mx-auto flex w-fit max-w-full flex-col items-center justify-center gap-8 lg:flex-row lg:items-center">
+        {donut}
+        {legend}
+      </div>
+    </div>
+  );
+}
+
+export function SpendingChartCardFooter({
+  label,
+  amount_sen,
+  content_sized = false,
+}: {
+  label: string;
+  amount_sen: number;
+  content_sized?: boolean;
+}) {
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 text-sm ${
+        content_sized ? "py-2" : "py-2.5"
+      }`}
+    >
+      <span className="font-semibold text-zyfn-ink">{label}</span>
+      <span className="font-semibold tabular-nums text-zyfn-ink">
+        {format_rm(amount_sen)}
+      </span>
+    </div>
+  );
+}
 
 /** Chart arc weights: each slice at least MIN_SLICE_PCT, renormalised to 100%. */
 function chart_display_majors(rows: SpendingAccountRow[], total_sen: number): number[] {
@@ -118,12 +217,17 @@ function SpendingDonutPanel({
     chart.update();
   }, []);
 
+  const set_row_hover = useCallback(
+    (index: number | null) => set_highlight(index),
+    [set_highlight],
+  );
+
   return (
-    <div className="spending-donut-layout flex min-h-0 w-full flex-1 flex-col items-center justify-center">
-      <div className="mx-auto flex w-fit max-w-full flex-col items-center justify-center gap-8 lg:flex-row lg:items-center">
+    <SpendingDonutSideBySideLayout
+      donut={
         <div
           className="spending-donut relative shrink-0"
-          style={{ height: DONUT_PX, width: DONUT_PX }}
+          style={{ height: SPENDING_DONUT_PX, width: SPENDING_DONUT_PX }}
           aria-label={`Spending donut chart, total ${total_label}`}
         >
           <Doughnut
@@ -142,45 +246,18 @@ function SpendingDonutPanel({
             </div>
           </div>
         </div>
-        <ul
-          className="legend m-0 w-fit max-w-[320px] shrink-0 list-none p-0"
-          aria-label="Account spending legend"
-        >
-          {rows.map((row, i) => (
-            <li
-              key={row.id}
-              className="grid min-h-9 grid-cols-[auto_6rem_3rem] items-center gap-4 border-b border-slate-100 text-sm last:border-b-0 hover:bg-slate-50"
-              onMouseEnter={() => set_highlight(i)}
-              onMouseLeave={() => set_highlight(null)}
-              onFocus={() => set_highlight(i)}
-              onBlur={() => set_highlight(null)}
-            >
-              <span className="inline-flex min-w-0 items-center gap-2">
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{
-                    backgroundColor: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
-                  }}
-                  aria-hidden
-                />
-                <span
-                  className="truncate font-medium whitespace-nowrap text-zyfn-ink"
-                  title={row.label}
-                >
-                  {row.label}
-                </span>
-              </span>
-              <span className="text-right font-semibold tabular-nums text-zyfn-ink">
-                {format_rm(row.amount_sen)}
-              </span>
-              <span className="text-right tabular-nums text-zyfn-muted">
-                {row.pct.toFixed(1)}%
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+      }
+      legend={
+        <SpendingDonutLegendList
+          rows={rows}
+          segment_colors={rows.map(
+            (_, i) => SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+          )}
+          on_row_hover={set_row_hover}
+          aria_label="Account spending legend"
+        />
+      }
+    />
   );
 }
 
@@ -251,16 +328,11 @@ export function SpendingBreakdownCard({
           <div className={`${body_parts.join(" ")} flex min-h-0 flex-1 flex-col`}>
             <SpendingDonutPanel rows={rows} total_sen={total_sen} />
           </div>
-          <div
-            className={`flex shrink-0 items-center justify-between border-t border-zyfn-line bg-[#fafbfc] px-5 text-sm ${
-              content_sized ? "py-2" : "py-2.5"
-            }`}
-          >
-            <span className="font-semibold text-zyfn-ink">Total</span>
-            <span className="font-semibold tabular-nums text-zyfn-ink">
-              {format_rm(total_sen)}
-            </span>
-          </div>
+          <SpendingChartCardFooter
+            label="Total"
+            amount_sen={total_sen}
+            content_sized={content_sized}
+          />
         </>
       )}
     </section>
