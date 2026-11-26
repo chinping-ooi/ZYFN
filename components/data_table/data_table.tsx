@@ -12,6 +12,7 @@ import {
   column_cell_class,
   column_header_class,
 } from "@/components/data_table/column_layout";
+import { visible_table_columns } from "@/components/data_table/visible_columns";
 import { compare_rows, display_cell } from "@/components/data_table/display";
 import { ExportDialog } from "@/components/data_table/export_dialog";
 import {
@@ -73,7 +74,7 @@ export function DataTable<T extends Record<string, unknown>>({
   void scope;
   const safe_columns = columns ?? EMPTY_COLUMNS;
   const labeled_columns = useMemo(
-    () => safe_columns.filter((col) => col.label.trim().length > 0),
+    () => visible_table_columns(safe_columns),
     [safe_columns],
   );
   const resolved_export_label = export_account_label ?? label;

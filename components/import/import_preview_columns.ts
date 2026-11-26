@@ -11,8 +11,20 @@ export type ImportPreviewTableRow = {
   out_sen: number;
   balance_sen: number;
   import_status: string;
+  /** Tooltip for Status badge; not a table column. */
   status_hint: string;
 };
+
+export const IMPORT_PREVIEW_COLUMN_KEYS = [
+  "date",
+  "txn_type",
+  "detail",
+  "description",
+  "in_sen",
+  "out_sen",
+  "balance_sen",
+  "import_status",
+] as const satisfies readonly (keyof ImportPreviewTableRow)[];
 
 export const IMPORT_PREVIEW_COLUMNS: DataTableColumn<ImportPreviewTableRow>[] = [
   { key: "date", label: "Date", type: "date" },

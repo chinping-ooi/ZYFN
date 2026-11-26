@@ -62,7 +62,7 @@ export function column_cell_class<T>(
   } else if (column.key === "description") {
     parts.push(
       column.single_line
-        ? "min-w-[15rem] max-w-0 truncate text-left"
+        ? "min-w-0 truncate text-left"
         : "min-w-[11rem] whitespace-normal break-words line-clamp-3 text-left",
     );
   } else if (column.type === "status" || column.key === "days_left") {
