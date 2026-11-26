@@ -3,6 +3,7 @@
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
+import { overview_includes_fd_slice } from "@/lib/wallets/overview";
 import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { MonthSelect } from "@/components/month_select";
@@ -59,6 +60,7 @@ export function TransactionSummaryView({
         closing_sen={data.closing_sen}
         closing_micro={data.closing_micro}
         section_aria_label="Account summary charts"
+        overview_include_fd_slice={overview_includes_fd_slice(data.account_kind)}
       />
     </div>
   );

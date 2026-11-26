@@ -32,6 +32,7 @@ export function build_overview_flow_slices(params: {
   in_count: number;
   out_count: number;
   fd_count: number;
+  include_fd_slice?: boolean;
 }): InOutFlowBreakdown {
   const {
     scale,
@@ -47,14 +48,15 @@ export function build_overview_flow_slices(params: {
     in_count,
     out_count,
     fd_count,
+    include_fd_slice = true,
   } = params;
 
   const in_amount = scale === "micro" ? total_in_micro : total_in_sen;
   const out_amount = scale === "micro" ? total_out_micro : total_out_sen;
   const fd_amount = scale === "micro" ? total_fd_out_micro : total_fd_out_sen;
-  const flow_total = in_amount + out_amount + fd_amount;
 
-  const pct = (part: number) => (flow_total > 0 ? (part / flow_total) * 100 : 0);
+  const pct = (part: number, flow_total: number) =>
+    flow_total > 0 ? (part / flow_total) * 100 : 0;
 
   const slices: TxnTypeBreakdownRow[] = [
     {
@@ -63,7 +65,7 @@ export function build_overview_flow_slices(params: {
       amount_sen: total_in_sen,
       amount_micro: total_in_micro,
       count: in_count,
-      pct: pct(in_amount),
+      pct: 0,
     },
     {
       type_key: "out",
@@ -71,17 +73,28 @@ export function build_overview_flow_slices(params: {
       amount_sen: total_out_sen,
       amount_micro: total_out_micro,
       count: out_count,
-      pct: pct(out_amount),
+      pct: 0,
     },
-    {
+  ];
+
+  if (include_fd_slice) {
+    const flow_total = in_amount + out_amount + fd_amount;
+    slices[0].pct = pct(in_amount, flow_total);
+    slices[1].pct = pct(out_amount, flow_total);
+    slices.push({
       type_key: "fd",
       label: fd_label,
       amount_sen: total_fd_out_sen,
       amount_micro: total_fd_out_micro,
       count: fd_count,
-      pct: pct(fd_amount),
-    },
-  ];
+      pct: pct(fd_amount, flow_total),
+    });
+  } else {
+    const out_combined = out_amount + fd_amount;
+    const flow_total = in_amount + out_combined;
+    slices[0].pct = pct(in_amount, flow_total);
+    slices[1].pct = pct(out_combined, flow_total);
+  }
 
   return {
     slices,
@@ -99,13 +112,21 @@ export function build_overview_flow_slices(params: {
 /**
  * In vs out vs FD for the Overview donut. Centre net = in − out (out slice excludes FD).
  */
+export type InOutFlowBreakdownOptions = {
+  fd_label?: string;
+  /** When false, all out (including FD) is in the out slice (wallet Overview). */
+  include_fd_slice?: boolean;
+};
+
 export function in_out_flow_breakdown(
   rows: TransactionDbRow[],
   scale: AmountScale,
   in_label: string,
   out_label: string,
-  fd_label = "FD",
+  options?: InOutFlowBreakdownOptions,
 ): InOutFlowBreakdown {
+  const fd_label = options?.fd_label ?? "FD";
+  const include_fd_slice = options?.include_fd_slice ?? true;
   let total_in_sen = 0;
   let total_out_sen = 0;
   let total_fd_out_sen = 0;
@@ -126,7 +147,7 @@ export function in_out_flow_breakdown(
     }
 
     if (row.out_sen > 0 || row.out_micro > 0) {
-      if (is_fd) {
+      if (include_fd_slice && is_fd) {
         total_fd_out_sen += row.out_sen;
         total_fd_out_micro += row.out_micro;
         fd_count += 1;
@@ -152,5 +173,6 @@ export function in_out_flow_breakdown(
     in_count,
     out_count,
     fd_count,
+    include_fd_slice,
   });
 }

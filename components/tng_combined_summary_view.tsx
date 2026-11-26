@@ -11,6 +11,7 @@ import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { MonthSelect } from "@/components/month_select";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
 import { WalletPageControls } from "@/components/wallet_page_controls";
+import { overview_includes_fd_slice } from "@/lib/wallets/overview";
 
 export function TngCombinedSummaryView({
   data,
@@ -74,6 +75,7 @@ export function TngCombinedSummaryView({
         closing_sen={data.closing_sen}
         closing_micro={data.closing_micro}
         section_aria_label="Account summary charts"
+        overview_include_fd_slice={overview_includes_fd_slice(data.account_kind)}
       />
     </div>
   );

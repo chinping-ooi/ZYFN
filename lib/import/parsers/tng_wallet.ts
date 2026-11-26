@@ -7,7 +7,7 @@ import { parse_tng_dump_date } from "@/lib/tng/import/date_parse";
 import { normalize_tng_type } from "@/lib/tng/import/normalize_type";
 import {
   display_dp_for_account,
-  format_micro_money,
+  format_micro_major_precise,
   major_text_to_micro,
   type MicroAmount,
 } from "@/lib/tng/money_micro";
@@ -530,8 +530,8 @@ function to_import_row(
   const account =
     row.section === "go_plus" ? GO_CFG : WALLET_CFG;
   const max_dp = display_dp_for_account(row.section);
-  const amount_major = format_micro_money(row.amount_micro, max_dp);
-  const balance_major = format_micro_money(row.balance_micro, max_dp);
+  const amount_major = format_micro_major_precise(row.amount_micro, max_dp);
+  const balance_major = format_micro_major_precise(row.balance_micro, max_dp);
   const money = row_money_from_direction(
     row.direction,
     amount_major,

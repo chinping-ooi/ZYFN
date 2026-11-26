@@ -3,6 +3,8 @@
  * Wallet rows use multiples of 100 micro (= 1 sen). GO+ may use full 4 dp.
  */
 
+import { format_money } from "@/lib/format/money";
+
 export type MicroAmount = number;
 
 const MICRO_PER_SEN = 100;
@@ -31,7 +33,22 @@ export function major_text_to_micro(
   return negative ? -value : value;
 }
 
-export function format_micro_money(micro: MicroAmount, max_dp: 2 | 4): string {
+/**
+ * UI/display: micro total → major text with exactly 2 decimal places (round to sen).
+ * Sum in micro first, then format the total here.
+ */
+export function format_micro_money(micro: MicroAmount, _max_dp: 2 | 4 = 2): string {
+  void _max_dp;
+  const negative = micro < 0;
+  const major = format_money(micro_to_sen_display(Math.abs(micro)));
+  return negative ? `-${major}` : major;
+}
+
+/** Import/preview: preserve up to 4 dp without forcing 2 (not used for RM UI labels). */
+export function format_micro_major_precise(
+  micro: MicroAmount,
+  max_dp: 2 | 4,
+): string {
   const negative = micro < 0;
   const abs = Math.abs(micro);
   const whole = Math.floor(abs / MICRO_PER_RM);

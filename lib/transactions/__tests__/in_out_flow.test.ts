@@ -45,6 +45,24 @@ describe("in_out_flow_breakdown", () => {
     expect(flow.slices.reduce((s, r) => s + r.pct, 0)).toBeCloseTo(100, 5);
   });
 
+  it("wallet Overview: two slices with FD merged into total out", () => {
+    const with_fd: TransactionDbRow[] = [
+      row({ sort_id: 1, in_sen: 100_000 }),
+      row({ sort_id: 2, out_sen: 10_000, txn_type: "purchase" }),
+      row({ sort_id: 3, out_sen: 50_000, txn_type: "fd_placement" }),
+    ];
+    const flow = in_out_flow_breakdown(
+      with_fd,
+      "sen",
+      "Total in",
+      "Total out",
+      { include_fd_slice: false },
+    );
+    expect(flow.slices).toHaveLength(2);
+    expect(flow.slices[1]?.amount_sen).toBe(60_000);
+    expect(flow.net_sen).toBe(40_000);
+  });
+
   it("splits FD placement out into its own slice", () => {
     const with_fd: TransactionDbRow[] = [
       row({ sort_id: 1, in_sen: 500_000 }),

@@ -36,6 +36,8 @@ export type CashFlowSummaryProps = {
   className?: string;
   /** Rendered inside the Overview card below the donut and legend. */
   overview_footer?: ReactNode;
+  /** Bank/dashboard: three slices incl. FD; TNG wallets: in + out only. */
+  overview_include_fd_slice?: boolean;
 };
 
 function format_flow_total(
@@ -132,6 +134,7 @@ export function CashFlowSummary({
   section_aria_label = "Cash flow summary",
   className = "",
   overview_footer,
+  overview_include_fd_slice = true,
 }: CashFlowSummaryProps) {
   const flow_chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
   const money_in_chart_ref = useRef<ChartInstance<"doughnut"> | null>(null);
@@ -144,14 +147,21 @@ export function CashFlowSummary({
 
   const flow = useMemo(
     () =>
-      in_out_flow_breakdown(
-        statement.rows,
-        amount_scale,
-        total_in_label,
-        total_out_label,
-      ),
-    [statement.rows, amount_scale, total_in_label, total_out_label],
+      in_out_flow_breakdown(statement.rows, amount_scale, total_in_label, total_out_label, {
+        include_fd_slice: overview_include_fd_slice,
+      }),
+    [
+      statement.rows,
+      amount_scale,
+      total_in_label,
+      total_out_label,
+      overview_include_fd_slice,
+    ],
   );
+
+  const overview_flow_colors = overview_include_fd_slice
+    ? [IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR]
+    : [IN_FLOW_COLOR, OUT_FLOW_COLOR];
 
   const breakdown_in = useMemo(
     () => txn_type_breakdown(statement.rows, "in", amount_scale),
@@ -217,7 +227,7 @@ export function CashFlowSummary({
                 <SummaryDoughnutPanel
                   chart_ref={flow_chart_ref}
                   values={flow_values}
-                  colors={[IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR]}
+                  colors={overview_flow_colors}
                   center_caption={DONUT_CENTER_CAPTION}
                   center_bottom={net_label}
                   size_px={OVERVIEW_DONUT_PX}
@@ -239,12 +249,10 @@ export function CashFlowSummary({
                   chart_ref={flow_chart_ref}
                   aria_label="Total in vs total out legend"
                   color_for_index={(i) =>
-                    [IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR][i] ??
-                    IN_FLOW_COLOR
+                    overview_flow_colors[i] ?? IN_FLOW_COLOR
                   }
                   bar_color_for_index={(i) =>
-                    [IN_FLOW_COLOR, OUT_FLOW_COLOR, FD_FLOW_COLOR][i] ??
-                    IN_FLOW_COLOR
+                    overview_flow_colors[i] ?? IN_FLOW_COLOR
                   }
                 />
               </div>
