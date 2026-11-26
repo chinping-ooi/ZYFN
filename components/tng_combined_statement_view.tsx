@@ -14,7 +14,7 @@ import type { TransactionTableRow } from "@/components/data_table/transaction_co
 import { AccountPageHeader } from "@/components/account_page_header";
 import { AccountTableCard } from "@/components/account_table_card";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
-import { WalletAccountToggle } from "@/components/wallet_account_toggle";
+import { WalletPageControls } from "@/components/wallet_page_controls";
 
 export function TngCombinedStatementView({
   data,
@@ -30,10 +30,11 @@ export function TngCombinedStatementView({
   const base_path = view_base_path ?? `/transactions/${account_slug}`;
   const labels = statement_kpi_labels(data.account_kind);
   const { show_go_plus, set_show_go_plus } = useShowGoPlus();
+  const include_go_plus = wallet_toggle ? true : show_go_plus;
 
   const visible_rows = useMemo(
-    () => filter_tng_rows_for_go_plus_visibility(data.rows, show_go_plus),
-    [data.rows, show_go_plus],
+    () => filter_tng_rows_for_go_plus_visibility(data.rows, include_go_plus),
+    [data.rows, include_go_plus],
   );
 
   const { month, set_month, month_options } = useStatementMonth(visible_rows);
@@ -61,19 +62,26 @@ export function TngCombinedStatementView({
           view_base_path={base_path}
           active_view="statement"
           controls={
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <ShowGoPlusCheckbox
-                checked={show_go_plus}
-                onChange={set_show_go_plus}
+            wallet_toggle ? (
+              <WalletPageControls
+                month={month}
+                month_options={month_options}
+                on_month_change={(v) => set_month(v as typeof month)}
               />
-              <MonthSelect
-                label="Statement month"
-                value={month}
-                options={month_options}
-                onChange={(v) => set_month(v as typeof month)}
-              />
-              {wallet_toggle ? <WalletAccountToggle /> : null}
-            </div>
+            ) : (
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <ShowGoPlusCheckbox
+                  checked={show_go_plus}
+                  onChange={set_show_go_plus}
+                />
+                <MonthSelect
+                  label="Statement month"
+                  value={month}
+                  options={month_options}
+                  onChange={(v) => set_month(v as typeof month)}
+                />
+              </div>
+            )
           }
         />
 
@@ -109,12 +117,12 @@ export function TngCombinedStatementView({
       <AccountTableCard title="Transaction activity" fill_height>
         <TransactionDataTable
           label="Touch 'n Go activity"
-          scope={`tng-combined-${month}-${show_go_plus ? "go" : "wallet"}`}
+          scope={`tng-combined-${month}-${include_go_plus ? "go" : "wallet"}`}
           export_account_label="Touch n Go"
           rows={table_rows}
           kind={data.account_kind}
           fill_height
-          show_go_plus_badge={show_go_plus}
+          show_go_plus_badge={include_go_plus}
         />
       </AccountTableCard>
     </div>

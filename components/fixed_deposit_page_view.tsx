@@ -11,9 +11,13 @@ import {
   bank_code_to_label,
   slug_to_bank_code,
 } from "@/lib/fixed_deposits/banks";
+import { statement_month_key_label } from "@/lib/datetime/default_statement_month";
+import { filter_fixed_deposits_by_month } from "@/lib/fixed_deposits/month_filter";
+import { useFixedDepositMonth } from "@/lib/hooks/use_fixed_deposit_month";
 import { PageToolbar } from "@/components/page_toolbar";
 import { AccountTableCard } from "@/components/account_table_card";
 import { FixedDepositBankToggle } from "@/components/fixed_deposit_bank_toggle";
+import { MonthSelect } from "@/components/month_select";
 
 function filter_rows_by_bank_slug(
   rows: FixedDepositLoadResult["rows"],
@@ -34,7 +38,9 @@ export function FixedDepositPageView({
   const bank_slug = searchParams.get("bank")?.trim() || null;
   const bank_code = bank_slug ? slug_to_bank_code(bank_slug) : null;
 
-  const visible_rows = filter_rows_by_bank_slug(load.rows, bank_slug);
+  const bank_rows = filter_rows_by_bank_slug(load.rows, bank_slug);
+  const { month, set_month, month_options } = useFixedDepositMonth(bank_rows);
+  const visible_rows = filter_fixed_deposits_by_month(bank_rows, month);
   const summary = summarize_fixed_deposits(visible_rows);
   const table_rows = to_table_rows(visible_rows) as FixedDepositDataRow[];
 
@@ -49,11 +55,19 @@ export function FixedDepositPageView({
     ? `${bank_code_to_label(bank_code)} fixed deposits`
     : "All fixed deposits";
 
-  const subtitle = bank_code
-    ? `Filtered by bank code ${bank_code} · ${source_note}`
-    : `Active and matured placements across banks · ${source_note}`;
+  const month_note =
+    month === "all"
+      ? "All months"
+      : statement_month_key_label(month);
 
-  const table_scope = bank_slug ? `fd-${bank_slug}` : "fd-all";
+  const subtitle = bank_code
+    ? `${month_note} · Bank ${bank_code} · ${source_note}`
+  : `${month_note} · Active and matured placements across banks · ${source_note}`;
+
+  const table_scope = [
+    bank_slug ? `fd-${bank_slug}` : "fd-all",
+    month === "all" ? "all-months" : month,
+  ].join("-");
   const show_bank_column = !bank_code;
 
   return (
@@ -62,7 +76,15 @@ export function FixedDepositPageView({
         title={title}
         subtitle={subtitle}
         controls={
-          <FixedDepositBankToggle bank_codes={load.bank_codes} />
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <FixedDepositBankToggle bank_codes={load.bank_codes} />
+            <MonthSelect
+              label="Statement month"
+              value={month}
+              options={month_options}
+              onChange={(v) => set_month(v as typeof month)}
+            />
+          </div>
         }
       />
 

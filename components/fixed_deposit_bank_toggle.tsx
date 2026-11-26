@@ -24,6 +24,9 @@ export function FixedDepositBankToggle({
   const searchParams = useSearchParams();
   const active_slug = searchParams.get("bank")?.trim() || null;
 
+  const other_query = new URLSearchParams(searchParams.toString());
+  other_query.delete("bank");
+
   const options = [
     { slug: null as string | null, label: "Overview" },
     ...ordered_bank_codes(bank_codes).map((code) => ({
@@ -32,13 +35,17 @@ export function FixedDepositBankToggle({
     })),
   ];
 
+  function href_for_slug(slug: string | null): string {
+    const params = new URLSearchParams(other_query.toString());
+    if (slug) params.set("bank", slug);
+    const query = params.toString();
+    return query ? `/fixed-deposits?${query}` : "/fixed-deposits";
+  }
+
   return (
     <div className={SEGMENT} role="group" aria-label="Filter by bank">
       {options.map((option) => {
-        const href =
-          option.slug === null
-            ? "/fixed-deposits"
-            : `/fixed-deposits?bank=${encodeURIComponent(option.slug)}`;
+        const href = href_for_slug(option.slug);
         const active =
           option.slug === null ? !active_slug : active_slug === option.slug;
         return (

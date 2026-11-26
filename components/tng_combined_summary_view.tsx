@@ -10,7 +10,7 @@ import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { MonthSelect } from "@/components/month_select";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
-import { WalletAccountToggle } from "@/components/wallet_account_toggle";
+import { WalletPageControls } from "@/components/wallet_page_controls";
 
 export function TngCombinedSummaryView({
   data,
@@ -26,10 +26,11 @@ export function TngCombinedSummaryView({
   const base_path = view_base_path ?? `/transactions/${account_slug}`;
   const labels = statement_kpi_labels(data.account_kind);
   const { show_go_plus, set_show_go_plus } = useShowGoPlus();
+  const include_go_plus = wallet_toggle ? true : show_go_plus;
 
   const visible_rows = useMemo(
-    () => filter_tng_rows_for_go_plus_visibility(data.rows, show_go_plus),
-    [data.rows, show_go_plus],
+    () => filter_tng_rows_for_go_plus_visibility(data.rows, include_go_plus),
+    [data.rows, include_go_plus],
   );
 
   const { month, set_month, month_options } = useStatementMonth(visible_rows);
@@ -41,19 +42,26 @@ export function TngCombinedSummaryView({
         view_base_path={base_path}
         active_view="summary"
         controls={
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <ShowGoPlusCheckbox
-              checked={show_go_plus}
-              onChange={set_show_go_plus}
+          wallet_toggle ? (
+            <WalletPageControls
+              month={month}
+              month_options={month_options}
+              on_month_change={(v) => set_month(v as typeof month)}
             />
-            <MonthSelect
-              label="Statement month"
-              value={month}
-              options={month_options}
-              onChange={(v) => set_month(v as typeof month)}
-            />
-            {wallet_toggle ? <WalletAccountToggle /> : null}
-          </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <ShowGoPlusCheckbox
+                checked={show_go_plus}
+                onChange={set_show_go_plus}
+              />
+              <MonthSelect
+                label="Statement month"
+                value={month}
+                options={month_options}
+                onChange={(v) => set_month(v as typeof month)}
+              />
+            </div>
+          )
         }
       />
       <CashFlowSummary
