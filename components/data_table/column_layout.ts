@@ -57,7 +57,7 @@ export function column_cell_class<T>(
   } else if (column.type === "money" || column.type === "money_micro") {
     parts.push("whitespace-nowrap tabular-nums");
   } else if (column.key === "description") {
-    parts.push("min-w-0 whitespace-normal break-words line-clamp-3 text-left");
+    parts.push("min-w-0 text-left align-top");
   } else if (column.type === "status" || column.key === "days_left") {
     parts.push("whitespace-nowrap");
   } else {

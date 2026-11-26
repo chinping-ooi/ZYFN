@@ -75,5 +75,6 @@ describe("DataTable ledger markup", () => {
     const desc_inner = td_chunks[description_index]?.[1] ?? "";
     expect(desc_inner).not.toMatch(/<td\b/i);
     expect(desc_inner).not.toMatch(/<table\b/i);
+    expect(desc_inner).toMatch(/<div class="line-clamp-3/);
   });
 });

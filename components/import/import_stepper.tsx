@@ -28,6 +28,11 @@ function step_index(step: ImportWizardStep): number {
   return ORDER.indexOf(step);
 }
 
+const CIRCLE_REACHED =
+  "border-slate-300 bg-slate-200 text-slate-600";
+const CIRCLE_PENDING =
+  "border-[#b8c2cf] bg-white text-slate-400";
+
 export function ImportStepper({
   current,
   mapping_skipped,
@@ -48,21 +53,10 @@ export function ImportStepper({
           const is_map = step.key === "map";
           const behind = active_index > idx;
           const skipped_map = is_map && mapping_skipped && behind;
-          const done =
-            behind || (current === "done" && idx < ORDER.indexOf("done"));
           const active = current === step.key;
+          const reached = behind || active;
 
-          let circle_class =
-            "border-[#b8c2cf] bg-white text-slate-500";
-          if (skipped_map) {
-            circle_class = "border-slate-300 bg-slate-50 text-slate-500";
-          } else if (done) {
-            circle_class = "border-zyfn-navy bg-zyfn-navy text-white";
-          } else if (active) {
-            circle_class =
-              "border-zyfn-navy bg-white text-zyfn-navy ring-2 ring-sky-400/30";
-          }
-
+          const circle_class = reached ? CIRCLE_REACHED : CIRCLE_PENDING;
           const connector_filled = active_index > index;
 
           return (
@@ -85,10 +79,7 @@ export function ImportStepper({
                   className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold sm:size-8 sm:text-[13px] ${circle_class}`}
                 >
                   {behind ? (
-                    <Check
-                      className={`size-4 ${skipped_map ? "text-slate-500" : ""}`}
-                      aria-hidden
-                    />
+                    <Check className="size-4 text-slate-600" aria-hidden />
                   ) : (
                     step.number
                   )}
@@ -107,12 +98,10 @@ export function ImportStepper({
               <span
                 className={`mt-1.5 hidden text-center text-[11px] leading-tight md:block ${
                   active
-                    ? "font-semibold text-zyfn-navy"
-                    : skipped_map
-                      ? "text-slate-500"
-                      : behind
-                        ? "text-slate-600"
-                        : "text-slate-400"
+                    ? "font-semibold text-slate-700"
+                    : reached
+                      ? "text-slate-600"
+                      : "text-slate-400"
                 }`}
               >
                 {skipped_map ? "Skipped" : step.label}

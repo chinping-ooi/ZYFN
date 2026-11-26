@@ -271,6 +271,8 @@ export function DataTable<T extends Record<string, unknown>>({
                     >
                       {column.type === "status" ? (
                         <StatusBadge status={String(raw)} />
+                      ) : column.key === "description" ? (
+                        <div className="line-clamp-3 break-words">{text}</div>
                       ) : (
                         text
                       )}
