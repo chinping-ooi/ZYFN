@@ -552,12 +552,138 @@ export function ImportWizard() {
   const file_input_id = "import-statement-file";
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden gap-3">
       <ImportStepper
         current={step}
         include_mapping_step={include_mapping_step}
       />
 
+      {step === "preview" ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+          <section className={`${CARD_SHELL} shrink-0 py-4`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-zyfn-navy">
+                  Review transactions
+                </h2>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {multi_account && account_summaries.length > 0 ? (
+                    account_summaries.map((summary) => (
+                      <span
+                        key={summary.account_ref}
+                        className="inline-flex flex-wrap items-center gap-1 rounded-[3px] border border-[#dce1e7] bg-[#f8f9fb] px-2 py-0.5 text-[11px] text-slate-700"
+                      >
+                        <span className="font-medium text-zyfn-navy">
+                          {summary.account_label}
+                        </span>
+                        <span className="text-slate-500">
+                          New {summary.new_count}
+                        </span>
+                        <span className="text-slate-500">
+                          Existing {summary.duplicate_count}
+                        </span>
+                        <span className="text-slate-500">
+                          Need check {summary.review_count}
+                        </span>
+                      </span>
+                    ))
+                  ) : (
+                    <>
+                      <StatChip
+                        label={IMPORT_STATUS_CHIP_LABELS.new}
+                        value={counts.new_count}
+                        status_key="new"
+                      />
+                      <StatChip
+                        label={IMPORT_STATUS_CHIP_LABELS.duplicate}
+                        value={counts.dup}
+                        status_key="duplicate"
+                      />
+                      <StatChip
+                        label={IMPORT_STATUS_CHIP_LABELS.needs_review}
+                        value={counts.review}
+                        status_key="needs_review"
+                      />
+                    </>
+                  )}
+                  {parser_id ? (
+                    <StatChip
+                      label="Format"
+                      value={parser_display_name(parser_id)}
+                    />
+                  ) : null}
+                  {ocr_pages > 0 ? (
+                    <StatChip label="OCR pages" value={ocr_pages} />
+                  ) : null}
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-[3px] border border-zyfn-line px-3 py-1.5 text-[13px] hover:bg-slate-50"
+                  onClick={reset_wizard}
+                >
+                  Upload another file
+                </button>
+                <button
+                  type="button"
+                  className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-3 py-1.5 text-[13px] font-medium text-white disabled:opacity-50"
+                  disabled={busy || counts.new_count === 0}
+                  onClick={() => set_confirm_open(true)}
+                >
+                  {busy
+                    ? "Saving…"
+                    : counts.new_count === 0
+                      ? "Nothing to save"
+                      : `Save ${counts.new_count} transactions`}
+                </button>
+              </div>
+            </div>
+            {parse_warning ? (
+              <p className="mt-2 text-[13px] text-amber-800" role="alert">
+                {parse_warning}
+              </p>
+            ) : null}
+            {rows.length === 0 && !parse_warning ? (
+              <p className="mt-2 text-[13px] text-zyfn-muted">
+                No rows to import. Go back and try another file or account.
+              </p>
+            ) : null}
+          </section>
+          {show_preview_table ? (
+            <AccountTableCard title="Parsed rows" fill_height>
+              <TransactionDataTable
+                label="Import preview"
+                scope={
+                  multi_account
+                    ? "import-mbb-combined"
+                    : `import-${account_ref}`
+                }
+                rows={preview_rows}
+                kind={preview_kind}
+                show_import_status
+                show_account_column={multi_account}
+                export_all_rows
+                resolve_export_filename={() =>
+                  build_import_preview_export_filename(
+                    multi_account
+                      ? "maybank_credit_cards"
+                      : (account?.account_label ?? "import"),
+                  )
+                }
+                fill_height
+                export_account_label={
+                  multi_account
+                    ? "Maybank credit cards"
+                    : account?.account_label
+                }
+                empty_period_message="No parsed rows to display."
+              />
+            </AccountTableCard>
+          ) : null}
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
       {step === "start" ? (
         <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
@@ -770,130 +896,6 @@ export function ImportWizard() {
         </section>
       ) : null}
 
-      {step === "preview" ? (
-        <>
-          <section className={`${CARD_SHELL} py-4`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-zyfn-navy">
-                  Review transactions
-                </h2>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {multi_account && account_summaries.length > 0 ? (
-                    account_summaries.map((summary) => (
-                      <span
-                        key={summary.account_ref}
-                        className="inline-flex flex-wrap items-center gap-1 rounded-[3px] border border-[#dce1e7] bg-[#f8f9fb] px-2 py-0.5 text-[11px] text-slate-700"
-                      >
-                        <span className="font-medium text-zyfn-navy">
-                          {summary.account_label}
-                        </span>
-                        <span className="text-slate-500">New {summary.new_count}</span>
-                        <span className="text-slate-500">
-                          Existing {summary.duplicate_count}
-                        </span>
-                        <span className="text-slate-500">
-                          Need check {summary.review_count}
-                        </span>
-                      </span>
-                    ))
-                  ) : (
-                    <>
-                      <StatChip
-                        label={IMPORT_STATUS_CHIP_LABELS.new}
-                        value={counts.new_count}
-                        status_key="new"
-                      />
-                      <StatChip
-                        label={IMPORT_STATUS_CHIP_LABELS.duplicate}
-                        value={counts.dup}
-                        status_key="duplicate"
-                      />
-                      <StatChip
-                        label={IMPORT_STATUS_CHIP_LABELS.needs_review}
-                        value={counts.review}
-                        status_key="needs_review"
-                      />
-                    </>
-                  )}
-                  {parser_id ? (
-                    <StatChip
-                      label="Format"
-                      value={parser_display_name(parser_id)}
-                    />
-                  ) : null}
-                  {ocr_pages > 0 ? (
-                    <StatChip label="OCR pages" value={ocr_pages} />
-                  ) : null}
-                </div>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                <button
-                  type="button"
-                  className="rounded-[3px] border border-zyfn-line px-3 py-1.5 text-[13px] hover:bg-slate-50"
-                  onClick={reset_wizard}
-                >
-                  Upload another file
-                </button>
-                <button
-                  type="button"
-                  className="rounded-[3px] border border-zyfn-navy bg-zyfn-navy px-3 py-1.5 text-[13px] font-medium text-white disabled:opacity-50"
-                  disabled={busy || counts.new_count === 0}
-                  onClick={() => set_confirm_open(true)}
-                >
-                  {busy
-                    ? "Saving…"
-                    : counts.new_count === 0
-                      ? "Nothing to save"
-                      : `Save ${counts.new_count} transactions`}
-                </button>
-              </div>
-            </div>
-            {parse_warning ? (
-              <p className="mt-2 text-[13px] text-amber-800" role="alert">
-                {parse_warning}
-              </p>
-            ) : null}
-            {rows.length === 0 && !parse_warning ? (
-              <p className="mt-2 text-[13px] text-zyfn-muted">
-                No rows to import. Go back and try another file or account.
-              </p>
-            ) : null}
-          </section>
-          {show_preview_table ? (
-            <AccountTableCard title="Parsed rows" fill_height>
-              <TransactionDataTable
-                label="Import preview"
-                scope={
-                  multi_account
-                    ? "import-mbb-combined"
-                    : `import-${account_ref}`
-                }
-                rows={preview_rows}
-                kind={preview_kind}
-                show_import_status
-                show_account_column={multi_account}
-                export_all_rows
-                resolve_export_filename={() =>
-                  build_import_preview_export_filename(
-                    multi_account
-                      ? "maybank_credit_cards"
-                      : (account?.account_label ?? "import"),
-                  )
-                }
-                fill_height
-                export_account_label={
-                  multi_account
-                    ? "Maybank credit cards"
-                    : account?.account_label
-                }
-                empty_period_message="No parsed rows to display."
-              />
-            </AccountTableCard>
-          ) : null}
-        </>
-      ) : null}
-
       {step === "done" && result && (multi_account || account) ? (
         <section className={CARD_SHELL}>
           {multi_account && done_by_account.length > 0 ? (
@@ -965,6 +967,8 @@ export function ImportWizard() {
           </div>
         </section>
       ) : null}
+        </div>
+      )}
 
       {confirm_open && (multi_account ? parsed_accounts.length > 0 : account) ? (
         <div
@@ -1031,7 +1035,7 @@ export function ImportWizard() {
       ) : null}
 
       {error && step !== "start" ? (
-        <p className="text-[13px] text-red-700" role="alert">
+        <p className="shrink-0 text-[13px] text-red-700" role="alert">
           {error}
         </p>
       ) : null}
