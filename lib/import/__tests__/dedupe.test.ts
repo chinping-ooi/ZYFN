@@ -6,7 +6,7 @@ function row(partial: Partial<NormalizedImportRow>): NormalizedImportRow {
   return {
     temp_id: "t1",
     txn_at: "2025-11-01T00:00:00Z",
-    description: "Coffee",
+    description: "Coffee Shop",
     detail: "",
     txn_type: "",
     direction: "out",
@@ -22,7 +22,7 @@ function row(partial: Partial<NormalizedImportRow>): NormalizedImportRow {
 }
 
 describe("mark_duplicate_matches export", () => {
-  it("marks fuzzy duplicate matches", () => {
+  it("marks duplicate when description fuzzy-matches", () => {
     const rows = [row({})];
     mark_duplicate_matches(rows, [
       {
@@ -30,7 +30,7 @@ describe("mark_duplicate_matches export", () => {
         txn_at: "2025-11-01T12:00:00Z",
         direction: "out",
         amount: 5,
-        description: "CAFE",
+        description: "COFFEE SHOP SDN BHD",
         detail: null,
       },
     ]);

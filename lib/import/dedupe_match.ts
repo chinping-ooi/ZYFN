@@ -1,8 +1,9 @@
 import { parse_amount_cell } from "@/lib/import/amount";
-import { normalize_description_for_key } from "@/lib/import/normalize";
+import {
+  descriptions_fuzzy_match,
+} from "@/lib/import/normalize";
 import type { NormalizedImportRow } from "@/lib/import/types";
 import { format_calendar_date } from "@/lib/format/date";
-import { format_money } from "@/lib/format/money";
 import { decimal_myr_to_sen } from "@/lib/supabase/decimal_to_sen";
 
 const MYT = "Asia/Kuala_Lumpur";
@@ -128,37 +129,43 @@ export function dedupe_query_bounds(rows: NormalizedImportRow[]): {
   };
 }
 
-function format_reason_amount(amount: string | number): string {
+function format_rm_major(amount: string | number): string {
   const major = normalize_amount_major(amount);
-  return format_money(decimal_myr_to_sen(major));
+  return `RM ${major}`;
 }
 
 export function duplicate_match_reason(
   existing: ExistingTxnForDedupe,
   date_delta: number,
-  import_description: string,
 ): string {
   const date_label = format_calendar_date(existing.txn_at, MYT);
-  const amt = format_reason_amount(existing.amount);
+  const amt = format_rm_major(existing.amount);
   const base = `Matches saved record on ${date_label} (${amt})`;
-  const desc_diff =
-    normalize_description_for_key(import_description) !==
-    normalize_description_for_key(existing.description ?? "");
-  const parts = [base];
   if (date_delta > 0) {
-    parts.push(`${date_delta}-day date difference`);
+    return `${base}; ${date_delta}-day date difference`;
   }
-  if (desc_diff && (existing.description ?? "").trim()) {
-    parts.push(`saved as "${existing.description!.trim()}"`);
-  }
-  return parts.join("; ");
+  return base;
+}
+
+export function similar_saved_record_reason(
+  existing: ExistingTxnForDedupe,
+): string {
+  const date_label = format_calendar_date(existing.txn_at, MYT);
+  const desc = (existing.description ?? "").trim() || "—";
+  const amt = format_rm_major(existing.amount);
+  return `Similar saved record: ${date_label} ${desc} ${amt}`;
 }
 
 type MatchPick = {
   index: number;
   existing: ExistingTxnForDedupe;
   date_delta: number;
+  desc_match: boolean;
 };
+
+function pick_score(pick: MatchPick): number {
+  return pick.date_delta * 10 + (pick.desc_match ? 0 : 5);
+}
 
 export function mark_duplicate_matches(
   import_rows: NormalizedImportRow[],
@@ -176,27 +183,38 @@ export function mark_duplicate_matches(
       if (used.has(i)) continue;
       const ex = existing[i]!;
       if (amount_fingerprint(ex.direction, ex.amount) !== fp) continue;
-      const delta = min_date_delta(import_dates, candidate_dates_for_existing(ex));
-      if (delta > DATE_SLACK_DAYS) continue;
-      if (
-        !pick ||
-        delta < pick.date_delta ||
-        (delta === pick.date_delta &&
-          normalize_description_for_key(row.description) ===
-            normalize_description_for_key(ex.description ?? ""))
-      ) {
-        pick = { index: i, existing: ex, date_delta: delta };
+      const date_delta = min_date_delta(
+        import_dates,
+        candidate_dates_for_existing(ex),
+      );
+      if (date_delta > DATE_SLACK_DAYS) continue;
+      const desc_match = descriptions_fuzzy_match(
+        row.description,
+        ex.description ?? "",
+      );
+      const candidate: MatchPick = {
+        index: i,
+        existing: ex,
+        date_delta,
+        desc_match,
+      };
+      if (!pick || pick_score(candidate) < pick_score(pick)) {
+        pick = candidate;
       }
     }
 
-    if (pick) {
-      used.add(pick.index);
+    if (!pick) continue;
+
+    used.add(pick.index);
+    if (pick.desc_match) {
       row.status = "duplicate";
-      const reason = duplicate_match_reason(
-        pick.existing,
-        pick.date_delta,
-        row.description,
-      );
+      const reason = duplicate_match_reason(pick.existing, pick.date_delta);
+      if (!row.review_reasons.includes(reason)) {
+        row.review_reasons.push(reason);
+      }
+    } else {
+      row.status = "needs_review";
+      const reason = similar_saved_record_reason(pick.existing);
       if (!row.review_reasons.includes(reason)) {
         row.review_reasons.push(reason);
       }

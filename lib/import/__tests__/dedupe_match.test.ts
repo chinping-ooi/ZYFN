@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  descriptions_fuzzy_match,
+  normalize_description_for_dedupe,
+} from "@/lib/import/normalize";
+import {
   amount_fingerprint,
   mark_duplicate_matches,
   normalize_amount_major,
@@ -34,14 +38,28 @@ function existing(
     txn_at: "2026-10-24T00:00:00Z",
     direction: "out",
     amount: "50.00",
-    description: "Different merchant text",
+    description: "CTX RO PRAI",
     detail: null,
     ...partial,
   };
 }
 
+describe("descriptions_fuzzy_match", () => {
+  it("normalizes case and punctuation", () => {
+    expect(normalize_description_for_dedupe(" ctx! ro-prai ")).toBe(
+      "CTX RO PRAI",
+    );
+  });
+
+  it("matches when one description contains the other", () => {
+    expect(
+      descriptions_fuzzy_match("CTX RO PRAI", "CTX RO PRAI SELANGOR"),
+    ).toBe(true);
+  });
+});
+
 describe("mark_duplicate_matches", () => {
-  it("matches on account amount direction and date despite different description", () => {
+  it("marks duplicate when amount direction date and fuzzy description match", () => {
     const rows = [import_row({ temp_id: "a" })];
     mark_duplicate_matches(rows, [existing({ id: 1 })]);
     expect(rows[0]?.status).toBe("duplicate");
@@ -56,7 +74,7 @@ describe("mark_duplicate_matches", () => {
     expect(rows[0]?.status).toBe("duplicate");
   });
 
-  it("matches when import txn date and existing posted-style detail differ within 3 days", () => {
+  it("matches when txn and posted dates align within slack", () => {
     const rows = [
       import_row({
         temp_id: "a",
@@ -79,15 +97,24 @@ describe("mark_duplicate_matches", () => {
     expect(normalize_amount_major(50)).toBe("50.00");
   });
 
-  it("consumes one existing row per import when two imports share amount and day", () => {
+  it("marks needs_review when amount date direction match but description does not", () => {
+    const rows = [import_row({ temp_id: "a", description: "MR DIY" })];
+    mark_duplicate_matches(rows, [
+      existing({ id: 1, description: "CTX RO PRAI" }),
+    ]);
+    expect(rows[0]?.status).toBe("needs_review");
+    expect(rows[0]?.review_reasons[0]).toMatch(/^Similar saved record:/);
+  });
+
+  it("consumes one existing row when two imports share amount and day", () => {
     const rows = [
       import_row({ temp_id: "a" }),
       import_row({ temp_id: "b", description: "Second shop" }),
     ];
     mark_duplicate_matches(rows, [existing({ id: 1 })]);
-    const dup = rows.filter((r) => r.status === "duplicate");
+    const matched = rows.filter((r) => r.status !== "new");
     const fresh = rows.filter((r) => r.status === "new");
-    expect(dup).toHaveLength(1);
+    expect(matched).toHaveLength(1);
     expect(fresh).toHaveLength(1);
   });
 });
