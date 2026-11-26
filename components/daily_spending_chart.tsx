@@ -15,6 +15,7 @@ import { format_rm, type MinorAmount } from "@/lib/money";
 import { chart_axis_max } from "@/lib/chart_scale";
 import {
   daily_spending_tooltip_date,
+  daily_spending_txn_count_label,
   type DailySpendingSeries,
 } from "@/lib/dashboard/daily_spending";
 import type { MonthKey } from "@/lib/dashboard/metrics";
@@ -92,7 +93,12 @@ export function DailySpendingChart({
             },
             label(context) {
               const major = context.parsed.y ?? 0;
-              return format_rm(Math.round(major * 100) as MinorAmount);
+              const index = context.dataIndex;
+              const count = series.txn_counts[index] ?? 0;
+              return [
+                format_rm(Math.round(major * 100) as MinorAmount),
+                daily_spending_txn_count_label(count),
+              ];
             },
           },
         },
@@ -126,7 +132,7 @@ export function DailySpendingChart({
         },
       },
     }),
-    [month, y_max_major],
+    [month, series.txn_counts, y_max_major],
   );
 
   const shell_class = `card flex w-full min-w-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white h-full min-h-0 flex-1 ${className}`;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   daily_spending_for_month,
+  daily_spending_txn_count_label,
   is_credit_card_payment_daily_chart_row,
   is_fixed_deposit_daily_chart_row,
 } from "@/lib/dashboard/daily_spending";
@@ -71,6 +72,10 @@ describe("daily_spending_for_month", () => {
     expect(data.spending_sen[11]).toBe(5_000);
     expect(data.spending_sen[0]).toBe(0);
     expect(data.month_total_sen).toBe(17_500);
+    expect(data.txn_counts[4]).toBe(2);
+    expect(data.txn_counts[11]).toBe(1);
+    expect(daily_spending_txn_count_label(1)).toBe("1 txn");
+    expect(daily_spending_txn_count_label(2)).toBe("2 txns");
   });
 
   it("excludes fixed deposit placements from the daily chart", () => {
@@ -122,6 +127,7 @@ describe("daily_spending_for_month", () => {
       month,
     );
     expect(data.month_total_sen).toBe(0);
+    expect(data.txn_counts[14]).toBe(0);
   });
 
   it("still counts credit card purchases on the card ledger", () => {

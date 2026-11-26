@@ -13,9 +13,15 @@ export type DailySpendingSeries = {
   day_labels: string[];
   /** Spending per calendar day in KL, index 0 = day 1. */
   spending_sen: MinorAmount[];
+  /** Included ledger rows per day (same inclusion rules as spending_sen). */
+  txn_counts: number[];
   days_in_month: number;
   month_total_sen: MinorAmount;
 };
+
+export function daily_spending_txn_count_label(count: number): string {
+  return count === 1 ? "1 txn" : `${count} txns`;
+}
 
 function days_in_month_key(month: MonthKey): number {
   const [year, month_num] = month.split("-").map(Number);
@@ -105,6 +111,7 @@ export function daily_spending_for_month(
 ): DailySpendingSeries {
   const days_in_month = days_in_month_key(month);
   const buckets = new Array<MinorAmount>(days_in_month).fill(0);
+  const txn_counts = new Array<number>(days_in_month).fill(0);
 
   for (const statement of statements) {
     const use_micro = statement.amount_scale === "micro";
@@ -125,6 +132,7 @@ export function daily_spending_for_month(
       const day_index = kl_day_of_month(row.date) - 1;
       if (day_index < 0 || day_index >= days_in_month) continue;
       buckets[day_index] += spent;
+      txn_counts[day_index] += 1;
     }
   }
 
@@ -136,6 +144,7 @@ export function daily_spending_for_month(
   return {
     day_labels,
     spending_sen: buckets,
+    txn_counts,
     days_in_month,
     month_total_sen,
   };
