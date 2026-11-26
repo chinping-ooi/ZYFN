@@ -4,7 +4,6 @@ import {
 } from "@/lib/import/normalize";
 import type { NormalizedImportRow } from "@/lib/import/types";
 import { format_calendar_date } from "@/lib/format/date";
-import { decimal_myr_to_sen } from "@/lib/supabase/decimal_to_sen";
 
 const MYT = "Asia/Kuala_Lumpur";
 const DATE_SLACK_DAYS = 3;
