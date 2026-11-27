@@ -1,8 +1,6 @@
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
-import {
-  pocket_closing_as_of_month,
-  pocket_closing_latest,
-} from "@/lib/supabase/transaction_statement";
+import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
+import { pocket_closing_latest } from "@/lib/supabase/transaction_statement";
 import type { MinorAmount } from "@/lib/money";
 import { micro_to_sen_display, type MicroAmount } from "@/lib/tng/money_micro";
 import { tng_balance_pocket } from "@/lib/tng/pocket";
@@ -112,11 +110,24 @@ export function combined_tng_closing_for_statement(
     };
   }
 
-  const wallet = pocket_closing_as_of_month(wallet_rows, month);
-  const go = pocket_closing_as_of_month(go_plus_rows, month);
+  const wallet_full = pocket_closing_latest(wallet_rows);
+  const go_full = pocket_closing_latest(go_plus_rows);
+  const wallet_stmt = build_transaction_statement(
+    wallet_rows,
+    month,
+    wallet_full.closing_sen,
+    wallet_full.closing_micro,
+  );
+  const go_stmt = build_transaction_statement(
+    go_plus_rows,
+    month,
+    go_full.closing_sen,
+    go_full.closing_micro,
+  );
 
   return {
-    closing_sen: wallet.closing_sen + micro_to_sen_display(go.closing_micro),
-    closing_micro: wallet.closing_micro + go.closing_micro,
+    closing_sen:
+      wallet_stmt.closing_sen + micro_to_sen_display(go_stmt.closing_micro),
+    closing_micro: wallet_stmt.closing_micro + go_stmt.closing_micro,
   };
 }

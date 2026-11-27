@@ -16,8 +16,34 @@ export function tng_balance_pocket(
     return "go_plus";
   }
 
-  if (row.tng_sub_account === "go_plus") return "go_plus";
   return "wallet";
+}
+
+/** Partition both sources then merge pockets (txn_type wins over account id). */
+export function merge_tng_pocket_ledgers(
+  wallet_source: TransactionDbRow[],
+  go_plus_source: TransactionDbRow[],
+): { wallet_rows: TransactionDbRow[]; go_plus_rows: TransactionDbRow[] } {
+  const wallet_rows: TransactionDbRow[] = [];
+  const go_plus_rows: TransactionDbRow[] = [];
+
+  for (const batch of [wallet_source, go_plus_source]) {
+    const split = partition_tng_source_rows(batch);
+    wallet_rows.push(...split.wallet_rows);
+    go_plus_rows.push(...split.go_plus_rows);
+  }
+
+  const sort_newest_first = (rows: TransactionDbRow[]) =>
+    [...rows].sort((a, b) => {
+      const by_date = b.date.localeCompare(a.date);
+      if (by_date !== 0) return by_date;
+      return b.sort_id - a.sort_id;
+    });
+
+  return {
+    wallet_rows: sort_newest_first(wallet_rows),
+    go_plus_rows: sort_newest_first(go_plus_rows),
+  };
 }
 
 /** Split one physical TNG ledger into eWallet vs GO+ pockets (newest-first order kept). */

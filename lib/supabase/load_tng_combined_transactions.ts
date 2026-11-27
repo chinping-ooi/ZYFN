@@ -4,7 +4,10 @@ import {
   combined_tng_closing_sen,
   merge_tng_statement_rows,
 } from "@/lib/tng/combined_statement";
-import { partition_tng_source_rows } from "@/lib/tng/pocket";
+import {
+  merge_tng_pocket_ledgers,
+  partition_tng_source_rows,
+} from "@/lib/tng/pocket";
 import { pocket_closing_latest } from "@/lib/supabase/transaction_statement";
 import { load_account_transactions } from "@/lib/supabase/load_account_transactions";
 import { is_account_statement_data } from "@/lib/supabase/account_statement_guards";
@@ -54,13 +57,7 @@ async function load_tng_combined_transactions_impl(): Promise<AccountStatementRe
   let wallet_rows = wallet.kind === "data" ? wallet.rows : [];
   let go_rows = go_plus.kind === "data" ? go_plus.rows : [];
 
-  if (go_rows.length === 0 && wallet_rows.length > 0) {
-    ({ wallet_rows, go_plus_rows: go_rows } =
-      partition_tng_source_rows(wallet_rows));
-  } else if (wallet_rows.length === 0 && go_rows.length > 0) {
-    ({ wallet_rows, go_plus_rows: go_rows } =
-      partition_tng_source_rows(go_rows));
-  } else if (wallet_rows.length === 0 && go_rows.length === 0) {
+  if (wallet_rows.length === 0 && go_rows.length === 0) {
     const single = await load_account_transactions(
       "TNG",
       "Touch 'n Go",
@@ -74,6 +71,11 @@ async function load_tng_combined_transactions_impl(): Promise<AccountStatementRe
         single.rows,
       ));
     }
+  } else {
+    ({ wallet_rows, go_plus_rows: go_rows } = merge_tng_pocket_ledgers(
+      wallet_rows,
+      go_rows,
+    ));
   }
 
   const rows = merge_tng_statement_rows(wallet_rows, go_rows);
