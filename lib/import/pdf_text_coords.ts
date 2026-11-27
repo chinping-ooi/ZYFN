@@ -23,7 +23,10 @@ export type PdfjsTextItem = {
   width?: number;
 };
 
-/** Map pdfjs text items to viewport x/y for stable line grouping (rotation-safe). */
+/**
+ * Map pdfjs text items to viewport x and y-up visual position for stable line
+ * grouping (rotation-safe). Returned `y` grows towards the top of the page.
+ */
 export function layout_items_from_viewport(
   items: PdfjsTextItem[],
   viewport_transform: number[],
@@ -33,7 +36,10 @@ export function layout_items_from_viewport(
     if (!item.str) continue;
     const tx = pdf_affine_transform(viewport_transform, item.transform);
     const x = tx[4];
-    const y = tx[5];
+    // Viewport space is y-down (canvas). `group_text_items_into_lines` expects
+    // PDF-style y-up (larger y = nearer the top), so flip here; otherwise every
+    // page is emitted bottom-to-top and multi-line records/balances break.
+    const y = -tx[5];
     const glyph_scale = Math.hypot(tx[0], tx[1]) || 1;
     const width =
       typeof item.width === "number"

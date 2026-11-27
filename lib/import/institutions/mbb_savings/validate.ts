@@ -1,6 +1,12 @@
 import { decimal_myr_to_sen } from "@/lib/supabase/decimal_to_sen";
 import type { NormalizedImportRow } from "@/lib/import/types";
 
+/** Trailing integer of `mbb-sav-…-<n>` temp ids (PDF reading order). */
+function parse_index_from_temp_id(temp_id: string): number {
+  const match = temp_id.match(/(\d+)$/);
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
 function major_number(major: string): number {
   return decimal_myr_to_sen(major) / 100;
 }
@@ -9,8 +15,13 @@ export function validate_running_balance(
   rows: NormalizedImportRow[],
   mode: "asset" | "liability" = "asset",
 ): void {
-  const chronological = [...rows].sort((a, b) =>
-    a.txn_at.localeCompare(b.txn_at),
+  // Parser output is newest-first for display; same-day ties must fall back
+  // to PDF reading order (ascending parse index in temp_id) or every day with
+  // more than one row is validated backwards.
+  const chronological = [...rows].sort(
+    (a, b) =>
+      a.txn_at.localeCompare(b.txn_at) ||
+      parse_index_from_temp_id(a.temp_id) - parse_index_from_temp_id(b.temp_id),
   );
   let prev_balance: number | null = null;
   for (const row of chronological) {

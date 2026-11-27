@@ -40,6 +40,12 @@ export type PbeCardStatementMeta = {
   grand_total_major: string | null;
 };
 
+/** Numeric parse index at the end of a temp id (string compare puts 10 before 9). */
+function temp_id_index(temp_id: string): number {
+  const match = temp_id.match(/(\d+)$/);
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
 function collapse_spaces(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
@@ -202,7 +208,7 @@ function assign_liability_balances(
   with_balance.sort((a, b) => {
     const by_date = b.txn_at.localeCompare(a.txn_at);
     if (by_date !== 0) return by_date;
-    return b.temp_id.localeCompare(a.temp_id);
+    return temp_id_index(b.temp_id) - temp_id_index(a.temp_id);
   });
   return with_balance;
 }
@@ -313,8 +319,10 @@ export function parse_pbe_card_statement(text: string): {
   }
   if (meta.grand_total_major != null && rows.length > 0) {
     const target = Number(meta.grand_total_major);
-    const chronological_close = [...rows].sort((a, b) =>
-      a.txn_at.localeCompare(b.txn_at),
+    const chronological_close = [...rows].sort(
+      (a, b) =>
+        a.txn_at.localeCompare(b.txn_at) ||
+        temp_id_index(a.temp_id) - temp_id_index(b.temp_id),
     );
     const closing = Number(
       chronological_close.at(-1)?.balance_after_major ?? "0",
