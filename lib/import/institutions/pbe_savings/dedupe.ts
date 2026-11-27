@@ -26,12 +26,34 @@ export type ExistingTxnForDedupe = {
   txn_at: string;
   direction: "in" | "out";
   amount: string | number;
+  balance_after?: string | number | null;
   description: string | null;
   detail: string | null;
 };
 
 export const TXN_SELECT_FOR_DEDUPE =
-  "id, txn_at, direction, amount, description, detail";
+  "id, txn_at, direction, amount, balance_after, description, detail";
+
+/**
+ * Exact ledger identity for a savings statement line: MYT calendar date,
+ * direction, amount and the printed running balance after the line. Two
+ * different transactions cannot share all four on one account, so this wins
+ * over the fuzzy description compare (descriptions differ between parser
+ * versions / sources, e.g. joined continuation lines).
+ */
+export function ledger_fingerprint(
+  txn_at: string,
+  direction: "in" | "out",
+  amount: string | number,
+  balance_after: string | number,
+): string {
+  return [
+    calendar_date_myt(txn_at),
+    direction,
+    normalize_amount_major(amount),
+    normalize_amount_major(balance_after),
+  ].join("|");
+}
 
 export function calendar_date_myt(iso: string): string {
   const instant = iso.includes("T")
@@ -175,6 +197,40 @@ export function mark_duplicate_matches(
   void _account_id;
   const used = new Set<number>();
 
+  // Pass 1: exact ledger matches first, so a fuzzy pick for another row can
+  // never consume the saved record that is this row's exact twin.
+  const exact_index = new Map<string, number[]>();
+  for (let i = 0; i < existing.length; i++) {
+    const ex = existing[i]!;
+    if (ex.balance_after === undefined || ex.balance_after === null) continue;
+    if (String(ex.balance_after).trim() === "") continue;
+    const key = ledger_fingerprint(
+      ex.txn_at,
+      ex.direction,
+      ex.amount,
+      ex.balance_after,
+    );
+    const list = exact_index.get(key) ?? [];
+    list.push(i);
+    exact_index.set(key, list);
+  }
+  for (const row of import_rows) {
+    if (row.status !== "new" && row.status !== "needs_review") continue;
+    if (!row.balance_after_major?.trim()) continue;
+    const key = ledger_fingerprint(
+      row.txn_at,
+      row.direction,
+      row.amount_major,
+      row.balance_after_major,
+    );
+    const hit = exact_index.get(key)?.find((i) => !used.has(i));
+    if (hit === undefined) continue;
+    used.add(hit);
+    row.status = "duplicate";
+    row.review_reasons = [duplicate_match_reason(existing[hit]!, 0)];
+  }
+
+  // Pass 2: fuzzy (amount + date window + description) for the rest.
   for (const row of import_rows) {
     if (row.status !== "new") continue;
 
