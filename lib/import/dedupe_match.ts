@@ -226,20 +226,25 @@ export function mark_duplicate_matches(
     account_id !== undefined && TNG_DEDUPE_ACCOUNT_IDS.has(account_id);
 
   for (const row of import_rows) {
-    if (row.status !== "new") continue;
+    const eligible_for_tng_exact =
+      tng_balance_match &&
+      (row.status === "new" || row.status === "needs_review");
+    const eligible_for_fuzzy = row.status === "new";
 
-    if (tng_balance_match) {
+    if (!eligible_for_tng_exact && !eligible_for_fuzzy) continue;
+
+    if (eligible_for_tng_exact) {
       const tng_hit = try_tng_exact_duplicate(row, existing, used);
       if (tng_hit) {
         used.add(tng_hit.index);
         row.status = "duplicate";
         const reason = duplicate_match_reason(tng_hit.existing, 0);
-        if (!row.review_reasons.includes(reason)) {
-          row.review_reasons.push(reason);
-        }
+        row.review_reasons = [reason];
         continue;
       }
     }
+
+    if (!eligible_for_fuzzy) continue;
 
     const fp = amount_fingerprint(row.direction, row.amount_major);
     const import_dates = candidate_dates_for_import_row(row);

@@ -213,6 +213,15 @@ export function ImportWizard() {
   }, [multi_account, parsed_accounts, rows]);
 
   const preview_kind = useMemo(() => {
+    if (
+      multi_account &&
+      parsed_accounts.length > 0 &&
+      parsed_accounts.every(
+        (a) => a.account_ref === "TNG_EWALLET" || a.account_ref === "TNG_GO_PLUS",
+      )
+    ) {
+      return "tng_combined" as const;
+    }
     if (multi_account && parsed_accounts[0]) {
       return (
         account_config_by_ref(parsed_accounts[0].account_ref)?.kind ??

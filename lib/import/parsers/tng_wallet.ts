@@ -517,7 +517,7 @@ function reconcile_go_plus(rows: LedgerDraft[]): void {
           ? running + row.amount_micro
           : running - row.amount_micro;
       const delta = row.balance_micro - expected;
-      if (delta !== 0) {
+      if (Math.abs(delta) >= 100) {
         const explained =
           row.review_reasons.length > 0 ||
           go_sorted.some(
