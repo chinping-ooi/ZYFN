@@ -3,6 +3,10 @@ import {
   parse_amount_cell,
   row_money_from_direction,
 } from "@/lib/import/institutions/hlb_savings/amount";
+import {
+  sort_hlb_ledger_drafts,
+  stamp_hlb_ledger_txn_at,
+} from "@/lib/import/institutions/hlb_savings/ledger_order";
 import type { ImportParsedAccount, NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 
@@ -428,7 +432,7 @@ function build_rows(
   account_ref: string,
 ): NormalizedImportRow[] {
   const newest_first = [...drafts].sort((a, b) => {
-    const by_date = b.txn_at.localeCompare(a.txn_at);
+    const by_date = b.txn_at.slice(0, 10).localeCompare(a.txn_at.slice(0, 10));
     if (by_date !== 0) return by_date;
     return b.parse_index - a.parse_index;
   });
@@ -584,9 +588,7 @@ export function parse_hlb_savings_statement(text: string): {
 
   let running = Number(meta.opening_balance_major ?? "0");
   const enriched: Array<DraftTxn & { computed_balance_major: string }> = [];
-  const chronological = [...drafts].sort((a, b) =>
-    a.txn_at.localeCompare(b.txn_at) || a.parse_index - b.parse_index,
-  );
+  const chronological = sort_hlb_ledger_drafts(drafts);
 
   for (const item of chronological) {
     const amt = Number(item.amount_major);
@@ -604,10 +606,12 @@ export function parse_hlb_savings_statement(text: string): {
         : next_running;
   }
 
+  const ledger_order = sort_hlb_ledger_drafts(enriched);
+  stamp_hlb_ledger_txn_at(ledger_order);
   const rows = build_rows(enriched, account.account_id, ACCOUNT_REF);
 
   let running_check = Number(meta.opening_balance_major ?? "0");
-  for (const item of enriched) {
+  for (const item of ledger_order) {
     const amt = Number(item.amount_major);
     const expected =
       item.direction === "in"

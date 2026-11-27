@@ -1,3 +1,4 @@
+import { parse_index_from_temp_id } from "@/lib/import/institutions/hlb_savings/ledger_order";
 import { decimal_myr_to_sen } from "@/lib/supabase/decimal_to_sen";
 import type { NormalizedImportRow } from "@/lib/import/types";
 
@@ -9,8 +10,10 @@ export function validate_running_balance(
   rows: NormalizedImportRow[],
   mode: "asset" | "liability" = "asset",
 ): void {
-  const chronological = [...rows].sort((a, b) =>
-    a.txn_at.localeCompare(b.txn_at),
+  const chronological = [...rows].sort(
+    (a, b) =>
+      a.txn_at.localeCompare(b.txn_at) ||
+      parse_index_from_temp_id(a.temp_id) - parse_index_from_temp_id(b.temp_id),
   );
   let prev_balance: number | null = null;
   for (const row of chronological) {
