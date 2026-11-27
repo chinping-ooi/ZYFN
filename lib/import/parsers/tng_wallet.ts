@@ -449,12 +449,26 @@ function inject_derived_go_plus_outflows(
   return [...go_rows, ...derived];
 }
 
+/** PDF lists newest-first within a day; ascending parse_index is reversed chronology. */
 function sort_ledger(rows: LedgerDraft[]): LedgerDraft[] {
   return [...rows].sort(
     (a, b) =>
       a.date_iso.localeCompare(b.date_iso) ||
-      a.parse_index - b.parse_index,
+      b.parse_index - a.parse_index,
   );
+}
+
+/** Distinct txn_at per same calendar day so balance validation can order ties. */
+function stamp_same_day_txn_at(rows: LedgerDraft[]): void {
+  const seq = new Map<string, number>();
+  for (const row of rows) {
+    const midnight = `${row.date_iso}T00:00:00Z`;
+    if (row.txn_at !== midnight) continue;
+    const key = `${row.section}|${row.date_iso}`;
+    const n = seq.get(key) ?? 0;
+    seq.set(key, n + 1);
+    row.txn_at = `${row.date_iso}T00:00:${String(n + 1).padStart(2, "0")}Z`;
+  }
 }
 
 function assign_directions(rows: LedgerDraft[]): void {
@@ -581,9 +595,9 @@ export function parse_tng_wallet_statement(text: string): {
   assign_directions(merged);
   reconcile_go_plus(merged);
 
-  const rows = sort_ledger(merged)
-    .filter((r) => r.affects_totals)
-    .map((r, i) => to_import_row(r, i));
+  const sorted = sort_ledger(merged).filter((r) => r.affects_totals);
+  stamp_same_day_txn_at(sorted);
+  const rows = sorted.map((r, i) => to_import_row(r, i));
 
   const accounts: ImportParsedAccount[] = [];
   if (rows.some((r) => r.account_ref === WALLET_CFG.account_ref)) {

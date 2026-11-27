@@ -28,9 +28,59 @@ export type ExistingTxnForDedupe = {
   txn_at: string;
   direction: "in" | "out";
   amount: string | number;
+  balance_after?: string | number | null;
   description: string | null;
   detail: string | null;
 };
+
+const TNG_DEDUPE_ACCOUNT_IDS = new Set([4, 5]);
+
+function normalize_major_4dp(raw: string | number): string {
+  const text = String(raw).replace(/,/g, "").replace(/RM\s*/gi, "").trim();
+  const n = Math.abs(Number.parseFloat(text));
+  if (!Number.isFinite(n)) return "0.0000";
+  return n.toFixed(4);
+}
+
+function tng_balance_fingerprint(
+  txn_at: string,
+  direction: "in" | "out",
+  amount: string | number,
+  balance_after: string | number,
+): string {
+  return [
+    calendar_date_myt(txn_at),
+    direction,
+    normalize_major_4dp(amount),
+    normalize_major_4dp(balance_after),
+  ].join("|");
+}
+
+function try_tng_exact_duplicate(
+  row: NormalizedImportRow,
+  existing: ExistingTxnForDedupe[],
+  used: Set<number>,
+): { existing: ExistingTxnForDedupe; index: number } | null {
+  const fp = tng_balance_fingerprint(
+    row.txn_at,
+    row.direction,
+    row.amount_major,
+    row.balance_after_major,
+  );
+  for (let i = 0; i < existing.length; i++) {
+    if (used.has(i)) continue;
+    const ex = existing[i]!;
+    if (ex.balance_after === undefined || ex.balance_after === null) continue;
+    const ex_fp = tng_balance_fingerprint(
+      ex.txn_at,
+      ex.direction,
+      ex.amount,
+      ex.balance_after,
+    );
+    if (ex_fp === fp) return { existing: ex, index: i };
+  }
+  return null;
+}
 
 export function calendar_date_myt(iso: string): string {
   const instant = iso.includes("T")
@@ -169,11 +219,28 @@ function pick_score(pick: MatchPick): number {
 export function mark_duplicate_matches(
   import_rows: NormalizedImportRow[],
   existing: ExistingTxnForDedupe[],
+  account_id?: number,
 ): void {
   const used = new Set<number>();
+  const tng_balance_match =
+    account_id !== undefined && TNG_DEDUPE_ACCOUNT_IDS.has(account_id);
 
   for (const row of import_rows) {
     if (row.status !== "new") continue;
+
+    if (tng_balance_match) {
+      const tng_hit = try_tng_exact_duplicate(row, existing, used);
+      if (tng_hit) {
+        used.add(tng_hit.index);
+        row.status = "duplicate";
+        const reason = duplicate_match_reason(tng_hit.existing, 0);
+        if (!row.review_reasons.includes(reason)) {
+          row.review_reasons.push(reason);
+        }
+        continue;
+      }
+    }
+
     const fp = amount_fingerprint(row.direction, row.amount_major);
     const import_dates = candidate_dates_for_import_row(row);
 

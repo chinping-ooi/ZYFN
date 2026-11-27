@@ -22,7 +22,7 @@ import type {
 } from "@/lib/import/types";
 
 const TXN_SELECT =
-  "id, txn_at, direction, amount, description, detail";
+  "id, txn_at, direction, amount, balance_after, description, detail";
 
 function balance_validation_mode(
   kind: TransactionAccountKind | undefined,
@@ -61,11 +61,12 @@ export async function dedupe_import_rows(
     txn_at: String(row.txn_at),
     direction: row.direction === "in" ? "in" : "out",
     amount: row.amount,
+    balance_after: row.balance_after ?? null,
     description: row.description,
     detail: row.detail,
   }));
   const working = rows.map((r) => ({ ...r, review_reasons: [...r.review_reasons] }));
-  mark_duplicate_matches(working, existing);
+  mark_duplicate_matches(working, existing, account_id);
   validate_running_balance(working, balance_validation_mode(account_kind));
   return working;
 }
