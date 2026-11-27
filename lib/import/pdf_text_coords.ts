@@ -41,9 +41,15 @@ export function layout_items_from_viewport(
     // page is emitted bottom-to-top and multi-line records/balances break.
     const y = -tx[5];
     const glyph_scale = Math.hypot(tx[0], tx[1]) || 1;
+    // pdfjs `item.width` is already in page user-space units (font size is
+    // baked in), so only the viewport scale applies. Multiplying by the glyph
+    // scale (font size, e.g. 9) inflated every width ~9x, pushed `prev_end`
+    // past the next token and glued adjacent columns ("NAME88.91", "33657791.90").
+    const viewport_scale =
+      Math.hypot(viewport_transform[0], viewport_transform[1]) || 1;
     const width =
       typeof item.width === "number"
-        ? item.width * glyph_scale
+        ? item.width * viewport_scale
         : item.str.length * glyph_scale * 0.55;
     out.push({ str: item.str, x, y, width });
   }
