@@ -73,7 +73,7 @@ These proposals are planning inputs and require refinement before implementation
 - Follow the user's updated preference for a formal financial workspace. Use navy and neutral grays, white panels, small corner radii, clear borders, compact spacing, and restrained typography. Brand the product ZYFN.
 - Tables require an outer border and a complete grid of horizontal and vertical cell borders.
 - Use sample data for the layout preview. Authentication work is deferred based on the current interpretation of the user's scope.
-- The sidebar has a Dashboard, a Transactions group with Maybank and Public Bank transactions, a separate TNG transaction page, and a Fixed deposits group with bank-specific FD pages.
+- The sidebar has Dashboard, Transactions (Public Bank savings, Maybank savings, Hong Leong Bank), Credit cards (MBB Visa/Amex, PBE Visa/Mastercard), Wallets (TNG eWallet, TNG GO+), and Fixed deposits (All + per bank). All account transaction pages share one Supabase loader and one statement table layout; only account config differs (including GO+ 4 dp).
 - Each FD page shows that bank's deposit register and FD activity, including placements, redemptions, and interest. The user has accepted the formal UI style.
 - Sidebar groups use collapsible menus with borderless active tabs. Keep the header compact and the sidebar footer anchored at the viewport bottom. Use one shared content footer across pages.
 

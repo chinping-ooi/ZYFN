@@ -8,11 +8,16 @@ export function column_header_class<T>(
 
   if (column.type === "date" || column.key === "date") {
     parts.push("w-[6.75rem] max-w-[6.75rem]");
+  } else if (column.type === "percent") {
+    parts.push("w-[4.25rem] min-w-[4.25rem]");
   } else if (column.type === "money" || column.type === "money_micro") {
     parts.push("w-[6.25rem] max-w-[6.25rem]");
   } else if (column.key === "description") {
-    parts.push("w-[38%] min-w-[11rem]");
-  } else if (column.key === "status") {
+    /* No % width — table-fixed + rem columns must not exceed 100% (avoids phantom col). */
+    parts.push("min-w-[11rem]");
+  } else if (column.key === "import_status") {
+    parts.push("w-[8.75rem] min-w-[8.75rem] max-w-[8.75rem]");
+  } else if (column.key === "status" || column.key === "status_label") {
     parts.push("w-[5.5rem] max-w-[5.5rem]");
   } else if (column.key === "type") {
     parts.push("w-[8.5rem] max-w-[8.5rem]");
@@ -20,9 +25,34 @@ export function column_header_class<T>(
     parts.push("w-[6.5rem] max-w-[6.5rem]");
   } else if (column.key === "account") {
     parts.push("w-[4.5rem] max-w-[4.5rem]");
+  } else if (column.key === "receipt_no") {
+    parts.push("w-[8.5rem] max-w-[8.5rem]");
+  } else if (column.key === "interest_rate") {
+    parts.push("w-[4.5rem] min-w-[4.5rem] whitespace-nowrap");
+  } else if (column.key === "principal_sen") {
+    parts.push("w-[7.25rem] max-w-[7.25rem]");
+  } else if (column.key === "interest_earned_sen") {
+    parts.push("w-[7.5rem] max-w-[7.5rem]");
+  } else if (column.key === "days_left") {
+    parts.push("w-[5.25rem] max-w-[5.25rem]");
+  } else if (column.key === "bank_label") {
+    parts.push("w-[7rem] max-w-[7rem]");
+  } else if (column.key === "txn_type") {
+    parts.push("w-[8.5rem] max-w-[8.5rem]");
+  } else if (column.key === "detail") {
+    parts.push("w-[8.5rem] max-w-[8.5rem]");
   }
 
   return parts.join(" ");
+}
+
+export function column_header_sticky_class<T>(
+  column: DataTableColumn<T>,
+): string {
+  if (column.key === "import_status") {
+    return "sticky right-0 z-20 bg-[#edf0f4] shadow-[-6px_0_8px_-6px_rgba(35,48,68,0.12)]";
+  }
+  return "";
 }
 
 export function column_cell_class<T>(
@@ -36,8 +66,12 @@ export function column_cell_class<T>(
   } else if (column.type === "money" || column.type === "money_micro") {
     parts.push("whitespace-nowrap tabular-nums");
   } else if (column.key === "description") {
-    parts.push("min-w-[11rem] whitespace-normal break-words line-clamp-3 text-left");
-  } else if (column.type === "status") {
+    parts.push("min-w-0 text-left align-top");
+  } else if (column.key === "import_status") {
+    parts.push(
+      "whitespace-nowrap sticky right-0 z-[1] bg-white shadow-[-6px_0_8px_-6px_rgba(35,48,68,0.12)] group-even:bg-[#fafbfc] group-hover:bg-[#f0f3f7]",
+    );
+  } else if (column.type === "status" || column.key === "days_left") {
     parts.push("whitespace-nowrap");
   } else {
     parts.push("truncate");

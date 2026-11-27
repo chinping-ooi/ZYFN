@@ -1,18 +1,42 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import type { DataTableColumn, SortDirection } from "@/components/data_table/types";
 import {
   column_cell_class,
   column_header_class,
+  column_header_sticky_class,
 } from "@/components/data_table/column_layout";
+import { visible_table_columns } from "@/components/data_table/visible_columns";
 import { compare_rows, display_cell } from "@/components/data_table/display";
 import { ExportDialog } from "@/components/data_table/export_dialog";
+import { resolve_table_export_rows } from "@/lib/data_table/export_source_rows";
+import {
+  DataTableSkeleton,
+  type DataTableSkeletonVariant,
+} from "@/components/data_table/data_table_skeleton";
+import { TableSelect } from "@/components/data_table/table_select";
 import { StatusBadge } from "@/components/status_badge";
+import {
+  LEDGER_CELL_DIVIDER,
+  LEDGER_HEAD_CELL,
+  LEDGER_TABLE_SCROLL_X,
+} from "@/components/data_table/ledger_styles";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
 
 const EMPTY_COLUMNS: DataTableColumn<Record<string, unknown>>[] = [];
+
+const TABLE_CONTROL_BORDER = "border-[#b8c2cf]";
+
+const pagination_icon_btn =
+  `inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] border ${TABLE_CONTROL_BORDER} bg-white text-zyfn-ink hover:bg-[#f8f9fb] disabled:cursor-default disabled:border-[#dce1e7] disabled:bg-[#f5f6f8] disabled:text-[#929baa]`;
 
 type Props<T extends Record<string, unknown>> = {
   label: string;
@@ -24,6 +48,22 @@ type Props<T extends Record<string, unknown>> = {
   empty_period_message?: string;
   /** When true (default), table sits inside an outer card without a second bordered panel. */
   inset?: boolean;
+  table_layout?: "fixed" | "auto";
+  /** Legacy layout flag; tables scroll with the page main area (no inner vertical scroll). */
+  fill_height?: boolean;
+  /** Slug source for Excel filename (defaults to `label`). */
+  export_account_label?: string;
+  /** When set with `export_all_rows`, export uses this set instead of `rows`. */
+  export_rows?: T[];
+  /** Export every loaded row (ignores search filter and pagination). */
+  export_all_rows?: boolean;
+  /** Optional filename for `export_all_rows` (defaults to date-ranged statement name). */
+  resolve_export_filename?: (rows: T[]) => string;
+  loading?: boolean;
+  skeleton_variant?: DataTableSkeletonVariant;
+  skeleton_show_bank?: boolean;
+  /** TNG combined: badge on GO+ ledger rows when visible. */
+  show_go_plus_badge?: boolean;
 };
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -35,8 +75,24 @@ export function DataTable<T extends Record<string, unknown>>({
   toolbar_in_header = false,
   empty_period_message = "No records in this period.",
   inset = true,
+  table_layout = "fixed",
+  fill_height = false,
+  export_account_label,
+  export_rows,
+  export_all_rows = false,
+  resolve_export_filename,
+  loading = false,
+  skeleton_variant = "transaction",
+  skeleton_show_bank = false,
+  show_go_plus_badge = false,
 }: Props<T>) {
+  void scope;
   const safe_columns = columns ?? EMPTY_COLUMNS;
+  const labeled_columns = useMemo(
+    () => visible_table_columns(safe_columns),
+    [safe_columns],
+  );
+  const resolved_export_label = export_account_label ?? label;
   const safe_rows = useMemo(
     () => (Array.isArray(rows) ? rows : []),
     [rows],
@@ -54,19 +110,30 @@ export function DataTable<T extends Record<string, unknown>>({
   const filtered = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     let result = safe_rows.filter((row) =>
-      safe_columns.some((column) => {
+      labeled_columns.some((column) => {
         const raw = row[column.key];
         const display = display_cell(row, column);
         return `${raw ?? ""} ${display}`.toLocaleLowerCase().includes(query);
       }),
     );
-    const column = safe_columns.find((c) => c.key === sort_key);
+    const column = labeled_columns.find((c) => c.key === sort_key);
     if (column) {
       const dir = sort_direction === "ascending" ? 1 : -1;
       result = [...result].sort((a, b) => compare_rows(a, b, column, dir));
     }
     return result;
-  }, [safe_rows, safe_columns, search, sort_key, sort_direction]);
+  }, [safe_rows, labeled_columns, search, sort_key, sort_direction]);
+
+  const export_source_rows = useMemo(
+    () =>
+      resolve_table_export_rows({
+        export_all_rows,
+        export_rows,
+        safe_rows,
+        filtered,
+      }),
+    [export_all_rows, export_rows, safe_rows, filtered],
+  );
 
   const page_count =
     page_size === "all"
@@ -91,6 +158,8 @@ export function DataTable<T extends Record<string, unknown>>({
     set_page(1);
   }
 
+  const body_pad = inset ? "px-4" : "px-0";
+
   const toolbar = (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <input
@@ -114,7 +183,17 @@ export function DataTable<T extends Record<string, unknown>>({
     </div>
   );
 
-  if (safe_columns.length === 0) {
+  if (loading) {
+    return (
+      <DataTableSkeleton
+        variant={skeleton_variant}
+        fill_height={fill_height}
+        show_bank_column={skeleton_show_bank}
+      />
+    );
+  }
+
+  if (labeled_columns.length === 0) {
     return (
       <p className="text-sm text-zyfn-muted" role="alert">
         Table columns are not configured.
@@ -123,23 +202,35 @@ export function DataTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <div className="flex min-h-0 w-full flex-col gap-3">
-      {!toolbar_in_header ? toolbar : null}
+    <div className="flex w-full flex-col">
+      {!toolbar_in_header ? (
+        <div className={`data-table-toolbar shrink-0 pt-4 pb-3 ${body_pad}`}>
+          {toolbar}
+        </div>
+      ) : null}
       <div
-        className={`max-h-[min(70vh,560px)] min-h-0 overflow-auto overscroll-contain ${
-          inset
-            ? "-mx-5 border-y border-zyfn-line"
-            : "rounded-[3px] border border-zyfn-line"
-        }`}
+        className={`${LEDGER_TABLE_SCROLL_X} rounded-[3px] border border-zyfn-line bg-white ${body_pad}`}
       >
         <table
-          className="w-full min-w-[520px] table-fixed border-collapse sm:min-w-[640px]"
+          className={`ledger-grid-table w-full min-w-[520px] border-collapse sm:min-w-[720px] ${
+            table_layout === "fixed" ? "table-fixed" : "table-auto"
+          }`}
           aria-label={label}
         >
-          <thead className="sticky top-0 z-[1] bg-[#edf0f4] shadow-[inset_0_-1px_0_#cbd2dc]">
+          {table_layout === "fixed" ? (
+            <colgroup>
+              {labeled_columns.map((column) => (
+                <col
+                  key={column.key}
+                  className={column_header_class(column)}
+                />
+              ))}
+            </colgroup>
+          ) : null}
+          <thead>
             <tr>
-              {safe_columns.map((column) => {
-                const numeric = ["money", "money_micro", "rate", "months"].includes(
+              {labeled_columns.map((column) => {
+                const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
                   column.type ?? "",
                 );
                 const sort =
@@ -151,7 +242,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     key={column.key}
                     scope="col"
                     aria-sort={sort === "none" ? undefined : sort}
-                    className={`border border-zyfn-line bg-[#edf0f4] p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${
+                    className={`${LEDGER_HEAD_CELL} p-0 text-[13px] font-semibold text-[#435168] ${column_header_class(column)} ${column_header_sticky_class(column)} ${
                       numeric ? "text-right" : "text-left"
                     }`}
                   >
@@ -177,26 +268,49 @@ export function DataTable<T extends Record<string, unknown>>({
             {visible.map((row, index) => (
               <tr
                 key={index}
-                className="even:bg-[#fafbfc] hover:bg-[#f0f3f7]"
+                className="group even:bg-[#fafbfc] hover:bg-[#f0f3f7] last:[&>td]:border-b-0"
               >
-                {safe_columns.map((column) => {
-                  const numeric = ["money", "money_micro", "rate", "months"].includes(
+                {labeled_columns.map((column) => {
+                  const numeric = ["money", "money_micro", "rate", "percent", "months"].includes(
                     column.type ?? "",
                   );
                   const raw = row[column.key];
                   const text = display_cell(row, column);
+                  const is_go_plus_row =
+                    show_go_plus_badge &&
+                    column.key === "description" &&
+                    row.tng_sub_account === "go_plus";
                   return (
                     <td
                       key={column.key}
                       title={
-                        column.key === "description" ? String(text) : undefined
+                        column.key === "description"
+                          ? String(text)
+                          : column.key === "import_status" &&
+                              typeof row.status_hint === "string" &&
+                              row.status_hint.length > 0
+                            ? row.status_hint
+                            : undefined
                       }
-                      className={`border border-zyfn-line px-[13px] py-[11px] text-sm ${
+                      className={`${LEDGER_CELL_DIVIDER} px-[13px] py-[11px] text-sm ${
                         numeric ? "text-right" : "text-left"
                       } ${column_cell_class(column)}`}
                     >
-                      {column.type === "status" ? (
+                      {column.render_cell ? (
+                        column.render_cell(row)
+                      ) : column.type === "status" ? (
                         <StatusBadge status={String(raw)} />
+                      ) : column.key === "description" ? (
+                        <div className="flex flex-wrap items-start gap-1.5">
+                          {is_go_plus_row ? (
+                            <span className="mt-0.5 shrink-0 rounded-[2px] border border-zyfn-line bg-[#f4f6f8] px-1 py-px text-[10px] font-semibold uppercase tracking-wide text-zyfn-navy">
+                              GO+
+                            </span>
+                          ) : null}
+                          <div className="line-clamp-3 min-w-0 flex-1 break-words">
+                            {text}
+                          </div>
+                        </div>
                       ) : (
                         text
                       )}
@@ -208,8 +322,8 @@ export function DataTable<T extends Record<string, unknown>>({
             {visible.length === 0 ? (
               <tr>
                 <td
-                  colSpan={Math.max(safe_columns.length, 1)}
-                  className="border border-zyfn-line px-[13px] py-[30px] text-center text-zyfn-muted"
+                  colSpan={Math.max(labeled_columns.length, 1)}
+                  className={`${LEDGER_CELL_DIVIDER} px-[13px] py-[30px] text-center text-zyfn-muted`}
                 >
                   {safe_rows.length
                     ? "No matching records."
@@ -220,75 +334,95 @@ export function DataTable<T extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-zyfn-muted">
-        <span role="status">
+      <div
+        className={`data-table-footer flex shrink-0 flex-wrap items-center justify-between gap-2 pt-3 pb-1 text-[13px] text-zyfn-muted ${body_pad}`}
+      >
+        <span role="status" className="leading-8">
           {filtered.length
             ? `${start + 1}–${start + visible.length} of ${filtered.length} records`
             : `0–0 of 0 records`}
         </span>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <label className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 whitespace-nowrap">
             Rows per page
-            <span className="relative inline-block">
-              <select
-                className="h-9 min-w-[80px] appearance-none rounded-[3px] border border-[#b8c2cf] bg-white pr-8 pl-2 text-sm"
-                value={String(page_size)}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  set_page_size(v === "all" ? "all" : Number(v));
-                  set_page(1);
-                }}
-              >
-                {PAGE_SIZES.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-                <option value="all">All</option>
-              </select>
-              <span className="pointer-events-none absolute top-2 right-2 text-zyfn-muted">
-                ⌄
-              </span>
-            </span>
+            <TableSelect
+              wrapperClassName="min-w-[4.5rem]"
+              className="h-8 px-2"
+              value={String(page_size)}
+              onChange={(e) => {
+                const v = e.target.value;
+                set_page_size(v === "all" ? "all" : Number(v));
+                set_page(1);
+              }}
+            >
+              {PAGE_SIZES.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+              <option value="all">All</option>
+            </TableSelect>
           </label>
-          <button
-            type="button"
-            className="page-btn"
-            disabled={safe_page <= 1}
-            onClick={() => set_page((p) => Math.max(1, p - 1))}
-          >
-            Previous
-          </button>
-          <span className="min-w-[75px] text-center">
-            Page {safe_page} of {page_count}
-          </span>
-          <button
-            type="button"
-            className="page-btn"
-            disabled={safe_page >= page_count}
-            onClick={() => set_page((p) => p + 1)}
-          >
-            Next
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page <= 1}
+              aria-label="First page"
+              title="First page"
+              onClick={() => set_page(1)}
+            >
+              <ChevronsLeft className="size-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page <= 1}
+              aria-label="Previous page"
+              title="Previous page"
+              onClick={() => set_page((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft className="size-4" aria-hidden />
+            </button>
+            <span
+              className="min-w-[6.5rem] text-center text-sm leading-8 text-zyfn-ink"
+              aria-live="polite"
+            >
+              Page {safe_page} of {page_count}
+            </span>
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page >= page_count}
+              aria-label="Next page"
+              title="Next page"
+              onClick={() => set_page((p) => Math.min(page_count, p + 1))}
+            >
+              <ChevronRight className="size-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={pagination_icon_btn}
+              disabled={safe_page >= page_count}
+              aria-label="Last page"
+              title="Last page"
+              onClick={() => set_page(page_count)}
+            >
+              <ChevronsRight className="size-4" aria-hidden />
+            </button>
+          </div>
         </div>
       </div>
       <ExportDialog
         open={export_open}
         onClose={() => set_export_open(false)}
-        label={label}
-        scope={scope}
-        columns={safe_columns}
-        rows={filtered}
+        label={resolved_export_label}
+        columns={labeled_columns}
+        rows={export_source_rows}
         date_key={resolved_date_key}
+        export_all_rows={export_all_rows}
+        resolve_export_filename={resolve_export_filename}
       />
     </div>
   );
-}
-
-export function DataTableToolbarSlot({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return children;
 }

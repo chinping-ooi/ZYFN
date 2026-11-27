@@ -1,5 +1,6 @@
 import type { DataTableColumn } from "@/components/data_table/types";
-import { format_money, type MinorAmount } from "@/lib/money";
+import { format_calendar_date } from "@/lib/format/date";
+import { format_money, type MinorAmount } from "@/lib/format/money";
 import {
   display_dp_for_account,
   format_micro_money,
@@ -32,14 +33,11 @@ export function display_cell<T extends Record<string, unknown>>(
       return format_micro_money(micro, dp);
     }
     case "date":
-      return new Intl.DateTimeFormat("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(new Date(String(value) + (String(value).includes("T") ? "" : "T00:00:00Z")));
+      return format_calendar_date(String(value), column.time_zone ?? "UTC");
     case "rate":
       return `${(Number(value) / 100).toFixed(2)}%`;
+    case "percent":
+      return `${Number(value).toFixed(2)}%`;
     case "months":
       return `${value} months`;
     case "status":

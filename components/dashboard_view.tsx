@@ -1,0 +1,162 @@
+"use client";
+
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
+import { daily_spending_for_month } from "@/lib/dashboard/daily_spending";
+import { snapshot_for_month } from "@/lib/dashboard/metrics";
+import { spending_breakdown_for_month } from "@/lib/dashboard/spending_breakdown";
+import { dashboard_account_balances } from "@/lib/dashboard/dashboard_balances";
+import { compute_spending_change } from "@/lib/spending_change";
+import { major_to_minor } from "@/lib/money";
+import type { AccountStatementFromDb } from "@/lib/supabase/types";
+import { KpiCard } from "@/components/kpi_card";
+import { useWorkspaceMonthOptions } from "@/components/workspace_toolbar_context";
+import { resolve_statement_month_from_query } from "@/lib/datetime/default_statement_month";
+import { DailySpendingChart } from "@/components/daily_spending_chart";
+import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
+import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
+import type { FixedDepositSummary } from "@/lib/fixed_deposits/types";
+
+function spending_meta(change: ReturnType<typeof compute_spending_change>) {
+  if (change.direction === "flat") {
+    return change.label;
+  }
+  const pct = `${Math.abs(change.pct).toFixed(1)}%`;
+  const word = change.direction === "down" ? "lower" : "higher";
+  return (
+    <>
+      <span
+        className={`font-semibold ${
+          change.direction === "down" ? "text-zyfn-green" : "text-zyfn-red"
+        }`}
+      >
+        {pct} {word}{" "}
+      </span>
+      vs. previous month
+    </>
+  );
+}
+
+export function DashboardView({
+  metrics,
+  fd_summary,
+  statements,
+}: {
+  metrics: DashboardMetrics;
+  fd_summary: FixedDepositSummary;
+  statements: AccountStatementFromDb[];
+}) {
+  const searchParams = useSearchParams();
+  const month_keys = useMemo(
+    () => metrics.months.map((m) => m.value),
+    [metrics.months],
+  );
+  const month = useMemo(
+    () =>
+      resolve_statement_month_from_query(
+        searchParams.get("month"),
+        month_keys,
+      ) as MonthKey,
+    [searchParams, month_keys],
+  );
+
+  useWorkspaceMonthOptions(metrics.months);
+
+  const snapshot = snapshot_for_month(metrics, month);
+  const month_index = metrics.monthly.findIndex((m) => m.month === month);
+  const previous = month_index > 0 ? metrics.monthly[month_index - 1] : undefined;
+
+  const income_sen = snapshot?.income_sen ?? 0;
+  const spending_sen = snapshot?.spending_sen ?? 0;
+  const net_cash_flow_sen = income_sen - spending_sen;
+
+  const spending_change = compute_spending_change(
+    spending_sen,
+    previous?.spending_sen ?? 0,
+  );
+
+  const fd_principal_sen = major_to_minor(fd_summary.active_principal_major);
+
+  const balance_rows = useMemo(
+    () =>
+      dashboard_account_balances(
+        statements,
+        fd_principal_sen,
+        fd_summary.active_count,
+      ),
+    [statements, fd_principal_sen, fd_summary.active_count],
+  );
+
+  const spending_rows = useMemo(
+    () => spending_breakdown_for_month(statements, month),
+    [statements, month],
+  );
+
+  const month_label = snapshot?.label ?? month;
+
+  const daily_spending = useMemo(
+    () => daily_spending_for_month(statements, month),
+    [statements, month],
+  );
+
+  return (
+    <div className="dashboard-shell">
+      <header className="dashboard-toolbar">
+        <div className="min-w-0">
+          <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>
+          <p className="m-0 mt-[3px] text-[13px] text-zyfn-muted">
+            Cash in/out only · excludes FD and internal transfers · {month_label}
+          </p>
+        </div>
+      </header>
+
+      {metrics.monthly.length > 0 ? (
+        <>
+          <div className="dashboard-columns" data-gap-check="body">
+            <div className="dashboard-column dashboard-column-left">
+              <div
+                className="dashboard-kpi-row"
+                aria-label="Monthly financial summary"
+              >
+                <KpiCard
+                  compact_amount
+                  snug
+                  label="Monthly spending"
+                  amount_sen={spending_sen}
+                  meta={spending_meta(spending_change)}
+                />
+                <KpiCard
+                  compact_amount
+                  snug
+                  label="Net cash flow"
+                  amount_sen={net_cash_flow_sen}
+                  meta={<>Excludes FD · {month_label}</>}
+                />
+              </div>
+              <SpendingBreakdownCard
+                content_sized
+                column_fill
+                className="min-h-0 flex-1"
+                rows={spending_rows.length > 0 ? spending_rows : []}
+              />
+            </div>
+            <div className="dashboard-column dashboard-column-right">
+              <DailySpendingChart
+                className="shrink-0"
+                month={month}
+                month_label={month_label}
+                series={daily_spending}
+              />
+              <DashboardAccountBalancesCard
+                column_fill
+                className="min-h-0 flex-1"
+                rows={balance_rows}
+              />
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}

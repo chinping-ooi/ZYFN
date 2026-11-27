@@ -1,14 +1,28 @@
-import { readFileSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+/**
+ * Parse a local TNG statement text file and print row/skip/reconcile stats.
+ * Usage: npx tsx scripts/report_tng_parse.mjs [path/to/data.txt] [--diagnose]
+ * Does not read .env.local; pass an explicit path to your private export.
+ */
+import { readFileSync, existsSync } from "fs";
 const argv = process.argv.slice(2);
 const diagnose = argv.includes("--diagnose");
 const path_args = argv.filter((a) => a !== "--diagnose");
-const fixture = path_args[0] ?? join(root, "fixtures", "data_synthetic.txt");
 
-const { parse_tng_dump } = await import("../lib/tng/parse_dump.ts");
+const { parse_tng_dump } = await import("../lib/tng/import/parse_dump.ts");
+
+function usage() {
+  console.error(
+    "Usage: npx tsx scripts/report_tng_parse.mjs <path-to-tng-export.txt> [--diagnose]",
+  );
+  process.exit(2);
+}
+
+const fixture = path_args[0];
+if (!fixture) usage();
+if (!existsSync(fixture)) {
+  console.error(`File not found: ${fixture}`);
+  process.exit(1);
+}
 
 const raw = readFileSync(fixture, "utf8");
 const dump = parse_tng_dump(raw);

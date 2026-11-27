@@ -1,33 +1,39 @@
 /**
- * Smoke-test all app routes against `next dev` (no real workbook).
- * Usage: start dev with TRANSACTION_XLSX_PATH=fixtures/transaction_synthetic.xlsx
- * then: node scripts/smoke_dev_routes.mjs
+ * Smoke-test app routes against `next dev` (Supabase env optional).
+ * Usage: node scripts/smoke_dev_routes.mjs
  */
 import { execSync, spawn } from "child_process";
 import { setTimeout as delay } from "timers/promises";
-import { existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const fixture = join(root, "fixtures", "transaction_synthetic.xlsx");
-const tng_fixture = join(root, "fixtures", "data_synthetic.txt");
 const base = process.env.SMOKE_BASE_URL ?? "http://127.0.0.1:3000";
 const routes = [
   "/",
   "/transactions/hong-leong-bank",
-  "/transactions/public-bank",
+  "/transactions/pbe",
   "/transactions/maybank",
-  "/wallets/tng",
+  "/credit-cards/mbb-2-gold",
+  "/credit-cards/mbb-2-gold/1697",
+  "/credit-cards/mbb-2-gold/statement",
+  "/credit-cards/mbb-2-gold/8060",
+  "/credit-cards/mbb-2-gold/8060/statement",
+  "/credit-cards/pbe-visa-4104",
+  "/credit-cards/pbe-mastercard-6357",
+  "/transactions/touch-n-go",
+  "/transactions/touch-n-go/statement",
+  "/fixed-deposits",
   "/fixed-deposits/maybank",
   "/fixed-deposits/public-bank",
+  "/fixed-deposits/hong-leong-bank",
   "/nope-404",
 ];
 
 const must_include = {
-  "/transactions/hong-leong-bank": "Search all columns",
-  "/transactions/public-bank": "Search all columns",
-  "/wallets/tng": "Search all columns",
+  "/transactions/hong-leong-bank/statement": "Search all columns",
+  "/fixed-deposits": "Deposit register",
+  "/fixed-deposits/maybank": "Deposit register",
 };
 
 let dev = null;
@@ -46,10 +52,6 @@ async function waitForServer() {
 }
 
 async function run() {
-  if (!existsSync(fixture)) {
-    await import("./generate_synthetic_workbook.mjs");
-  }
-
   const ownDev = process.env.SMOKE_SKIP_DEV_START !== "1";
   if (ownDev) {
     try {
@@ -62,11 +64,7 @@ async function run() {
     await delay(500);
     dev = spawn("npm", ["run", "dev", "--", "-p", "3000"], {
       cwd: root,
-      env: {
-        ...process.env,
-        TRANSACTION_XLSX_PATH: fixture,
-        TNG_DATA_PATH: tng_fixture,
-      },
+      env: { ...process.env },
       stdio: ["ignore", "pipe", "pipe"],
     });
     await waitForServer();
@@ -102,6 +100,7 @@ async function run() {
   }
 
   if (dev) dev.kill("SIGTERM");
+
   if (failed) process.exit(1);
 }
 

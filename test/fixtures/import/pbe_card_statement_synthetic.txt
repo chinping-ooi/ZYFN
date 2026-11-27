@@ -1,0 +1,21 @@
+PUBLIC BANK BERHAD
+PENYATA KAD / CARD STATEMENT
+Tarikh Penyata / Statement Date    16 JAN 2027
+www.pbebank.com
+MASTERCARD QUANTUM 1111 2222 3333 6357 CARDHOLDER NAME
+
+Maklumat Transaksi / Transaction Details
+Posting Date Transaction Date Transaction Description Amount (RM)
+ 17 OCT                     Previous Balance                         25.00
+ 25 OCT    25 OCT           SHOP ABC (H)-XYZ   PENANG   MYS          16.90
+ 25 OCT    24 OCT           PETROL STN SS      PENANG   MYS          50.00
+PAGE 1 OF 2
+TARIKH PENYATA
+161127 SN5831
+ 28 DEC    28 DEC           WINTER BOUTIQUE      KL       MYS         120.00
+ 01 NOV    01 NOV           PBeBANK PAYMENT - THANK YOU              211.90CR
+CARDHOLDER NAME
+This month total credit   211.90
+This month total debit   186.90
+Jumlah besar untuk akaun ini / Grand total for this account   0.00
+PAGE 2 OF 2
