@@ -14,6 +14,7 @@ export type TransactionDataTableProps = {
   kind: TransactionAccountKind;
   empty_period_message?: string;
   fill_height?: boolean;
+  inset?: boolean;
   export_account_label?: string;
   loading?: boolean;
   /** Import preview only — appends Status column via shared column builder. */
@@ -32,6 +33,7 @@ export function TransactionDataTable({
   kind,
   empty_period_message,
   fill_height = false,
+  inset,
   export_account_label,
   loading,
   show_import_status = false,
@@ -52,7 +54,7 @@ export function TransactionDataTable({
       date_key="date"
       empty_period_message={empty_period_message}
       fill_height={fill_height}
-      inset={!fill_height}
+      inset={inset ?? !fill_height}
       export_account_label={export_account_label}
       export_all_rows={export_all_rows}
       resolve_export_filename={resolve_export_filename}

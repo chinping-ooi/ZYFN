@@ -31,7 +31,7 @@ export type DataTableSkeletonVariant = "transaction" | "fixed_deposit";
 
 export function DataTableSkeleton({
   variant = "transaction",
-  fill_height = false,
+  fill_height: _fill_height = false,
   show_bank_column = false,
   row_count = 8,
 }: {
@@ -40,6 +40,7 @@ export function DataTableSkeleton({
   show_bank_column?: boolean;
   row_count?: number;
 }) {
+  void _fill_height;
   const header_widths =
     variant === "fixed_deposit"
       ? show_bank_column
@@ -51,9 +52,7 @@ export function DataTableSkeleton({
 
   return (
     <div
-      className={`flex w-full flex-col ${
-        fill_height ? "min-h-0 flex-1" : "min-h-0"
-      }`}
+      className="flex w-full min-h-0 flex-col"
       role="status"
       aria-label="Loading table"
     >
@@ -64,9 +63,7 @@ export function DataTableSkeleton({
         </div>
       </div>
       <div
-        className={`min-h-0 overflow-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
-          fill_height ? "flex-1" : "max-h-[min(70vh,560px)]"
-        }`}
+        className={`overflow-x-auto overscroll-x-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad}`}
       >
         <table className="ledger-grid-table w-full min-w-[520px] table-fixed border-collapse sm:min-w-[720px]">
           <thead>

@@ -11,7 +11,7 @@ export function TransactionStatementSkeleton({
   header_slot?: ReactNode;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="flex flex-col">
       <div className="shrink-0">
         {header_slot ? (
           header_slot
@@ -37,7 +37,7 @@ export function TransactionStatementSkeleton({
         </section>
       </div>
 
-      <AccountTableCard title="Transaction activity" fill_height loading />
+      <AccountTableCard title="Transaction activity" loading />
     </div>
   );
 }

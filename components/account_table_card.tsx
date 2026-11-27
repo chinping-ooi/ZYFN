@@ -22,14 +22,10 @@ export function AccountTableCard({
 }) {
   return (
     <section
-      className={`statement-table card flex min-h-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white ${
-        fill_height ? "flex-1" : ""
-      }`}
+      className="statement-table card flex min-h-0 flex-col rounded-[3px] border border-zyfn-line bg-white"
     >
       <CardHead title={title} table_shell align="center" />
-      <div
-        className={`flex min-h-0 flex-col ${fill_height ? "min-h-0 flex-1" : ""} px-5 pb-4`}
-      >
+      <div className="flex min-h-0 flex-col px-5 pb-4">
         {loading ? (
           <DataTableSkeleton
             variant={skeleton_variant}

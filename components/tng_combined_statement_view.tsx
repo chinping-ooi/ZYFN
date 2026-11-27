@@ -55,7 +55,7 @@ export function TngCombinedStatementView({
     month === "all" ? visible_rows.length : table_rows.length;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="flex flex-col">
       <div className="shrink-0">
         <AccountPageHeader
           title="Account statement"
@@ -114,14 +114,14 @@ export function TngCombinedStatementView({
         </section>
       </div>
 
-      <AccountTableCard title="Transaction activity" fill_height>
+      <AccountTableCard title="Transaction activity">
         <TransactionDataTable
           label="Touch 'n Go activity"
           scope={`tng-combined-${month}-${include_go_plus ? "go" : "wallet"}`}
           export_account_label="Touch n Go"
           rows={table_rows}
           kind={data.account_kind}
-          fill_height
+          inset={false}
           show_go_plus_badge={include_go_plus}
         />
       </AccountTableCard>

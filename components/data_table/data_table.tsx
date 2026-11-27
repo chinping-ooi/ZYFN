@@ -48,7 +48,7 @@ type Props<T extends Record<string, unknown>> = {
   /** When true (default), table sits inside an outer card without a second bordered panel. */
   inset?: boolean;
   table_layout?: "fixed" | "auto";
-  /** Statement pages: grow into parent and scroll tbody only. */
+  /** Legacy layout flag; tables scroll with the page main area (no inner vertical scroll). */
   fill_height?: boolean;
   /** Slug source for Excel filename (defaults to `label`). */
   export_account_label?: string;
@@ -201,22 +201,14 @@ export function DataTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <div
-      className={`flex w-full flex-col ${
-        fill_height ? "min-h-0 flex-1" : "min-h-0"
-      }`}
-    >
+    <div className="flex w-full min-h-0 flex-col">
       {!toolbar_in_header ? (
         <div className={`data-table-toolbar shrink-0 pt-4 pb-3 ${body_pad}`}>
           {toolbar}
         </div>
       ) : null}
       <div
-        className={`min-h-0 overflow-auto overscroll-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad} ${
-          fill_height
-            ? "flex-1"
-            : "max-h-[min(70vh,560px)]"
-        }`}
+        className={`overflow-x-auto overscroll-x-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad}`}
       >
         <table
           className={`ledger-grid-table w-full min-w-[520px] border-collapse sm:min-w-[720px] ${

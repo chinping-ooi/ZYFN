@@ -44,7 +44,7 @@ export function TransactionStatementView({
     month === "all" ? data.row_count : table_rows.length;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="flex flex-col">
       <div className="shrink-0">
         <AccountPageHeader
           title="Account statement"
@@ -101,14 +101,14 @@ export function TransactionStatementView({
         </section>
       </div>
 
-      <AccountTableCard title="Transaction activity" fill_height>
+      <AccountTableCard title="Transaction activity">
         <TransactionDataTable
           label={`${data.account_label} activity`}
           scope={`${data.account_ref}-${month}`}
           export_account_label={data.account_label}
           rows={table_rows}
           kind={data.account_kind}
-          fill_height
+          inset={false}
         />
       </AccountTableCard>
     </div>

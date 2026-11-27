@@ -718,14 +718,14 @@ export function ImportWizard() {
   const file_input_id = "import-statement-file";
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden gap-3">
+    <div className="flex w-full flex-col gap-3">
       <ImportStepper
         current={step}
         include_mapping_step={include_mapping_step}
       />
 
       {step === "preview" ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+        <div className="flex flex-col gap-3">
           <section className={`${CARD_SHELL} shrink-0 py-4`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
@@ -817,7 +817,7 @@ export function ImportWizard() {
             ) : null}
           </section>
           {show_preview_table ? (
-            <AccountTableCard title="Parsed rows" fill_height>
+            <AccountTableCard title="Parsed rows">
               <TransactionDataTable
                 label="Import preview"
                 scope={
@@ -837,7 +837,7 @@ export function ImportWizard() {
                       : (account?.account_label ?? "import"),
                   )
                 }
-                fill_height
+                inset={false}
                 export_account_label={
                   multi_account
                     ? "Maybank credit cards"
@@ -849,7 +849,7 @@ export function ImportWizard() {
           ) : null}
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <>
       {step === "start" ? (
         <section className={CARD_SHELL}>
           <h2 className="text-sm font-semibold text-zyfn-navy">
@@ -1154,7 +1154,7 @@ export function ImportWizard() {
           </div>
         </section>
       ) : null}
-        </div>
+        </>
       )}
 
       {confirm_open && (multi_account ? parsed_accounts.length > 0 : account) ? (

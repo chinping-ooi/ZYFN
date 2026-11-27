@@ -160,7 +160,7 @@ export function SummaryCardShell({
 }) {
   return (
     <article
-      className={`card flex h-full min-h-[280px] flex-col overflow-hidden rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white ${className}`}
+      className={`card flex h-full min-h-[280px] flex-col rounded-[3px] border border-zyfn-line border-t-[3px] border-t-zyfn-navy bg-white ${className}`}
     >
       <div className="shrink-0 border-b border-zyfn-line px-4 py-3 md:px-[18px]">
         <h3 className="m-0 text-sm font-semibold text-[#526075]">{title}</h3>
