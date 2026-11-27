@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
+import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import {
+  combined_tng_closing_for_statement,
   combined_tng_closing_sen,
   filter_tng_rows_for_go_plus_visibility,
   merge_tng_statement_rows,
@@ -95,6 +97,80 @@ describe("filter_tng_rows_for_go_plus_visibility", () => {
     show_go_plus = false;
     visible = filter_tng_rows_for_go_plus_visibility(rows, show_go_plus);
     expect(visible.map((r) => r.sort_id)).toEqual([1]);
+  });
+});
+
+describe("combined_tng_closing_for_statement", () => {
+  it("sums per-pocket month-end balances instead of merged newest row only", () => {
+    const wallet = [
+      row({
+        date: "2025-10-15T00:00:00.000Z",
+        sort_id: 2,
+        tng_sub_account: "wallet",
+        balance_sen: 1_000,
+        balance_micro: 100_000,
+      }),
+      row({
+        date: "2025-10-01T00:00:00.000Z",
+        sort_id: 1,
+        tng_sub_account: "wallet",
+        balance_sen: 800,
+        balance_micro: 80_000,
+      }),
+    ];
+    const go = [
+      row({
+        date: "2025-10-20T00:00:00.000Z",
+        sort_id: 4,
+        tng_sub_account: "go_plus",
+        balance_micro: 50_000,
+      }),
+      row({
+        date: "2025-10-05T00:00:00.000Z",
+        sort_id: 3,
+        tng_sub_account: "go_plus",
+        balance_micro: 40_000,
+      }),
+    ];
+    const merged = merge_tng_statement_rows(wallet, go);
+    const full_sen = combined_tng_closing_sen(wallet, go);
+    const full_micro = 100_000 + 50_000;
+
+    const wrong = build_transaction_statement(merged, "2025-10", full_sen, full_micro);
+    const fixed = combined_tng_closing_for_statement(
+      merged,
+      "2025-10",
+      full_sen,
+      full_micro,
+    );
+
+    expect(wrong.closing_sen).toBe(0);
+    expect(wrong.closing_micro).toBe(50_000);
+    expect(fixed.closing_sen).toBe(1_000 + 500);
+    expect(fixed.closing_micro).toBe(100_000 + 50_000);
+  });
+
+  it("uses loader totals for All months", () => {
+    const merged = merge_tng_statement_rows(
+      [
+        row({
+          date: "2025-10-01T00:00:00.000Z",
+          sort_id: 1,
+          balance_sen: 10,
+          balance_micro: 1_000,
+        }),
+      ],
+      [
+        row({
+          date: "2025-10-01T00:00:00.000Z",
+          sort_id: 2,
+          balance_micro: 2_000,
+        }),
+      ],
+    );
+    expect(
+      combined_tng_closing_for_statement(merged, "all", 10 + 20, 1_000 + 2_000),
+    ).toEqual({ closing_sen: 30, closing_micro: 3_000 });
   });
 });
 

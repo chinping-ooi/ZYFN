@@ -1,8 +1,9 @@
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
-import { micro_to_sen_display } from "@/lib/tng/money_micro";
+import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
+import type { MinorAmount } from "@/lib/money";
+import { micro_to_sen_display, type MicroAmount } from "@/lib/tng/money_micro";
 
 const MICRO_PER_SEN = 100;
-import type { MinorAmount } from "@/lib/money";
 
 export function wallet_row_to_combined_view(
   row: TransactionDbRow,
@@ -60,4 +61,54 @@ export function combined_tng_closing_sen(
   const wallet_closing = wallet_rows[0]?.balance_sen ?? 0;
   const go_closing = go_plus_rows[0]?.balance_micro ?? 0;
   return wallet_closing + micro_to_sen_display(go_closing);
+}
+
+function split_tng_combined_rows(merged_rows: TransactionDbRow[]): {
+  wallet_rows: TransactionDbRow[];
+  go_plus_rows: TransactionDbRow[];
+} {
+  return {
+    wallet_rows: merged_rows.filter((r) => r.tng_sub_account === "wallet"),
+    go_plus_rows: merged_rows.filter((r) => r.tng_sub_account === "go_plus"),
+  };
+}
+
+/** eWallet + GO+ closing for a statement month (full ledger uses loader totals). */
+export function combined_tng_closing_for_statement(
+  merged_rows: TransactionDbRow[],
+  month: string | "all",
+  closing_sen_full: MinorAmount,
+  closing_micro_full: MicroAmount,
+): { closing_sen: MinorAmount; closing_micro: MicroAmount } {
+  if (month === "all") {
+    return {
+      closing_sen: closing_sen_full,
+      closing_micro: closing_micro_full,
+    };
+  }
+
+  const { wallet_rows, go_plus_rows } = split_tng_combined_rows(merged_rows);
+  const wallet_full_sen = wallet_rows[0]?.balance_sen ?? 0;
+  const wallet_full_micro =
+    wallet_rows[0]?.balance_micro ?? wallet_full_sen * MICRO_PER_SEN;
+  const go_full_micro = go_plus_rows[0]?.balance_micro ?? 0;
+
+  const wallet_slice = build_transaction_statement(
+    wallet_rows,
+    month,
+    wallet_full_sen,
+    wallet_full_micro,
+  );
+  const go_slice = build_transaction_statement(
+    go_plus_rows,
+    month,
+    0,
+    go_full_micro,
+  );
+
+  return {
+    closing_sen:
+      wallet_slice.closing_sen + micro_to_sen_display(go_slice.closing_micro),
+    closing_micro: wallet_slice.closing_micro + go_slice.closing_micro,
+  };
 }

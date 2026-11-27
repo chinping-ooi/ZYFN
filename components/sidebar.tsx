@@ -299,7 +299,7 @@ function SidebarPanel({
           <span>Fixed Deposits</span>
         </Link>
         <Link
-          href={WALLET_HREF}
+          href={resolve_href(WALLET_HREF)}
           onClick={on_navigate}
           className={`${NAV_LINK_BASE} mt-1 gap-2.5 px-3.5 py-1.5 ${
             wallet_active

@@ -4,7 +4,10 @@ import { useMemo } from "react";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
-import { filter_tng_rows_for_go_plus_visibility } from "@/lib/tng/combined_statement";
+import {
+  combined_tng_closing_for_statement,
+  filter_tng_rows_for_go_plus_visibility,
+} from "@/lib/tng/combined_statement";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { useShowGoPlus } from "@/lib/hooks/use_show_go_plus";
 import { KpiCard } from "@/components/kpi_card";
@@ -41,16 +44,25 @@ export function TngCombinedStatementView({
   const { month, month_options } = useStatementMonth(visible_rows);
   useWorkspaceMonthOptions(month_options);
 
-  const statement = useMemo(
-    () =>
-      build_transaction_statement(
-        visible_rows,
-        month,
-        data.closing_sen,
-        data.closing_micro,
-      ),
-    [visible_rows, month, data.closing_sen, data.closing_micro],
-  );
+  const statement = useMemo(() => {
+    const base = build_transaction_statement(
+      visible_rows,
+      month,
+      data.closing_sen,
+      data.closing_micro,
+    );
+    const closing = combined_tng_closing_for_statement(
+      data.rows,
+      month,
+      data.closing_sen,
+      data.closing_micro,
+    );
+    return {
+      ...base,
+      closing_sen: closing.closing_sen,
+      closing_micro: closing.closing_micro,
+    };
+  }, [visible_rows, month, data.rows, data.closing_sen, data.closing_micro]);
 
   const table_rows = statement.rows as TransactionTableRow[];
   const row_count_in_view =
@@ -99,7 +111,8 @@ export function TngCombinedStatementView({
           <KpiCard
             compact_amount
             label={labels.closing}
-            amount_sen={statement.closing_sen}
+            amount_micro={statement.closing_micro}
+            money_dp={4}
           />
         </section>
       </div>

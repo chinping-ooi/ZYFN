@@ -1,6 +1,5 @@
 import type { AccountViewMode } from "@/lib/accounts/account_view_preference";
 import { account_statement_href } from "@/lib/accounts/view_paths";
-import { WALLET_HREF } from "@/lib/wallets/routes";
 
 export function is_account_hub_nav_href(href: string): boolean {
   const path = href.replace(/\/$/, "");
@@ -19,10 +18,6 @@ export function resolve_sidebar_account_href(
   const suffix = query.startsWith("?") ? query : query ? `?${query}` : "";
 
   const normalized = href.replace(/\/$/, "");
-
-  if (normalized === WALLET_HREF.replace(/\/$/, "")) {
-    return `${normalized}${suffix}`;
-  }
 
   if (!is_account_hub_nav_href(href)) {
     return `${normalized}${suffix}`;
