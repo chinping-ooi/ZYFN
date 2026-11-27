@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/app_shell";
 
-/** App shell for account statement routes — locks viewport; table scrolls inside. */
+/** App shell for account statement routes (main content scroll). */
 export function TransactionAppShell({
   title,
   children,
@@ -10,7 +10,7 @@ export function TransactionAppShell({
   title: string;
   children: React.ReactNode;
   last_updated?: string | null;
-  /** Statement table uses locked viewport; summary page scrolls. */
+  /** Tighter main padding when viewport_lock is set (dashboard, import, statements). */
   viewport_lock?: boolean;
 }) {
   return (

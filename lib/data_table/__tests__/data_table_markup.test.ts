@@ -53,6 +53,24 @@ describe("DataTable ledger markup", () => {
     });
   }
 
+  it("ledger panel scrolls horizontally only", () => {
+    const columns = transaction_columns("bank");
+    const html = renderToStaticMarkup(
+      createElement(DataTable<TransactionTableRow>, {
+        label: "Test",
+        scope: "test",
+        columns,
+        rows: [sample_row(0)],
+        inset: false,
+      }),
+    );
+    expect(html).toMatch(/overflow-x-auto/);
+    expect(html).toMatch(/overflow-y-clip/);
+    expect(html).not.toMatch(/max-h-\[/);
+    expect(html).not.toMatch(/overflow-y-auto/);
+    expect(html).not.toMatch(/sticky top-0/);
+  });
+
   it("description cells do not nest an extra table cell", () => {
     const columns = transaction_columns("credit_card");
     const rows = [sample_row(0)];

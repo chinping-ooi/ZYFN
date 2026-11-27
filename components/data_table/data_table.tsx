@@ -26,6 +26,7 @@ import { StatusBadge } from "@/components/status_badge";
 import {
   LEDGER_CELL_DIVIDER,
   LEDGER_HEAD_CELL,
+  LEDGER_TABLE_SCROLL_X,
 } from "@/components/data_table/ledger_styles";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
@@ -208,7 +209,7 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
       ) : null}
       <div
-        className={`overflow-x-auto overscroll-x-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad}`}
+        className={`${LEDGER_TABLE_SCROLL_X} rounded-[3px] border border-zyfn-line bg-white ${body_pad}`}
       >
         <table
           className={`ledger-grid-table w-full min-w-[520px] border-collapse sm:min-w-[720px] ${

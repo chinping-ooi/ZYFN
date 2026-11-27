@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import type { Mbb2GoldCardBreakdownRow } from "@/lib/credit_cards/mbb_2_gold_breakdown";
 import { format_rm } from "@/lib/money";
+import { LEDGER_TABLE_SCROLL_X } from "@/components/data_table/ledger_styles";
 
 function amount_cell(
   sen: number | null,
@@ -42,7 +43,7 @@ export function Mbb2GoldCardBreakdownTable({
         Card breakdown
         <span className="font-normal text-zyfn-muted"> · {month_label}</span>
       </p>
-      <div className="overflow-x-auto">
+      <div className={LEDGER_TABLE_SCROLL_X}>
         <table className="w-full min-w-[28rem] border-collapse border border-zyfn-line text-sm">
           <thead>
             <tr className="bg-[#f8f9fb] text-left text-[12px] font-semibold text-[#526075]">

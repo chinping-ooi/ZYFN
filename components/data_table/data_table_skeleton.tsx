@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   LEDGER_CELL_DIVIDER,
   LEDGER_HEAD_CELL_SKELETON as LEDGER_HEAD_CELL,
+  LEDGER_TABLE_SCROLL_X,
 } from "@/components/data_table/ledger_styles";
 
 const TRANSACTION_HEADER_WIDTHS = [
@@ -63,7 +64,7 @@ export function DataTableSkeleton({
         </div>
       </div>
       <div
-        className={`overflow-x-auto overscroll-x-contain rounded-[3px] border border-zyfn-line bg-white ${body_pad}`}
+        className={`${LEDGER_TABLE_SCROLL_X} rounded-[3px] border border-zyfn-line bg-white ${body_pad}`}
       >
         <table className="ledger-grid-table w-full min-w-[520px] table-fixed border-collapse sm:min-w-[720px]">
           <thead>
