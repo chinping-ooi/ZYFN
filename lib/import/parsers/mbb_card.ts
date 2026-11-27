@@ -3,26 +3,13 @@ import {
   parse_amount_cell,
   row_money_from_direction,
 } from "@/lib/import/institutions/mbb_card/amount";
+import { scan_mbb_card_accounts_from_text } from "@/lib/import/institutions/mbb_card/product_scan";
+import { parse_mbb_card_statement_header_date } from "@/lib/import/institutions/mbb_card/statement_date";
 import type {
   ImportParsedAccount,
   NormalizedImportRow,
 } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
-
-const MONTH_TO_NUM: Record<string, number> = {
-  JAN: 1,
-  FEB: 2,
-  MAR: 3,
-  APR: 4,
-  MAY: 5,
-  JUN: 6,
-  JUL: 7,
-  AUG: 8,
-  SEP: 9,
-  OCT: 10,
-  NOV: 11,
-  DEC: 12,
-};
 
 const PRODUCT_ACCOUNTS: Array<{
   pattern: RegExp;
@@ -51,29 +38,7 @@ function collapse_spaces(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function expand_year_yy(yy: number): number {
-  return yy >= 70 ? 1900 + yy : 2000 + yy;
-}
-
-export function parse_mbb_statement_header_date(text: string): {
-  iso: string | null;
-  month: number | null;
-  year: number | null;
-} {
-  const match = text.match(
-    /Statement Date\/[\s\S]{0,200}?(\d{1,2})\s+([A-Z]{3})\s+(\d{2})\b/i,
-  );
-  if (!match) return { iso: null, month: null, year: null };
-  const day = match[1].padStart(2, "0");
-  const month_key = match[2].toUpperCase();
-  const month = MONTH_TO_NUM[month_key];
-  const year = expand_year_yy(Number.parseInt(match[3], 10));
-  if (!month || !Number.isFinite(year)) {
-    return { iso: null, month: null, year: null };
-  }
-  const iso = `${year}-${String(month).padStart(2, "0")}-${day}`;
-  return { iso, month, year };
-}
+export { parse_mbb_card_statement_header_date as parse_mbb_statement_header_date } from "@/lib/import/institutions/mbb_card/statement_date";
 
 function account_for_product_line(line: string): (typeof PRODUCT_ACCOUNTS)[0] | null {
   for (const entry of PRODUCT_ACCOUNTS) {
@@ -375,7 +340,7 @@ export function parse_mbb_card_statement(text: string): {
   accounts: ImportParsedAccount[];
   parse_warning: string | null;
 } {
-  const header = parse_mbb_statement_header_date(text);
+  const header = parse_mbb_card_statement_header_date(text);
   const meta: MbbCardStatementMeta = {
     statement_date_iso: header.iso,
     statement_month: header.month,
@@ -385,11 +350,15 @@ export function parse_mbb_card_statement(text: string): {
   const all_rows: NormalizedImportRow[] = [];
 
   if (header.month == null || header.year == null) {
+    const peek_accounts = scan_mbb_card_accounts_from_text(text);
     return {
       rows: [],
       meta,
-      accounts: [],
-      parse_warning: null,
+      accounts: peek_accounts,
+      parse_warning:
+        peek_accounts.length > 0
+          ? "Maybank card layout matched but statement date was not found in the PDF text."
+          : null,
     };
   }
 
