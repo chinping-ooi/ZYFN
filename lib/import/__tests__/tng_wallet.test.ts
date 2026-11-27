@@ -81,7 +81,8 @@ Balance) TNGOW3MY1
     expect(earnings?.amount_major).toBe("0.0012");
 
     const rfid = wallet.find((r) => /Toll/i.test(r.description));
-    expect(rfid?.txn_at).toContain("T08:28:00Z");
+    // 08:28 AM Malaysia time (UTC+8) stored as a real UTC instant.
+    expect(rfid?.txn_at).toContain("T00:28:00Z");
 
     const duit = wallet.find((r) => r.detail === "55667788");
     expect(duit?.txn_type).toBe("DUITNOW_RECEIVEFROM");

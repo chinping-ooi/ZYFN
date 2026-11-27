@@ -200,6 +200,9 @@ const KNOWN_TXN_TYPES = [
   "Receive from Wallet",
   "DUITNOW_RECEIVEFROM",
   "DUITNOW_RECEI VEFROM",
+  // pdfjs splits the wrapped type cell: "DUITNOW_RECEI" on the record line,
+  // "VEFROM" at the start of the next line.
+  "DUITNOW_RECEI",
   "Reload",
   "Payment",
   "Refund",
@@ -210,6 +213,8 @@ function parse_header_line(line: string): {
   status: string;
   raw_type: string;
   reference: string;
+  /** Type text exactly as printed on the record line (for stripping). */
+  type_text?: string;
 } {
   const prefix = line.match(
     /^(\d{1,2}\/\d{1,2}\/\d{4})\s+(Success|Pending|Failed)\s+(.*)$/i,
@@ -223,8 +228,11 @@ function parse_header_line(line: string): {
         return {
           date_dmy: prefix[1],
           status: prefix[2],
-          raw_type: known.replace("DUITNOW_RECEI VEFROM", "DUITNOW_RECEIVEFROM"),
+          raw_type: /^DUITNOW_RECEI(?: VEFROM)?$/.test(known)
+            ? "DUITNOW_RECEIVEFROM"
+            : known,
           reference: ref?.[1] ?? "",
+          type_text: rest.slice(0, known.length),
         };
       }
     }
@@ -296,10 +304,24 @@ function parse_rm_pair(
 }
 
 function type_direction_fallback(raw_type: string, description: string): "in" | "out" {
+  const type = raw_type.toLowerCase();
+  // `classify_tng_direction` folds pocket moves into "transfer" (dashboard
+  // semantics); for the ledger the side is fixed by the type.
+  if (type.includes("go+ cash in")) return "in";
+  if (type.includes("go+ cash out") || type.includes("ewallet cash out")) {
+    return "out";
+  }
+  if (type === "reload" || type.includes("receive")) return "in";
   const flow = classify_tng_direction(raw_type, description);
   if (flow === "in") return "in";
   return "out";
 }
+
+/**
+ * GO+ balances are printed at 2dp while interest is credited in micro
+ * (RM 0.0001) units, so a correct step can be off by up to half a sen.
+ */
+const GO_PLUS_BALANCE_TOLERANCE_MICRO = 100;
 
 function direction_from_balance(
   prev_balance: MicroAmount | null,
@@ -307,6 +329,7 @@ function direction_from_balance(
   balance_micro: MicroAmount,
   raw_type: string,
   description: string,
+  tolerance_micro = 0,
 ): "in" | "out" {
   const fallback = type_direction_fallback(raw_type, description);
   if (prev_balance === null) {
@@ -318,13 +341,23 @@ function direction_from_balance(
   }
   if (prev_balance + amount_micro === balance_micro) return "in";
   if (prev_balance - amount_micro === balance_micro) return "out";
+  if (tolerance_micro > 0) {
+    const d_in = Math.abs(prev_balance + amount_micro - balance_micro);
+    const d_out = Math.abs(prev_balance - amount_micro - balance_micro);
+    if (d_in <= tolerance_micro && d_in < d_out) return "in";
+    if (d_out <= tolerance_micro && d_out < d_in) return "out";
+  }
   return fallback;
 }
 
 function row_affects_totals(success: boolean, raw_type: string): boolean {
   if (!success) return false;
-  const t = raw_type.toLowerCase();
-  if (t.includes("ewallet cash out")) return false;
+  // "eWallet Cash Out" (eWallet -> GO+) is a real eWallet debit: the printed
+  // eWallet balance drops by it, and the GO+ section shows the matching
+  // "GO+ Cash In". Dropping it left a gap in the eWallet running balance
+  // (every next row flagged "Balance mismatch"). Dashboard spend already
+  // excludes it (lib/dashboard/spending_go_plus_exclusion.ts).
+  void raw_type;
   return true;
 }
 
@@ -338,7 +371,10 @@ function parse_rfid_txn_at(date_iso: string, inner: string[]): string | null {
     const minute = mm.padStart(2, "0");
     if (ampm.toUpperCase() === "PM" && hour < 12) hour += 12;
     if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
-    return `${iso_date}T${String(hour).padStart(2, "0")}:${minute}:00Z`;
+    // The printed time is Malaysia time (UTC+8); store a real UTC instant so
+    // e.g. 04:02 PM does not land on the next MYT calendar day.
+    const local = `${iso_date}T${String(hour).padStart(2, "0")}:${minute}:00+08:00`;
+    return new Date(local).toISOString().replace(".000Z", "Z");
   }
   return null;
 }
@@ -365,13 +401,19 @@ function parse_record_group(
   const amount_idx = inline_amount
     ? 0
     : group.chunk.indexOf(amount_line);
-  const inner = inline_amount
+  const inner_raw = inline_amount
     ? group.chunk.slice(1).filter((l) => !RM_PAIR_END.test(l))
     : group.chunk.slice(1, amount_idx);
+  const split_type = header.type_text?.toUpperCase() === "DUITNOW_RECEI";
+  const inner = split_type
+    ? inner_raw
+        .map((l, i) => (i === 0 ? l.replace(/^VEFROM\b\s*/i, "") : l))
+        .filter(Boolean)
+    : inner_raw;
   const headline_desc = headline
     .replace(
       new RegExp(
-        `^\\d{1,2}/\\d{1,2}/\\d{4}\\s+${header.status}\\s+${header.raw_type.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+${header.reference.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`,
+        `^\\d{1,2}/\\d{1,2}/\\d{4}\\s+${header.status}\\s+${(header.type_text ?? header.raw_type).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*${header.reference.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`,
         "i",
       ),
       "",
@@ -449,26 +491,91 @@ function inject_derived_go_plus_outflows(
   return [...go_rows, ...derived];
 }
 
-/** PDF lists newest-first within a day; ascending parse_index is reversed chronology. */
+/**
+ * The statement lists each section oldest-first within a day (top-down, as
+ * read from the PDF); the printed running balances confirm it. The old
+ * "newest-first" assumption came from pdfjs pages being read bottom-up.
+ */
 function sort_ledger(rows: LedgerDraft[]): LedgerDraft[] {
   return [...rows].sort(
     (a, b) =>
       a.date_iso.localeCompare(b.date_iso) ||
-      b.parse_index - a.parse_index,
+      a.parse_index - b.parse_index,
   );
 }
 
-/** Distinct txn_at per same calendar day so balance validation can order ties. */
+/**
+ * Distinct, strictly increasing txn_at per section and day in ledger order so
+ * balance validation (which sorts by txn_at) replays the statement order.
+ * Rows with a printed time (RFID) keep it unless that would break order.
+ */
 function stamp_same_day_txn_at(rows: LedgerDraft[]): void {
-  const seq = new Map<string, number>();
+  const last = new Map<string, number>();
   for (const row of rows) {
-    const midnight = `${row.date_iso}T00:00:00Z`;
-    if (row.txn_at !== midnight) continue;
     const key = `${row.section}|${row.date_iso}`;
-    const n = seq.get(key) ?? 0;
-    seq.set(key, n + 1);
-    row.txn_at = `${row.date_iso}T00:00:${String(n + 1).padStart(2, "0")}Z`;
+    const midnight = Date.parse(`${row.date_iso}T00:00:00Z`);
+    const own = Date.parse(row.txn_at);
+    const has_time = Number.isFinite(own) && own !== midnight;
+    const prev = last.get(key) ?? midnight;
+    const t = has_time && own > prev ? own : prev + 1000;
+    last.set(key, t);
+    row.txn_at = new Date(t).toISOString().replace(".000Z", "Z");
   }
+}
+
+/**
+ * Place derived GO+ outflows (eWallet "Quick Reload Payment (via GO+)") inside
+ * the GO+ section ledger. Within a day, before each printed GO+ row insert the
+ * smallest number of pending outflows (in eWallet order) that makes the
+ * running balance land on that row's printed balance; leftovers close the
+ * day. Re-numbers GO+ parse_index to the merged order.
+ */
+function order_go_plus_with_derived(go_rows: LedgerDraft[]): LedgerDraft[] {
+  const by_day = new Map<string, { real: LedgerDraft[]; derived: LedgerDraft[] }>();
+  for (const row of go_rows) {
+    const bucket = by_day.get(row.date_iso) ?? { real: [], derived: [] };
+    (row.derived ? bucket.derived : bucket.real).push(row);
+    by_day.set(row.date_iso, bucket);
+  }
+  const days = [...by_day.keys()].sort();
+  const out: LedgerDraft[] = [];
+  let running: MicroAmount | null = null;
+  for (const day of days) {
+    const bucket = by_day.get(day)!;
+    const real = [...bucket.real].sort((a, b) => a.parse_index - b.parse_index);
+    const pending = [...bucket.derived].sort(
+      (a, b) => a.parse_index - b.parse_index,
+    );
+    for (const row of real) {
+      let take = 0;
+      if (running !== null) {
+        let bal: number = running;
+        for (let k = 0; k <= pending.length; k++) {
+          if (k > 0) bal -= pending[k - 1]!.amount_micro;
+          const d_in = Math.abs(bal + row.amount_micro - row.balance_micro);
+          const d_out = Math.abs(bal - row.amount_micro - row.balance_micro);
+          if (Math.min(d_in, d_out) <= GO_PLUS_BALANCE_TOLERANCE_MICRO) {
+            take = k;
+            break;
+          }
+        }
+      }
+      for (const d of pending.splice(0, take)) {
+        if (running !== null) running -= d.amount_micro;
+        out.push(d);
+      }
+      out.push(row);
+      running = row.balance_micro;
+    }
+    for (const d of pending) {
+      if (running !== null) running -= d.amount_micro;
+      out.push(d);
+    }
+  }
+  out.forEach((row, i) => {
+    row.parse_index = 1_000_000 + i;
+  });
+  return out;
 }
 
 function assign_directions(rows: LedgerDraft[]): void {
@@ -500,6 +607,7 @@ function assign_directions(rows: LedgerDraft[]): void {
       row.balance_micro,
       row.raw_type,
       row.description,
+      GO_PLUS_BALANCE_TOLERANCE_MICRO,
     );
     go_prev = row.balance_micro;
   }
@@ -517,7 +625,7 @@ function reconcile_go_plus(rows: LedgerDraft[]): void {
           ? running + row.amount_micro
           : running - row.amount_micro;
       const delta = row.balance_micro - expected;
-      if (Math.abs(delta) >= 100) {
+      if (Math.abs(delta) > GO_PLUS_BALANCE_TOLERANCE_MICRO) {
         const explained =
           row.review_reasons.length > 0 ||
           go_sorted.some(
@@ -590,7 +698,9 @@ export function parse_tng_wallet_statement(text: string): {
 
   const wallet = drafts.filter((r) => r.section === "wallet");
   const go = drafts.filter((r) => r.section === "go_plus");
-  const go_with_derived = inject_derived_go_plus_outflows(wallet, go);
+  const go_with_derived = order_go_plus_with_derived(
+    inject_derived_go_plus_outflows(wallet, go),
+  );
   const merged = [...wallet, ...go_with_derived];
   assign_directions(merged);
   reconcile_go_plus(merged);

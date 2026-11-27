@@ -8,11 +8,12 @@ import { validate_running_balance } from "@/lib/import/validate";
 const NOV1_SAME_DAY_FIXTURE = `
 TNG WALLET TRANSACTION HISTORY
 TNG WALLET TRANSACTION
-1/11/2026 Success Refund 9001 Store credit RM1.00 RM7.20
-1/11/2026 Success Payment 9002 QSR Stores RM1.00 RM6.20
-1/11/2026 Success Payment 9003 Merchant RM7.99 RM7.20
-1/11/2026 Success Reload 9004 Top up RM7.99 RM15.19
+1/11/2026 Success Reload 9004 Top up RM4.00 RM9.00
+1/11/2026 Success Payment 9003 Merchant RM4.00 RM5.00
+1/11/2026 Success Payment 9002 Sample Store RM2.00 RM3.00
+1/11/2026 Success Refund 9001 Store credit RM2.00 RM5.00
 `;
+// Statement lists each day oldest-first top-down (balances chain downwards).
 
 describe("tng_wallet same-day chronological order", () => {
   it("orders 1 Nov wallet rows oldest-first and validates running balance", () => {
@@ -22,16 +23,16 @@ describe("tng_wallet same-day chronological order", () => {
       .filter((r) => r.txn_at.startsWith("2026-11-01"));
 
     expect(wallet.map((r) => r.amount_major)).toEqual([
-      "7.99",
-      "7.99",
-      "1.00",
-      "1.00",
+      "4.00",
+      "4.00",
+      "2.00",
+      "2.00",
     ]);
     expect(wallet.map((r) => r.balance_after_major)).toEqual([
-      "15.19",
-      "7.20",
-      "6.20",
-      "7.20",
+      "9.00",
+      "5.00",
+      "3.00",
+      "5.00",
     ]);
     expect(wallet.map((r) => r.direction)).toEqual([
       "in",
