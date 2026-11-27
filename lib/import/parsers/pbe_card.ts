@@ -2,6 +2,8 @@ import {
   parse_amount_cell,
   row_money_from_direction,
 } from "@/lib/import/institutions/pbe_card/amount";
+import { parse_pbe_card_statement_header_date } from "@/lib/import/institutions/pbe_card/statement_date";
+import { parse_pbe_card_statement_line } from "@/lib/import/institutions/pbe_card/statement_line";
 import { pbe_savings_layout_score } from "@/lib/import/parsers/pbe_savings";
 import type { NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
@@ -59,23 +61,7 @@ function parse_dmy_with_year(
   return `${txn_year}-${month}-${day}`;
 }
 
-export function parse_pbe_statement_header_date(text: string): {
-  iso: string | null;
-  month: number | null;
-  year: number | null;
-} {
-  const match = text.match(
-    /Statement Date[\s\S]{0,120}?(\d{1,2})\s+([A-Z]{3})\s+(\d{4})/i,
-  );
-  if (!match) return { iso: null, month: null, year: null };
-  const day = match[1].padStart(2, "0");
-  const month_key = match[2].toUpperCase();
-  const year = Number.parseInt(match[3], 10);
-  const month = MONTH_TO_NUM[month_key];
-  if (!month || !Number.isFinite(year)) return { iso: null, month: null, year: null };
-  const iso = `${year}-${String(month).padStart(2, "0")}-${day}`;
-  return { iso, month, year };
-}
+export { parse_pbe_card_statement_header_date as parse_pbe_statement_header_date } from "@/lib/import/institutions/pbe_card/statement_date";
 
 export function parse_pbe_card_last4(text: string): string | null {
   const card_line = text.match(
@@ -93,7 +79,7 @@ export function pbe_card_account_ref_from_last4(last4: string): string | null {
 }
 
 export function extract_pbe_card_meta(text: string): PbeCardStatementMeta {
-  const { iso, month, year } = parse_pbe_statement_header_date(text);
+  const { iso, month, year } = parse_pbe_card_statement_header_date(text);
   const last4 = parse_pbe_card_last4(text);
   return {
     statement_date_iso: iso,
@@ -139,53 +125,7 @@ function parse_footer_amounts(text: string): Partial<PbeCardStatementMeta> {
   };
 }
 
-type ParsedLine =
-  | { kind: "opening"; posting: string; amount_major: string }
-  | {
-      kind: "txn";
-      posting: string;
-      txn_date: string;
-      description: string;
-      amount_major: string;
-      is_credit: boolean;
-    };
-
-function normalize_line_for_amount(line: string): string {
-  return line
-    .replace(/\s+CR\s*$/i, " CR")
-    .replace(/([\d,]+\.\d{2})\s+(CR)\s*$/i, "$1$2")
-    .trim();
-}
-
-function parse_transaction_line(line: string): ParsedLine | null {
-  const normalized = normalize_line_for_amount(line);
-  const amount_match = normalized.match(/([\d,]+\.\d{2})\s*(CR)?\s*$/i);
-  if (!amount_match) return null;
-  const is_credit = Boolean(amount_match[2]);
-  const amount_major = parse_amount_cell(amount_match[1]);
-  const left = normalized.slice(0, amount_match.index).trim();
-  if (/previous\s+balance/i.test(left)) {
-    const post = left.match(/^(\d{1,2}\s+[A-Za-z]{3})/i)?.[1];
-    if (!post) return null;
-    return { kind: "opening", posting: post, amount_major };
-  }
-  const head = left.match(
-    /^(\d{1,2}\s+[A-Za-z]{3})(?:\s+(\d{1,2}\s+[A-Za-z]{3}))?\s+(.+)$/i,
-  );
-  if (!head) return null;
-  const posting = head[1];
-  const txn_date = head[2] ?? head[1];
-  const description = collapse_spaces(head[3]);
-  if (!description) return null;
-  return {
-    kind: "txn",
-    posting,
-    txn_date,
-    description,
-    amount_major,
-    is_credit,
-  };
-}
+type ParsedLine = ReturnType<typeof parse_pbe_card_statement_line>;
 
 function is_grand_total_line(line: string): boolean {
   return /grand\s+total/i.test(line) && /(account|akaun)/i.test(line);
@@ -280,7 +220,7 @@ export function parse_pbe_card_statement(text: string): {
   section_found: boolean;
   parse_warning: string | null;
 } {
-  const header = parse_pbe_statement_header_date(text);
+  const header = parse_pbe_card_statement_header_date(text);
   const footer = parse_footer_amounts(text);
   const meta: PbeCardStatementMeta = {
     ...extract_pbe_card_meta(text),
@@ -300,7 +240,7 @@ export function parse_pbe_card_statement(text: string): {
   const lines = text.split(/\r?\n/);
   let in_section = false;
   let section_found = false;
-  const parsed: ParsedLine[] = [];
+  const parsed: NonNullable<ParsedLine>[] = [];
 
   for (const raw of lines) {
     const line = raw.replace(/\t/g, " ");
@@ -312,7 +252,7 @@ export function parse_pbe_card_statement(text: string): {
     if (!in_section) continue;
     if (is_grand_total_line(line)) break;
     if (is_noise_line(line)) continue;
-    const parsed_line = parse_transaction_line(line.trim());
+    const parsed_line = parse_pbe_card_statement_line(line);
     if (!parsed_line) continue;
     if (parsed_line.kind === "opening") {
       meta.opening_balance_major = parsed_line.amount_major;
