@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import type { DashboardMetrics, MonthKey } from "@/lib/dashboard/metrics";
 import { daily_spending_for_month } from "@/lib/dashboard/daily_spending";
 import { snapshot_for_month } from "@/lib/dashboard/metrics";
@@ -10,7 +11,8 @@ import { compute_spending_change } from "@/lib/spending_change";
 import { major_to_minor } from "@/lib/money";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { KpiCard } from "@/components/kpi_card";
-import { MonthSelect } from "@/components/month_select";
+import { useWorkspaceMonthOptions } from "@/components/workspace_toolbar_context";
+import { resolve_statement_month_from_query } from "@/lib/datetime/default_statement_month";
 import { DailySpendingChart } from "@/components/daily_spending_chart";
 import { SpendingBreakdownCard } from "@/components/spending_breakdown_card";
 import { DashboardAccountBalancesCard } from "@/components/dashboard_account_balances_card";
@@ -45,7 +47,21 @@ export function DashboardView({
   fd_summary: FixedDepositSummary;
   statements: AccountStatementFromDb[];
 }) {
-  const [month, set_month] = useState<MonthKey>(metrics.default_month);
+  const searchParams = useSearchParams();
+  const month_keys = useMemo(
+    () => metrics.months.map((m) => m.value),
+    [metrics.months],
+  );
+  const month = useMemo(
+    () =>
+      resolve_statement_month_from_query(
+        searchParams.get("month"),
+        month_keys,
+      ) as MonthKey,
+    [searchParams, month_keys],
+  );
+
+  useWorkspaceMonthOptions(metrics.months);
 
   const snapshot = snapshot_for_month(metrics, month);
   const month_index = metrics.monthly.findIndex((m) => m.month === month);
@@ -93,14 +109,6 @@ export function DashboardView({
             Cash in/out only · excludes FD and internal transfers · {month_label}
           </p>
         </div>
-        {metrics.months.length > 0 ? (
-          <MonthSelect
-            label="Dashboard month"
-            value={month}
-            options={metrics.months}
-            onChange={(v) => set_month(v)}
-          />
-        ) : null}
       </header>
 
       {metrics.monthly.length > 0 ? (

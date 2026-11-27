@@ -4,13 +4,12 @@ import { useMemo } from "react";
 import type { AccountStatementFromDb } from "@/lib/supabase/types";
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
-import { mbb_2_gold_combined_href } from "@/lib/credit_cards/mbb_2_gold_routes";
 import { mbb_2_gold_card_breakdown } from "@/lib/credit_cards/mbb_2_gold_breakdown";
 import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
 import { overview_includes_fd_slice } from "@/lib/wallets/overview";
-import { MonthSelect } from "@/components/month_select";
 import { Mbb2GoldCardBreakdownTable } from "@/components/mbb_2_gold_card_breakdown_table";
+import { useWorkspaceMonthOptions } from "@/components/workspace_toolbar_context";
 
 export function Mbb2GoldCombinedSummaryView({
   combined,
@@ -22,7 +21,8 @@ export function Mbb2GoldCombinedSummaryView({
   amex: AccountStatementFromDb;
 }) {
   const labels = statement_kpi_labels("mbb_2_gold_combined");
-  const { month, set_month, month_options } = useStatementMonth(combined.rows);
+  const { month, month_options } = useStatementMonth(combined.rows);
+  useWorkspaceMonthOptions(month_options);
 
   const month_label =
     month_options.find((o) => o.value === month)?.label ?? month;
@@ -49,19 +49,7 @@ export function Mbb2GoldCombinedSummaryView({
 
   return (
     <div>
-      <AccountPageHeader
-        title="Summary"
-        view_base_path={mbb_2_gold_combined_href()}
-        active_view="summary"
-        controls={
-          <MonthSelect
-            label="Statement month"
-            value={month}
-            options={month_options}
-            onChange={(v) => set_month(v as typeof month)}
-          />
-        }
-      />
+      <AccountPageHeader title="Summary" />
       <CashFlowSummary
         rows={combined.rows}
         month={month}

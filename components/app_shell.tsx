@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { Menu } from "lucide-react";
 import { MOBILE_DRAWER_ID, Sidebar } from "@/components/sidebar";
+import { WorkspaceHeaderControls } from "@/components/workspace_header_controls";
 import { WorkspaceProfileMenu } from "@/components/workspace_profile_menu";
+import { WorkspaceToolbarProvider } from "@/components/workspace_toolbar_context";
 import { APP_VERSION } from "@/lib/app_version";
 import { format_last_updated_footer } from "@/lib/last_updated";
 
@@ -27,10 +29,11 @@ export function AppShell({
     : null;
 
   return (
+    <WorkspaceToolbarProvider>
     <div className="shell flex h-screen min-h-screen min-w-0 overflow-hidden">
       <Sidebar mobile_open={mobile_nav} on_close={close_nav} />
       <div className="workspace flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
-        <header className="topbar flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-zyfn-line bg-white px-4 lg:px-8">
+        <header className="topbar flex min-h-16 shrink-0 flex-col gap-2 border-b border-zyfn-line bg-white px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:px-8 lg:py-0">
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <button
               type="button"
@@ -46,7 +49,12 @@ export function AppShell({
               {title}
             </h1>
           </div>
-          <WorkspaceProfileMenu />
+          <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-3 lg:w-auto">
+            <Suspense fallback={null}>
+              <WorkspaceHeaderControls />
+            </Suspense>
+            <WorkspaceProfileMenu />
+          </div>
         </header>
         <main
           className={`content mx-auto flex w-full min-w-0 max-w-[1560px] flex-1 flex-col ${
@@ -65,5 +73,6 @@ export function AppShell({
         </footer>
       </div>
     </div>
+    </WorkspaceToolbarProvider>
   );
 }

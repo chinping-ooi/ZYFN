@@ -8,9 +8,9 @@ import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { useShowGoPlus } from "@/lib/hooks/use_show_go_plus";
 import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
-import { MonthSelect } from "@/components/month_select";
 import { ShowGoPlusCheckbox } from "@/components/show_go_plus_checkbox";
 import { WalletPageControls } from "@/components/wallet_page_controls";
+import { useWorkspaceMonthOptions } from "@/components/workspace_toolbar_context";
 import { overview_includes_fd_slice } from "@/lib/wallets/overview";
 
 export function TngCombinedSummaryView({
@@ -24,7 +24,8 @@ export function TngCombinedSummaryView({
   view_base_path?: string;
   wallet_toggle?: boolean;
 }) {
-  const base_path = view_base_path ?? `/transactions/${account_slug}`;
+  void view_base_path;
+  void account_slug;
   const labels = statement_kpi_labels(data.account_kind);
   const { show_go_plus, set_show_go_plus } = useShowGoPlus();
   const include_go_plus = wallet_toggle ? true : show_go_plus;
@@ -34,32 +35,21 @@ export function TngCombinedSummaryView({
     [data.rows, include_go_plus],
   );
 
-  const { month, set_month, month_options } = useStatementMonth(visible_rows);
+  const { month, month_options } = useStatementMonth(visible_rows);
+  useWorkspaceMonthOptions(month_options);
 
   return (
     <div className="min-h-0">
       <AccountPageHeader
         title="Summary"
-        view_base_path={base_path}
-        active_view="summary"
         controls={
           wallet_toggle ? (
-            <WalletPageControls
-              month={month}
-              month_options={month_options}
-              on_month_change={(v) => set_month(v as typeof month)}
-            />
+            <WalletPageControls />
           ) : (
             <div className="flex flex-wrap items-center justify-end gap-3">
               <ShowGoPlusCheckbox
                 checked={show_go_plus}
                 onChange={set_show_go_plus}
-              />
-              <MonthSelect
-                label="Statement month"
-                value={month}
-                options={month_options}
-                onChange={(v) => set_month(v as typeof month)}
               />
             </div>
           )

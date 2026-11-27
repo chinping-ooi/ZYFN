@@ -6,8 +6,8 @@ import { build_transaction_statement } from "@/lib/supabase/transaction_statemen
 import { useStatementMonth } from "@/lib/hooks/use_statement_month";
 import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { KpiCard } from "@/components/kpi_card";
-import { MonthSelect } from "@/components/month_select";
 import { WalletPageControls } from "@/components/wallet_page_controls";
+import { useWorkspaceMonthOptions } from "@/components/workspace_toolbar_context";
 import { TransactionDataTable } from "@/components/data_table/transaction_data_table";
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
 import { AccountPageHeader } from "@/components/account_page_header";
@@ -15,18 +15,18 @@ import { AccountTableCard } from "@/components/account_table_card";
 
 export function TransactionStatementView({
   data,
-  view_base_path,
   wallet_toggle = false,
 }: {
   data: AccountStatementFromDb;
-  view_base_path: string;
+  view_base_path?: string;
   wallet_toggle?: boolean;
 }) {
   const labels = statement_kpi_labels(data.account_kind);
   const use_micro = data.amount_scale === "micro";
   const money_dp = use_micro ? 4 : 2;
 
-  const { month, set_month, month_options } = useStatementMonth(data.rows);
+  const { month, month_options } = useStatementMonth(data.rows);
+  useWorkspaceMonthOptions(month_options);
 
   const statement = useMemo(
     () =>
@@ -48,24 +48,7 @@ export function TransactionStatementView({
       <div className="shrink-0">
         <AccountPageHeader
           title="Account statement"
-          view_base_path={view_base_path}
-          active_view="statement"
-          controls={
-            wallet_toggle ? (
-              <WalletPageControls
-                month={month}
-                month_options={month_options}
-                on_month_change={(v) => set_month(v as typeof month)}
-              />
-            ) : (
-              <MonthSelect
-                label="Statement month"
-                value={month}
-                options={month_options}
-                onChange={(v) => set_month(v as typeof month)}
-              />
-            )
-          }
+          controls={wallet_toggle ? <WalletPageControls /> : undefined}
         />
 
         <section

@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { AppShell } from "@/components/app_shell";
+import { DashboardLoadingContent } from "@/components/skeletons/dashboard_loading_content";
 import { DashboardView } from "@/components/dashboard_view";
 import { SupabaseStatusPanel } from "@/components/supabase_status_panel";
 import { load_dashboard } from "@/lib/dashboard/load_dashboard";
@@ -27,11 +29,13 @@ export default async function DashboardPage() {
       last_updated={last_updated}
     >
       {result.kind === "data" ? (
-        <DashboardView
-          metrics={result.metrics}
-          fd_summary={fd_summary}
-          statements={result.statements}
-        />
+        <Suspense fallback={<DashboardLoadingContent />}>
+          <DashboardView
+            metrics={result.metrics}
+            fd_summary={fd_summary}
+            statements={result.statements}
+          />
+        </Suspense>
       ) : (
         <SupabaseStatusPanel result={result} />
       )}

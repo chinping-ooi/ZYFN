@@ -6,17 +6,15 @@ import { statement_kpi_labels } from "@/lib/transactions/account_config";
 import { overview_includes_fd_slice } from "@/lib/wallets/overview";
 import { AccountPageHeader } from "@/components/account_page_header";
 import { CashFlowSummary } from "@/components/cash_flow_summary";
-import { MonthSelect } from "@/components/month_select";
 import { WalletPageControls } from "@/components/wallet_page_controls";
+import { useWorkspaceMonthOptions } from "@/components/workspace_toolbar_context";
 
 export function TransactionSummaryView({
   data,
-  view_base_path,
-  hide_view_toggle = false,
   wallet_toggle = false,
 }: {
   data: AccountStatementFromDb;
-  view_base_path: string;
+  view_base_path?: string;
   hide_view_toggle?: boolean;
   wallet_toggle?: boolean;
 }) {
@@ -24,31 +22,14 @@ export function TransactionSummaryView({
   const use_micro = data.amount_scale === "micro";
   const money_dp = use_micro ? 4 : 2;
 
-  const { month, set_month, month_options } = useStatementMonth(data.rows);
+  const { month, month_options } = useStatementMonth(data.rows);
+  useWorkspaceMonthOptions(month_options);
 
   return (
     <div className="min-h-0">
       <AccountPageHeader
         title="Summary"
-        view_base_path={view_base_path}
-        hide_view_toggle={hide_view_toggle}
-        active_view="summary"
-        controls={
-          wallet_toggle ? (
-            <WalletPageControls
-              month={month}
-              month_options={month_options}
-              on_month_change={(v) => set_month(v as typeof month)}
-            />
-          ) : (
-            <MonthSelect
-              label="Statement month"
-              value={month}
-              options={month_options}
-              onChange={(v) => set_month(v as typeof month)}
-            />
-          )
-        }
+        controls={wallet_toggle ? <WalletPageControls /> : undefined}
       />
       <CashFlowSummary
         rows={data.rows}

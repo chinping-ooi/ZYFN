@@ -17,7 +17,7 @@ import { useFixedDepositMonth } from "@/lib/hooks/use_fixed_deposit_month";
 import { PageToolbar } from "@/components/page_toolbar";
 import { AccountTableCard } from "@/components/account_table_card";
 import { FixedDepositBankToggle } from "@/components/fixed_deposit_bank_toggle";
-import { MonthSelect } from "@/components/month_select";
+import { useWorkspaceMonthOptions } from "@/components/workspace_toolbar_context";
 
 function filter_rows_by_bank_slug(
   rows: FixedDepositLoadResult["rows"],
@@ -39,7 +39,8 @@ export function FixedDepositPageView({
   const bank_code = bank_slug ? slug_to_bank_code(bank_slug) : null;
 
   const bank_rows = filter_rows_by_bank_slug(load.rows, bank_slug);
-  const { month, set_month, month_options } = useFixedDepositMonth(bank_rows);
+  const { month, month_options } = useFixedDepositMonth(bank_rows);
+  useWorkspaceMonthOptions(month_options);
   const visible_rows = filter_fixed_deposits_by_month(bank_rows, month);
   const summary = summarize_fixed_deposits(visible_rows);
   const table_rows = to_table_rows(visible_rows) as FixedDepositDataRow[];
@@ -76,15 +77,7 @@ export function FixedDepositPageView({
         title={title}
         subtitle={subtitle}
         controls={
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <FixedDepositBankToggle bank_codes={load.bank_codes} />
-            <MonthSelect
-              label="Statement month"
-              value={month}
-              options={month_options}
-              onChange={(v) => set_month(v as typeof month)}
-            />
-          </div>
+          <FixedDepositBankToggle bank_codes={load.bank_codes} />
         }
       />
 
