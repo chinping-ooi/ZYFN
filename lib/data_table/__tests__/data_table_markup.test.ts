@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { DataTable } from "@/components/data_table/data_table";
 import { transaction_columns } from "@/components/data_table/transaction_columns";
 import type { TransactionTableRow } from "@/components/data_table/transaction_columns";
+import { fixed_deposit_columns } from "@/components/data_table/fixed_deposit_columns";
+import type { FixedDepositDataRow } from "@/components/data_table/fixed_deposit_columns";
 
 function count_tag(html: string, tag: string): number {
   return [...html.matchAll(new RegExp(`<${tag}\\b`, "gi"))].length;
@@ -65,10 +67,48 @@ describe("DataTable ledger markup", () => {
       }),
     );
     expect(html).toMatch(/overflow-x-auto/);
-    expect(html).toMatch(/overflow-y-clip/);
+    expect(html).toMatch(/overflow-y-hidden/);
     expect(html).not.toMatch(/max-h-\[/);
     expect(html).not.toMatch(/overflow-y-auto/);
     expect(html).not.toMatch(/sticky top-0/);
+  });
+
+  it("fixed deposit: one th per column, table-auto, no colgroup", () => {
+    const columns = fixed_deposit_columns(false);
+    const row: FixedDepositDataRow = {
+      id: 1,
+      account_id: 1,
+      bank_code: "PBE",
+      bank_label: "Public Bank",
+      receipt_no: "FD-001",
+      principal_major: 10_000,
+      interest_rate: 3.25,
+      start_date: "2026-01-01",
+      maturity_date: "2026-07-01",
+      interest_earned_major: null,
+      status: 0,
+      principal_sen: 1_000_000,
+      interest_earned_sen: null,
+      status_label: "Active",
+      days_left: 120,
+    };
+    const html = renderToStaticMarkup(
+      createElement(DataTable<FixedDepositDataRow>, {
+        label: "FD test",
+        scope: "fd-test",
+        columns,
+        rows: [row],
+        inset: false,
+        table_layout: "auto",
+      }),
+    );
+    const thead = html.match(/<thead[\s\S]*?<\/thead>/)?.[0] ?? "";
+    const th_count = (thead.match(/<th\b/g) ?? []).length;
+    expect(th_count).toBe(columns.length);
+    expect(html).toMatch(/table-auto/);
+    expect(html).not.toMatch(/<colgroup/);
+    expect(thead).toContain("Rate");
+    expect(thead).toContain("Receipt no.");
   });
 
   it("description cells do not nest an extra table cell", () => {

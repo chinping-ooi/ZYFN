@@ -48,7 +48,7 @@ export function Mbb2GoldCombinedSummaryView({
   );
 
   return (
-    <div className="min-h-0">
+    <div>
       <AccountPageHeader
         title="Summary"
         view_base_path={mbb_2_gold_combined_href()}

@@ -202,7 +202,7 @@ export function DataTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <div className="flex w-full min-h-0 flex-col">
+    <div className="flex w-full flex-col">
       {!toolbar_in_header ? (
         <div className={`data-table-toolbar shrink-0 pt-4 pb-3 ${body_pad}`}>
           {toolbar}
@@ -217,11 +217,16 @@ export function DataTable<T extends Record<string, unknown>>({
           }`}
           aria-label={label}
         >
-          <colgroup>
-            {labeled_columns.map((column) => (
-              <col key={column.key} className={column_header_class(column)} />
-            ))}
-          </colgroup>
+          {table_layout === "fixed" ? (
+            <colgroup>
+              {labeled_columns.map((column) => (
+                <col
+                  key={column.key}
+                  className={column_header_class(column)}
+                />
+              ))}
+            </colgroup>
+          ) : null}
           <thead>
             <tr>
               {labeled_columns.map((column) => {
@@ -291,7 +296,9 @@ export function DataTable<T extends Record<string, unknown>>({
                         numeric ? "text-right" : "text-left"
                       } ${column_cell_class(column)}`}
                     >
-                      {column.type === "status" ? (
+                      {column.render_cell ? (
+                        column.render_cell(row)
+                      ) : column.type === "status" ? (
                         <StatusBadge status={String(raw)} />
                       ) : column.key === "description" ? (
                         <div className="flex flex-wrap items-start gap-1.5">

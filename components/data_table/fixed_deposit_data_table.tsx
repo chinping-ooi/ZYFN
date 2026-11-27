@@ -36,6 +36,7 @@ export function FixedDepositDataTable({
       loading={loading}
       skeleton_variant="fixed_deposit"
       skeleton_show_bank={show_bank}
+      table_layout="auto"
     />
   );
 }

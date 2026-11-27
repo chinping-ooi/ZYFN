@@ -33,6 +33,7 @@ const BASE_COLUMNS: DataTableColumn<FixedDepositDataRow>[] = [
   {
     key: "days_left",
     label: "Days left",
+    type: "text",
   },
   {
     key: "interest_earned_sen",

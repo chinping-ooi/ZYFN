@@ -27,6 +27,8 @@ export function column_header_class<T>(
     parts.push("w-[4.5rem] max-w-[4.5rem]");
   } else if (column.key === "receipt_no") {
     parts.push("w-[8.5rem] max-w-[8.5rem]");
+  } else if (column.key === "interest_rate") {
+    parts.push("w-[4.5rem] min-w-[4.5rem] whitespace-nowrap");
   } else if (column.key === "principal_sen") {
     parts.push("w-[7.25rem] max-w-[7.25rem]");
   } else if (column.key === "interest_earned_sen") {

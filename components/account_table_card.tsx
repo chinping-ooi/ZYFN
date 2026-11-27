@@ -21,11 +21,9 @@ export function AccountTableCard({
   skeleton_show_bank?: boolean;
 }) {
   return (
-    <section
-      className="statement-table card flex min-h-0 flex-col rounded-[3px] border border-zyfn-line bg-white"
-    >
+    <section className="statement-table card flex w-full flex-col rounded-[3px] border border-zyfn-line bg-white">
       <CardHead title={title} table_shell align="center" />
-      <div className="flex min-h-0 flex-col px-5 pb-4">
+      <div className="flex w-full flex-col px-5 pb-4">
         {loading ? (
           <DataTableSkeleton
             variant={skeleton_variant}

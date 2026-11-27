@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type ColumnType =
   | "text"
   | "money"
@@ -22,6 +24,8 @@ export type DataTableColumn<T> = {
   account_key?: keyof T & string;
   /** When true, render even if `label` is empty (e.g. icon-only actions). */
   allow_blank_header?: boolean;
+  /** Optional custom cell body (export still uses display_cell). */
+  render_cell?: (row: T) => ReactNode;
 };
 
 export type SortDirection = "ascending" | "descending";

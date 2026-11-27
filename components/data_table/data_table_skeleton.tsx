@@ -53,7 +53,7 @@ export function DataTableSkeleton({
 
   return (
     <div
-      className="flex w-full min-h-0 flex-col"
+      className="flex w-full flex-col"
       role="status"
       aria-label="Loading table"
     >
