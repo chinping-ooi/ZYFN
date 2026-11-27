@@ -4,6 +4,8 @@ import {
   combined_tng_closing_sen,
   merge_tng_statement_rows,
 } from "@/lib/tng/combined_statement";
+import { partition_tng_source_rows } from "@/lib/tng/pocket";
+import { pocket_closing_latest } from "@/lib/supabase/transaction_statement";
 import { load_account_transactions } from "@/lib/supabase/load_account_transactions";
 import { is_account_statement_data } from "@/lib/supabase/account_statement_guards";
 import type { AccountStatementResult } from "@/lib/supabase/types";
@@ -49,9 +51,31 @@ async function load_tng_combined_transactions_impl(): Promise<AccountStatementRe
     };
   }
 
-  const wallet_rows =
-    wallet.kind === "data" ? wallet.rows : [];
-  const go_rows = go_plus.kind === "data" ? go_plus.rows : [];
+  let wallet_rows = wallet.kind === "data" ? wallet.rows : [];
+  let go_rows = go_plus.kind === "data" ? go_plus.rows : [];
+
+  if (go_rows.length === 0 && wallet_rows.length > 0) {
+    ({ wallet_rows, go_plus_rows: go_rows } =
+      partition_tng_source_rows(wallet_rows));
+  } else if (wallet_rows.length === 0 && go_rows.length > 0) {
+    ({ wallet_rows, go_plus_rows: go_rows } =
+      partition_tng_source_rows(go_rows));
+  } else if (wallet_rows.length === 0 && go_rows.length === 0) {
+    const single = await load_account_transactions(
+      "TNG",
+      "Touch 'n Go",
+      "tng_combined",
+      null,
+      "TNG",
+      { allow_empty: true },
+    );
+    if (single.kind === "data" && single.rows.length > 0) {
+      ({ wallet_rows, go_plus_rows: go_rows } = partition_tng_source_rows(
+        single.rows,
+      ));
+    }
+  }
+
   const rows = merge_tng_statement_rows(wallet_rows, go_rows);
 
   if (rows.length === 0) {
@@ -65,10 +89,8 @@ async function load_tng_combined_transactions_impl(): Promise<AccountStatementRe
   }
 
   const closing_sen = combined_tng_closing_sen(wallet_rows, go_rows);
-  const wallet_closing_micro = wallet_rows[0]?.balance_sen
-    ? wallet_rows[0].balance_sen * 100
-    : 0;
-  const go_closing_micro = go_rows[0]?.balance_micro ?? 0;
+  const wallet_closing = pocket_closing_latest(wallet_rows);
+  const go_closing = pocket_closing_latest(go_rows);
 
   return {
     kind: "data",
@@ -83,7 +105,7 @@ async function load_tng_combined_transactions_impl(): Promise<AccountStatementRe
     closing_sen,
     total_in_micro: rows.reduce((t, row) => t + row.in_micro, 0),
     total_out_micro: rows.reduce((t, row) => t + row.out_micro, 0),
-    closing_micro: wallet_closing_micro + go_closing_micro,
+    closing_micro: wallet_closing.closing_micro + go_closing.closing_micro,
     row_count: rows.length,
   };
 }

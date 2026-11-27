@@ -1,5 +1,6 @@
 import { decimal_myr_to_micro } from "@/lib/supabase/decimal_to_micro";
 import { decimal_myr_to_sen } from "@/lib/supabase/decimal_to_sen";
+import { micro_to_sen_display } from "@/lib/tng/money_micro";
 import type { TransactionAccountKind } from "@/lib/transactions/account_config";
 import type { MinorAmount } from "@/lib/money";
 import type { MicroAmount } from "@/lib/tng/money_micro";
@@ -39,7 +40,13 @@ export type ZyfnTransactionRow = {
 };
 
 function amount_scale_for_kind(kind: TransactionAccountKind): AmountScale {
-  if (kind === "tng_go_plus" || kind === "tng_combined") return "micro";
+  if (
+    kind === "tng_wallet" ||
+    kind === "tng_go_plus" ||
+    kind === "tng_combined"
+  ) {
+    return "micro";
+  }
   return "sen";
 }
 
@@ -48,14 +55,18 @@ export function map_transaction_row(
   kind: TransactionAccountKind,
 ): TransactionDbRow {
   const scale = amount_scale_for_kind(kind);
-  const amount_sen =
-    scale === "sen" ? decimal_myr_to_sen(row.amount) : 0;
-  const balance_sen =
-    scale === "sen" ? decimal_myr_to_sen(row.balance_after) : 0;
   const amount_micro =
     scale === "micro" ? decimal_myr_to_micro(row.amount) : 0;
   const balance_micro =
     scale === "micro" ? decimal_myr_to_micro(row.balance_after) : 0;
+  const amount_sen =
+    scale === "sen"
+      ? decimal_myr_to_sen(row.amount)
+      : micro_to_sen_display(amount_micro);
+  const balance_sen =
+    scale === "sen"
+      ? decimal_myr_to_sen(row.balance_after)
+      : micro_to_sen_display(balance_micro);
 
   const in_sen = row.direction === "in" ? amount_sen : 0;
   const out_sen = row.direction === "out" ? amount_sen : 0;

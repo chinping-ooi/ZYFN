@@ -32,6 +32,59 @@ export function transaction_month_options(rows: TransactionDbRow[]) {
   ];
 }
 
+function month_key_lte(row_month: string, through_month: string): boolean {
+  return row_month.localeCompare(through_month) <= 0;
+}
+
+function newest_row(rows: TransactionDbRow[]): TransactionDbRow | undefined {
+  if (rows.length === 0) return undefined;
+  return [...rows].sort((a, b) => {
+    const by_date = b.date.localeCompare(a.date);
+    if (by_date !== 0) return by_date;
+    return b.sort_id - a.sort_id;
+  })[0];
+}
+
+function row_closing_amounts(row: TransactionDbRow): {
+  closing_sen: MinorAmount;
+  closing_micro: MicroAmount;
+} {
+  const closing_micro =
+    row.balance_micro !== 0
+      ? row.balance_micro
+      : row.balance_sen * 100;
+  const closing_sen =
+    row.balance_sen !== 0
+      ? row.balance_sen
+      : Math.round(row.balance_micro / 100);
+  return { closing_sen, closing_micro };
+}
+
+/** Latest balance at or before the end of `through_month`; zero if none. */
+export function pocket_closing_as_of_month(
+  rows: TransactionDbRow[],
+  through_month: string,
+): { closing_sen: MinorAmount; closing_micro: MicroAmount } {
+  const eligible = rows.filter((row) =>
+    month_key_lte(kl_month_key(row.date), through_month),
+  );
+  const row = newest_row(eligible);
+  if (!row) {
+    return { closing_sen: 0, closing_micro: 0 };
+  }
+  return row_closing_amounts(row);
+}
+
+export function pocket_closing_latest(
+  rows: TransactionDbRow[],
+): { closing_sen: MinorAmount; closing_micro: MicroAmount } {
+  const row = rows[0];
+  if (!row) {
+    return { closing_sen: 0, closing_micro: 0 };
+  }
+  return row_closing_amounts(row);
+}
+
 function kl_date_label(iso: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",

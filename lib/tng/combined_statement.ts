@@ -1,9 +1,28 @@
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
-import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
+import {
+  pocket_closing_as_of_month,
+  pocket_closing_latest,
+} from "@/lib/supabase/transaction_statement";
 import type { MinorAmount } from "@/lib/money";
 import { micro_to_sen_display, type MicroAmount } from "@/lib/tng/money_micro";
+import { tng_balance_pocket } from "@/lib/tng/pocket";
 
 const MICRO_PER_SEN = 100;
+
+function row_micro_from_parts(
+  row: TransactionDbRow,
+  field: "in" | "out" | "balance",
+): MicroAmount {
+  if (field === "in") {
+    return row.in_micro !== 0 ? row.in_micro : row.in_sen * MICRO_PER_SEN;
+  }
+  if (field === "out") {
+    return row.out_micro !== 0 ? row.out_micro : row.out_sen * MICRO_PER_SEN;
+  }
+  return row.balance_micro !== 0
+    ? row.balance_micro
+    : row.balance_sen * MICRO_PER_SEN;
+}
 
 export function wallet_row_to_combined_view(
   row: TransactionDbRow,
@@ -11,9 +30,9 @@ export function wallet_row_to_combined_view(
   return {
     ...row,
     tng_sub_account: "wallet",
-    in_micro: row.in_sen * MICRO_PER_SEN,
-    out_micro: row.out_sen * MICRO_PER_SEN,
-    balance_micro: row.balance_sen * MICRO_PER_SEN,
+    in_micro: row_micro_from_parts(row, "in"),
+    out_micro: row_micro_from_parts(row, "out"),
+    balance_micro: row_micro_from_parts(row, "balance"),
   };
 }
 
@@ -58,9 +77,9 @@ export function combined_tng_closing_sen(
   wallet_rows: TransactionDbRow[],
   go_plus_rows: TransactionDbRow[],
 ): MinorAmount {
-  const wallet_closing = wallet_rows[0]?.balance_sen ?? 0;
-  const go_closing = go_plus_rows[0]?.balance_micro ?? 0;
-  return wallet_closing + micro_to_sen_display(go_closing);
+  const wallet = pocket_closing_latest(wallet_rows);
+  const go = pocket_closing_latest(go_plus_rows);
+  return wallet.closing_sen + micro_to_sen_display(go.closing_micro);
 }
 
 function split_tng_combined_rows(merged_rows: TransactionDbRow[]): {
@@ -68,8 +87,12 @@ function split_tng_combined_rows(merged_rows: TransactionDbRow[]): {
   go_plus_rows: TransactionDbRow[];
 } {
   return {
-    wallet_rows: merged_rows.filter((r) => r.tng_sub_account === "wallet"),
-    go_plus_rows: merged_rows.filter((r) => r.tng_sub_account === "go_plus"),
+    wallet_rows: merged_rows.filter(
+      (r) => tng_balance_pocket(r) === "wallet",
+    ),
+    go_plus_rows: merged_rows.filter(
+      (r) => tng_balance_pocket(r) === "go_plus",
+    ),
   };
 }
 
@@ -80,6 +103,8 @@ export function combined_tng_closing_for_statement(
   closing_sen_full: MinorAmount,
   closing_micro_full: MicroAmount,
 ): { closing_sen: MinorAmount; closing_micro: MicroAmount } {
+  const { wallet_rows, go_plus_rows } = split_tng_combined_rows(merged_rows);
+
   if (month === "all") {
     return {
       closing_sen: closing_sen_full,
@@ -87,28 +112,11 @@ export function combined_tng_closing_for_statement(
     };
   }
 
-  const { wallet_rows, go_plus_rows } = split_tng_combined_rows(merged_rows);
-  const wallet_full_sen = wallet_rows[0]?.balance_sen ?? 0;
-  const wallet_full_micro =
-    wallet_rows[0]?.balance_micro ?? wallet_full_sen * MICRO_PER_SEN;
-  const go_full_micro = go_plus_rows[0]?.balance_micro ?? 0;
-
-  const wallet_slice = build_transaction_statement(
-    wallet_rows,
-    month,
-    wallet_full_sen,
-    wallet_full_micro,
-  );
-  const go_slice = build_transaction_statement(
-    go_plus_rows,
-    month,
-    0,
-    go_full_micro,
-  );
+  const wallet = pocket_closing_as_of_month(wallet_rows, month);
+  const go = pocket_closing_as_of_month(go_plus_rows, month);
 
   return {
-    closing_sen:
-      wallet_slice.closing_sen + micro_to_sen_display(go_slice.closing_micro),
-    closing_micro: wallet_slice.closing_micro + go_slice.closing_micro,
+    closing_sen: wallet.closing_sen + micro_to_sen_display(go.closing_micro),
+    closing_micro: wallet.closing_micro + go.closing_micro,
   };
 }

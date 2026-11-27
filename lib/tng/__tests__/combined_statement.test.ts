@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { TransactionDbRow } from "@/lib/supabase/transaction_rows";
-import { build_transaction_statement } from "@/lib/supabase/transaction_statement";
 import {
   combined_tng_closing_for_statement,
   combined_tng_closing_sen,
@@ -101,7 +100,7 @@ describe("filter_tng_rows_for_go_plus_visibility", () => {
 });
 
 describe("combined_tng_closing_for_statement", () => {
-  it("sums per-pocket month-end balances instead of merged newest row only", () => {
+  it("sums per-pocket month-end balances (not the newest merged row only)", () => {
     const wallet = [
       row({
         date: "2025-10-15T00:00:00.000Z",
@@ -124,19 +123,20 @@ describe("combined_tng_closing_for_statement", () => {
         sort_id: 4,
         tng_sub_account: "go_plus",
         balance_micro: 50_000,
+        balance_sen: 500,
       }),
       row({
         date: "2025-10-05T00:00:00.000Z",
         sort_id: 3,
         tng_sub_account: "go_plus",
         balance_micro: 40_000,
+        balance_sen: 400,
       }),
     ];
     const merged = merge_tng_statement_rows(wallet, go);
     const full_sen = combined_tng_closing_sen(wallet, go);
     const full_micro = 100_000 + 50_000;
 
-    const wrong = build_transaction_statement(merged, "2025-10", full_sen, full_micro);
     const fixed = combined_tng_closing_for_statement(
       merged,
       "2025-10",
@@ -144,8 +144,6 @@ describe("combined_tng_closing_for_statement", () => {
       full_micro,
     );
 
-    expect(wrong.closing_sen).toBe(0);
-    expect(wrong.closing_micro).toBe(50_000);
     expect(fixed.closing_sen).toBe(1_000 + 500);
     expect(fixed.closing_micro).toBe(100_000 + 50_000);
   });
