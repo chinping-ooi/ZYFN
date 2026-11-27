@@ -30,11 +30,15 @@ const WorkspaceToolbarContext = createContext<WorkspaceToolbarContextValue | nul
 
 export function WorkspaceToolbarProvider({ children }: { children: ReactNode }) {
   const [month_options, set_month_options] = useState<MonthOption[]>([]);
-  const [account_view, set_account_view_state] = useState<AccountViewMode>(() =>
-    typeof window !== "undefined" ? read_account_view_preference() : "summary",
-  );
+  const [account_view, set_account_view_state] =
+    useState<AccountViewMode>("summary");
 
   useEffect(() => {
+    const stored = read_account_view_preference();
+    queueMicrotask(() => {
+      set_account_view_state(stored);
+    });
+
     const on_change = () => {
       set_account_view_state(read_account_view_preference());
     };
