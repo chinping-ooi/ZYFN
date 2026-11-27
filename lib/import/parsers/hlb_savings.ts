@@ -259,7 +259,9 @@ function resolve_txn_amount(
 
 function amount_hits(line: string): Array<{ start: number; major: string }> {
   const hits: Array<{ start: number; major: string }> = [];
-  for (const match of line.matchAll(/([\d,]+\.\d{2})/g)) {
+  // Money cells only: not part of a longer number and not a percentage
+  // (footer notices print rates like "N.NN% p.a." which are not amounts).
+  for (const match of line.matchAll(/(?<![\d.,])([\d,]+\.\d{2})(?![\d%])/g)) {
     if (match.index == null) continue;
     hits.push({ start: match.index, major: parse_amount_cell(match[1]) });
   }
@@ -307,6 +309,15 @@ function is_noise_line(line: string): boolean {
   }
   if (/HIGHLIGHTS/i.test(upper) && !/\d{2}-\d{2}-\d{4}/.test(trimmed)) return true;
   return false;
+}
+
+function is_ledger_footer_start(line: string): boolean {
+  const trimmed = line.trim();
+  return (
+    /^Total Withdrawals|^Jumlah Pengeluaran/i.test(trimmed) ||
+    /^Total Deposits|^Jumlah Simpanan/i.test(trimmed) ||
+    /^Important Notices|^Notis Penting/i.test(trimmed)
+  );
 }
 
 function headline_suggests_out(headline: string): boolean {
@@ -527,13 +538,25 @@ export function parse_hlb_savings_statement(text: string): {
     open_draft = null;
   };
 
+  // The statement summary ("Total Withdrawals / Total Deposits") and the
+  // "Important Notices" block close the ledger. Undated lines there must not
+  // inherit the last transaction date, become rows, or be appended as detail.
+  // A new column header (next page) re-opens the ledger.
+  let in_footer = false;
   for (const line of lines) {
     if (!line.trim()) continue;
     const cols = detect_columns(line);
     if (cols) {
       page_columns = cols;
+      in_footer = false;
       continue;
     }
+    if (is_ledger_footer_start(line)) {
+      flush_open();
+      in_footer = true;
+      continue;
+    }
+    if (in_footer) continue;
     if (is_noise_line(line)) continue;
 
     if (/Balance[\s\S]{0,30}?from[\s\S]{0,20}?previous statement/i.test(line)) {
