@@ -3,6 +3,10 @@ import {
   parse_amount_cell,
   row_money_from_direction,
 } from "@/lib/import/institutions/pbe_savings/amount";
+import {
+  is_continuation_line,
+  split_pbe_savings_statement_line,
+} from "@/lib/import/institutions/pbe_savings/statement_line";
 import type { ImportParsedAccount, NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 
@@ -199,51 +203,6 @@ function is_noise_line(line: string): boolean {
   return false;
 }
 
-function trailing_amounts_raw(line: string): string[] {
-  const found: string[] = [];
-  let rest = line.trim();
-  while (true) {
-    const match = rest.match(/([\d,]+\.\d{2})\s*$/);
-    if (!match || match.index == null) break;
-    found.unshift(match[1]);
-    rest = rest.slice(0, match.index).trimEnd();
-  }
-  return found;
-}
-
-type SplitLine = {
-  entry_date: string | null;
-  description: string;
-  txn_amount_major: string;
-  balance_major: string;
-};
-
-function split_transaction_line(line: string): SplitLine | null {
-  const date_match = line.match(/^(\d{1,2}\/\d{1,2})\s+(.*)$/);
-  const entry_date = date_match?.[1] ?? null;
-  const body = date_match?.[2] ?? line;
-  const raw_amounts = trailing_amounts_raw(body);
-  if (raw_amounts.length < 2) return null;
-  const balance_major = parse_amount_cell(raw_amounts.at(-1)!);
-  const txn_amount_major = parse_amount_cell(raw_amounts.at(-2)!);
-  let desc = body;
-  for (let i = 0; i < 2; i++) {
-    const m = desc.match(/([\d,]+\.\d{2})\s*$/);
-    if (!m || m.index == null) return null;
-    desc = desc.slice(0, m.index).trim();
-  }
-  const description = collapse_spaces(desc);
-  if (!description && txn_amount_major === "0.00") {
-    return null;
-  }
-  return {
-    entry_date,
-    description,
-    txn_amount_major,
-    balance_major,
-  };
-}
-
 function direction_from_balances(
   prev: number,
   amount: number,
@@ -356,6 +315,16 @@ export function parse_pbe_savings_statement(text: string): {
   let last_entry_date: string | null = null;
   let pending_description: string[] = [];
   let running_balance = Number(meta.opening_balance_major ?? "NaN");
+  const amount_bounds = {
+    opening:
+      meta.opening_balance_major != null
+        ? Number(meta.opening_balance_major)
+        : null,
+    closing:
+      meta.closing_balance_major != null
+        ? Number(meta.closing_balance_major)
+        : null,
+  };
 
   const flush_pending = () => {
     if (!pending_description.length || drafts.length === 0) {
@@ -375,9 +344,9 @@ export function parse_pbe_savings_statement(text: string): {
     if (!line) continue;
     if (is_noise_line(line)) continue;
 
-    const split = split_transaction_line(line);
+    const split = split_pbe_savings_statement_line(line, amount_bounds);
     if (!split) {
-      if (drafts.length > 0 && !/^[\d,]+\.\d{2}$/.test(line)) {
+      if (drafts.length > 0 && is_continuation_line(line)) {
         pending_description.push(line);
       }
       continue;
