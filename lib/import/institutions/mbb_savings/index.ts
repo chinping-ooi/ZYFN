@@ -2,6 +2,7 @@ export {
   parse_amount_cell,
   row_money_from_direction,
 } from "@/lib/import/institutions/mbb_savings/amount";
+export { parse_mbb_savings_statement_date } from "@/lib/import/institutions/mbb_savings/statement_date";
 export {
   validate_running_balance,
   validate_statement_total,

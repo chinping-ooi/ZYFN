@@ -3,6 +3,7 @@ import {
   parse_amount_cell,
   row_money_from_direction,
 } from "@/lib/import/institutions/mbb_savings/amount";
+import { parse_mbb_savings_statement_date } from "@/lib/import/institutions/mbb_savings/statement_date";
 import type { ImportParsedAccount, NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 
@@ -25,10 +26,6 @@ export type MbbSavingsStatementMeta = {
   ending_balance_major: string | null;
 };
 
-function expand_year_yy(yy: number): number {
-  return yy >= 70 ? 1900 + yy : 2000 + yy;
-}
-
 function collapse_spaces(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
@@ -45,26 +42,7 @@ export function mbb_savings_layout_score(text: string): number {
   return detect_score(text);
 }
 
-export function parse_mbb_savings_statement_date(text: string): {
-  iso: string | null;
-  month: number | null;
-  year: number | null;
-} {
-  const match = text.match(
-    /TARIKH\s+PENYATA[\s\S]{0,240}?(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{2,4})\b/i,
-  );
-  if (!match) return { iso: null, month: null, year: null };
-  const day = match[1].padStart(2, "0");
-  const month = Number.parseInt(match[2], 10);
-  const year_raw = match[3];
-  const year =
-    year_raw.length === 4
-      ? Number.parseInt(year_raw, 10)
-      : expand_year_yy(Number.parseInt(year_raw, 10));
-  if (month < 1 || month > 12) return { iso: null, month: null, year: null };
-  const iso = `${year}-${String(month).padStart(2, "0")}-${day}`;
-  return { iso, month, year };
-}
+export { parse_mbb_savings_statement_date } from "@/lib/import/institutions/mbb_savings/statement_date";
 
 function entry_date_to_iso(
   ddmm: string,
@@ -214,8 +192,17 @@ export function parse_mbb_savings_statement(text: string): {
         }
       : null;
 
-  if (header.month == null || header.year == null || !account) {
+  if (!account) {
     return { rows: [], meta, account: null, parse_warning: null };
+  }
+  if (header.month == null || header.year == null) {
+    return {
+      rows: [],
+      meta,
+      account,
+      parse_warning:
+        "Maybank savings layout matched but statement date was not found in the PDF text.",
+    };
   }
   const statement_month = header.month;
   const statement_year = header.year;
