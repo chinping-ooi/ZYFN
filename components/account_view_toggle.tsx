@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChartPie, List } from "lucide-react";
+import { useWorkspaceToolbar } from "@/components/workspace_toolbar_context";
 import { account_statement_href } from "@/lib/accounts/view_paths";
 
 const SEGMENT =
@@ -19,6 +20,7 @@ export function AccountViewToggle({
   view_base_path: string;
   active_view: "statement" | "summary";
 }) {
+  const { set_account_view } = useWorkspaceToolbar();
   const searchParams = useSearchParams();
   const query = searchParams.toString();
   const query_suffix = query ? `?${query}` : "";
@@ -33,6 +35,7 @@ export function AccountViewToggle({
         title="Summary"
         aria-label="Summary"
         aria-current={active_view === "summary" ? "page" : undefined}
+        onClick={() => set_account_view("summary")}
       >
         <ChartPie className="size-4" aria-hidden />
       </Link>
@@ -42,6 +45,7 @@ export function AccountViewToggle({
         title="Account statement"
         aria-label="Account statement"
         aria-current={active_view === "statement" ? "page" : undefined}
+        onClick={() => set_account_view("statement")}
       >
         <List className="size-4" aria-hidden />
       </Link>

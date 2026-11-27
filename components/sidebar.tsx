@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useWorkspaceToolbar } from "@/components/workspace_toolbar_context";
+import { resolve_sidebar_account_href } from "@/lib/accounts/resolve_sidebar_href";
 import {
   CreditCard,
   Landmark,
@@ -55,6 +57,7 @@ function SidebarNavLink({
   item,
   pathname,
   on_navigate,
+  resolved_href,
   className = "",
   aria_current = true,
   level = 2,
@@ -62,6 +65,7 @@ function SidebarNavLink({
   item: NavItem;
   pathname: string;
   on_navigate: () => void;
+  resolved_href: string;
   className?: string;
   aria_current?: boolean;
   level?: 2 | 3;
@@ -73,7 +77,7 @@ function SidebarNavLink({
     level === 3 ? "mb-px py-1.5 pr-3 pl-3 last:mb-0" : NAV_LINK_LEVEL_2;
   return (
     <Link
-      href={item.href}
+      href={resolved_href}
       onClick={on_navigate}
       className={`${NAV_LINK_BASE} ${padding} ${className} ${
         active
@@ -99,10 +103,12 @@ function SidebarNavBranch({
   item,
   pathname,
   on_navigate,
+  resolve_href,
 }: {
   item: NavItem;
   pathname: string;
   on_navigate: () => void;
+  resolve_href: (href: string) => string;
 }) {
   const has_children = (item.children?.length ?? 0) > 0;
 
@@ -112,6 +118,7 @@ function SidebarNavBranch({
         item={item}
         pathname={pathname}
         on_navigate={on_navigate}
+        resolved_href={resolve_href(item.href)}
       />
     );
   }
@@ -122,6 +129,7 @@ function SidebarNavBranch({
         item={item}
         pathname={pathname}
         on_navigate={on_navigate}
+        resolved_href={resolve_href(item.href)}
         level={2}
       />
       <div className={NAV_NEST_LEVEL_3} aria-label="MBB 2 Gold cards">
@@ -131,6 +139,7 @@ function SidebarNavBranch({
             item={child}
             pathname={pathname}
             on_navigate={on_navigate}
+            resolved_href={resolve_href(child.href)}
             level={3}
           />
         ))}
@@ -144,11 +153,13 @@ function NavGroupSection({
   items,
   pathname,
   on_navigate,
+  resolve_href,
 }: {
   title: string;
   items: NavItem[];
   pathname: string;
   on_navigate: () => void;
+  resolve_href: (href: string) => string;
 }) {
   const GroupIcon = GROUP_ICONS[title];
   const group_has_active = items.some((item) =>
@@ -182,6 +193,7 @@ function NavGroupSection({
             item={item}
             pathname={pathname}
             on_navigate={on_navigate}
+            resolve_href={resolve_href}
           />
         ))}
       </div>
@@ -198,6 +210,20 @@ function SidebarPanel({
   on_navigate: () => void;
   nav_groups: ReturnType<typeof useNavGroups>;
 }) {
+  const { account_view } = useWorkspaceToolbar();
+  const searchParams = useSearchParams();
+  const month_query = useMemo(() => {
+    const month = searchParams.get("month");
+    if (!month) return null;
+    return `month=${encodeURIComponent(month)}`;
+  }, [searchParams]);
+
+  const resolve_href = useCallback(
+    (href: string) =>
+      resolve_sidebar_account_href(href, account_view, month_query),
+    [account_view, month_query],
+  );
+
   const dashboard_active = pathname === DASHBOARD_HREF;
   const import_active = pathname === IMPORT_HREF;
   const fixed_deposits_active =
@@ -298,6 +324,7 @@ function SidebarPanel({
             items={group.items}
             pathname={pathname}
             on_navigate={on_navigate}
+            resolve_href={resolve_href}
           />
         ))}
       </nav>
