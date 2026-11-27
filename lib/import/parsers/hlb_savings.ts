@@ -355,8 +355,20 @@ type ParsedTxnLine = {
   balance_major: string | null;
 };
 
+/**
+ * Give an undated continuation line the running date without shifting its
+ * columns: overwrite leading indentation when there is room.
+ */
+function with_date_prefix(raw_line: string, date_token: string): string {
+  const indent = raw_line.length - raw_line.trimStart().length;
+  if (indent >= date_token.length + 2) {
+    return ` ${date_token}${raw_line.slice(date_token.length + 1)}`;
+  }
+  return `${date_token} ${raw_line.trimStart()}`;
+}
+
 function parse_txn_line(line: string, cols: PageColumns | null): ParsedTxnLine | null {
-  const date_match = line.match(/^(\d{2}-\d{2}-\d{4})\s+(.*)$/);
+  const date_match = line.match(/^\s*(\d{2}-\d{2}-\d{4})\s+(.*)$/);
   const date_token = date_match?.[1] ?? null;
   const body = date_match?.[2] ?? line;
   const hits = amount_hits(body);
@@ -513,7 +525,13 @@ export function parse_hlb_savings_statement(text: string): {
   const statement_year = dates.statement_year;
 
   const drafts: DraftTxn[] = [];
-  const lines = text.split(/\r?\n/).map(normalize_pdfjs_line);
+  // Keep the original spacing: column classification compares character
+  // offsets of amounts with the header's Deposit/Withdrawal/Balance offsets,
+  // which collapsing whitespace destroys (an aligned withdrawal then lands
+  // nearest the Deposit header). Text checks use the collapsed form.
+  const raw_lines = text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/\u00a0/g, " ").replace(/\s+$/, ""));
   let page_columns: PageColumns | null = null;
   let parse_index = 0;
   let last_date_token: string | null = null;
@@ -543,9 +561,10 @@ export function parse_hlb_savings_statement(text: string): {
   // inherit the last transaction date, become rows, or be appended as detail.
   // A new column header (next page) re-opens the ledger.
   let in_footer = false;
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const cols = detect_columns(line);
+  for (const raw_line of raw_lines) {
+    const line = normalize_pdfjs_line(raw_line);
+    if (!line) continue;
+    const cols = detect_columns(raw_line);
     if (cols) {
       page_columns = cols;
       in_footer = false;
@@ -566,9 +585,12 @@ export function parse_hlb_savings_statement(text: string): {
     }
 
     const parsed: ParsedTxnLine | null =
-      parse_txn_line(line, page_columns) ??
+      parse_txn_line(raw_line, page_columns) ??
       (last_date_token
-        ? parse_txn_line(`${last_date_token} ${line}`, page_columns)
+        ? parse_txn_line(
+            with_date_prefix(raw_line, last_date_token),
+            page_columns,
+          )
         : null);
 
     if (!parsed) {
