@@ -1,4 +1,4 @@
-import { row_money_from_direction } from "@/lib/import/amount";
+import { row_money_from_direction } from "@/lib/import/institutions/tng_wallet/amount";
 import type { NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 import { parse_tng_text } from "@/lib/tng/import/parse_text";

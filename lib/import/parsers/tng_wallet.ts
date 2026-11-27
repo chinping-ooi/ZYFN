@@ -1,5 +1,5 @@
 import { account_config_by_ref } from "@/lib/accounts/registry";
-import { row_money_from_direction } from "@/lib/import/amount";
+import { row_money_from_direction } from "@/lib/import/institutions/tng_wallet/amount";
 import type { ImportParsedAccount, NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 import { classify_tng_direction } from "@/lib/tng/import/direction";

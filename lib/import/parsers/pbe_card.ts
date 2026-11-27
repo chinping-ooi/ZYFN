@@ -1,4 +1,7 @@
-import { parse_amount_cell, row_money_from_direction } from "@/lib/import/amount";
+import {
+  parse_amount_cell,
+  row_money_from_direction,
+} from "@/lib/import/institutions/pbe_card/amount";
 import { pbe_savings_layout_score } from "@/lib/import/parsers/pbe_savings";
 import type { NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";

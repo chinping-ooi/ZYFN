@@ -16,7 +16,12 @@ export async function POST(request: Request) {
     const kind = body.account_ref
       ? account_config_by_ref(body.account_ref)?.kind
       : undefined;
-    const rows = await dedupe_import_rows(body.account_id, body.rows, kind);
+    const rows = await dedupe_import_rows(
+      body.account_id,
+      body.rows,
+      kind,
+      body.account_ref,
+    );
     return NextResponse.json({ rows });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Dedupe failed";

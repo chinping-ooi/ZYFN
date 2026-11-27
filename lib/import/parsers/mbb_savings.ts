@@ -1,5 +1,8 @@
 import { account_config_by_ref } from "@/lib/accounts/registry";
-import { parse_amount_cell, row_money_from_direction } from "@/lib/import/amount";
+import {
+  parse_amount_cell,
+  row_money_from_direction,
+} from "@/lib/import/institutions/mbb_savings/amount";
 import type { ImportParsedAccount, NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 

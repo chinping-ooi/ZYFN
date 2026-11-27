@@ -1,5 +1,8 @@
 import ExcelJS from "exceljs";
-import { parse_amount_cell, row_money_from_direction } from "@/lib/import/amount";
+import {
+  parse_amount_cell,
+  row_money_from_direction,
+} from "@/lib/import/institutions/spreadsheet/amount";
 import type { NormalizedImportRow, SpreadsheetColumnMapping } from "@/lib/import/types";
 import { detect_column_mapping } from "@/lib/import/spreadsheet_mapping";
 

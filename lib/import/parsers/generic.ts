@@ -1,4 +1,7 @@
-import { parse_amount_cell, row_money_from_direction } from "@/lib/import/amount";
+import {
+  parse_amount_cell,
+  row_money_from_direction,
+} from "@/lib/import/institutions/spreadsheet/amount";
 import type { NormalizedImportRow } from "@/lib/import/types";
 import type { StatementParser } from "@/lib/import/parsers/types";
 
