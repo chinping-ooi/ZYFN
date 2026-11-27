@@ -315,7 +315,7 @@ export function SpendingBreakdownCard({
   if (content_sized && column_fill) {
     body_parts.push("min-h-min", "flex-1", "justify-center");
   } else if (column_fill && !content_sized) {
-    body_parts.push("shrink-0", "lg:flex-1", "lg:min-h-0", "lg:overflow-hidden");
+    body_parts.push("shrink-0", "lg:flex-1", "lg:min-h-0");
   } else {
     body_parts.push("shrink-0");
   }

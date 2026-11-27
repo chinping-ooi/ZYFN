@@ -17,7 +17,6 @@ export function SpendingBreakdownSkeleton({
     "flex",
     "w-full",
     "flex-col",
-    "overflow-hidden",
     "rounded-[3px]",
     "border",
     "border-zyfn-line",

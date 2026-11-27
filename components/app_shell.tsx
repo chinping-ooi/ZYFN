@@ -51,7 +51,7 @@ export function AppShell({
         <main
           className={`content mx-auto flex w-full min-w-0 max-w-[1560px] flex-1 flex-col ${
             dashboard_grid
-              ? "dashboard-main min-h-0 overflow-x-auto lg:overflow-x-hidden"
+              ? "dashboard-main min-h-0 flex-1 overflow-y-auto overflow-x-auto lg:overflow-x-hidden"
               : `px-4 lg:px-8 ${viewport_lock ? "py-3 lg:py-3" : "py-4 lg:py-6"} min-h-0 overflow-x-auto ${
                   viewport_lock
                     ? "overflow-y-auto lg:overflow-y-hidden lg:overflow-x-hidden"

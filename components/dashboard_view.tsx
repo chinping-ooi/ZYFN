@@ -85,7 +85,7 @@ export function DashboardView({
   );
 
   return (
-    <div className="dashboard-shell lg:flex-1">
+    <div className="dashboard-shell">
       <header className="dashboard-toolbar">
         <div className="min-w-0">
           <h2 className="m-0 text-[17px] font-semibold">Monthly summary</h2>
@@ -135,7 +135,7 @@ export function DashboardView({
             </div>
             <div className="dashboard-column dashboard-column-right">
               <DailySpendingChart
-                className="min-h-0 flex-1"
+                className="shrink-0"
                 month={month}
                 month_label={month_label}
                 series={daily_spending}

@@ -135,7 +135,7 @@ export function DailySpendingChart({
     [month, series.txn_counts, y_max_major],
   );
 
-  const shell_class = `card flex w-full min-w-0 flex-col overflow-hidden rounded-[3px] border border-zyfn-line bg-white h-full min-h-0 flex-1 ${className}`;
+  const shell_class = `card flex w-full min-w-0 shrink-0 flex-col rounded-[3px] border border-zyfn-line bg-white ${className}`.trim();
 
   return (
     <section className={shell_class}>
@@ -146,8 +146,8 @@ export function DailySpendingChart({
         align="center"
         className="shrink-0 flex-nowrap gap-1.5 !py-2 lg:gap-2 lg:!py-2.5"
       />
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pt-1.5 lg:px-3 lg:pt-2">
-        <div className="plot relative min-h-[140px] max-h-[360px] min-h-0 flex-1 pb-2">
+      <div className="flex flex-col px-2 pt-1.5 lg:px-3 lg:pt-2">
+        <div className="plot relative min-h-[200px] w-full pb-2" style={{ height: 280 }}>
           <Line data={chart_data} options={options} aria-label={`Daily spending for ${month_label}`} />
         </div>
       </div>

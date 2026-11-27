@@ -46,7 +46,7 @@ export function DashboardAccountBalancesCard({
 }: {
   rows: DashboardBalanceRow[];
   className?: string;
-  /** lg dashboard: grow in column; rows list scrolls internally. */
+  /** lg dashboard: grow in column; footer stays at card bottom. */
   column_fill?: boolean;
 }) {
   const { amounts_hidden, toggle_amounts_hidden } = use_hide_amounts();
@@ -63,14 +63,12 @@ export function DashboardAccountBalancesCard({
     "border",
     "border-zyfn-line",
     "bg-white",
-    column_fill
-      ? "min-h-0 flex-1 overflow-hidden lg:h-auto lg:min-h-0"
-      : "shrink-0 overflow-hidden",
+    column_fill ? "flex min-h-min min-h-0 flex-1 flex-col" : "shrink-0",
     className,
   ].join(" ");
 
   const list_class = column_fill
-    ? "balance-rows min-h-0 px-4 pb-2 md:px-5 md:pb-3 lg:flex-1 lg:overflow-y-auto"
+    ? "balance-rows min-h-min flex-1 px-4 pb-2 md:px-5 md:pb-3"
     : "balance-rows px-4 pb-2 md:px-5 md:pb-3";
 
   return (
